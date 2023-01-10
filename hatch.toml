@@ -1,0 +1,68 @@
+[envs.default]
+python = "3.11"
+dependencies = [
+  "coverage[toml]>=6.5",
+  "pytest",
+  "pytest-asyncio",
+  "pytest-mock",
+]
+# pre-install-commands = [
+#   "python -m pip install --disable-pip-version-check git+https://github.com/Textualize/textual.git",
+# ]
+[envs.default.scripts]
+test = "pytest {args:tests}"
+test-cov = "coverage run -m pytest {args:tests}"
+cov-report = [
+  "- coverage combine",
+  "coverage report",
+]
+cov = [
+  "test-cov",
+  "cov-report",
+]
+
+[[envs.all.matrix]]
+python = ["3.10", "3.11"]
+
+[envs.lint]
+detached = true
+python = "3.11"
+dependencies = [
+  "black>=23.1.0",
+  "mypy>=1.0.0",
+  "pydantic",
+  "ruff>=0.0.243",
+]
+[envs.lint.scripts]
+typing = "mypy --install-types --non-interactive {args:src/ddqa tests}"
+style = [
+  "ruff {args:.}",
+  "black --check --diff {args:.}",
+]
+fmt = [
+  "black {args:.}",
+  "ruff --fix {args:.}",
+  "style",
+]
+all = [
+  "style",
+  "typing",
+]
+
+[envs.build]
+detached = true
+dependencies = [
+  "pyoxidizer>=0.24.0",
+]
+
+[envs.build.env-vars]
+FLAVOR = "standalone_static"
+
+[envs.build.overrides]
+platform.macos.env-vars = [
+  { key = "FLAVOR", value = "standalone_dynamic" },
+]
+
+[envs.build.scripts]
+debug = "pyoxidizer build exe --path app --var-env flavor FLAVOR {args}"
+release = "debug --release"

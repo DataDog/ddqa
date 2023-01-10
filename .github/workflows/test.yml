@@ -1,0 +1,103 @@
+name: test
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+env:
+  STABLE_PYTHON_VERSION: '3.11'
+  PYTHONUNBUFFERED: "1"
+  FORCE_COLOR: "1"
+
+jobs:
+  run:
+    name: Python ${{ matrix.python-version }} on ${{ startsWith(matrix.os, 'macos-') && 'macOS' || startsWith(matrix.os, 'windows-') && 'Windows' || 'Linux' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.10', '3.11']
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install ourself
+      run: pip install --upgrade hatch
+
+    - name: Lint
+      run: hatch run lint:all
+
+    - name: Run tests
+      run: hatch run full
+
+    - name: Disambiguate coverage filename
+      run: mv .coverage ".coverage.${{ matrix.os }}.${{ matrix.python-version }}"
+
+    - name: Upload coverage data
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-data
+        path: .coverage.*
+
+  coverage:
+    name: Report coverage
+    runs-on: ubuntu-latest
+    needs:
+    - run
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ env.STABLE_PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.STABLE_PYTHON_VERSION }}
+
+    - name: Install Hatch
+      run: pip install hatch
+
+    - name: Download coverage data
+      uses: actions/download-artifact@v3
+      with:
+        name: coverage-data
+
+    - name: Combine coverage data
+      run: hatch run coverage:combine
+
+    - name: Export coverage reports
+      run: |
+        hatch run coverage:report-xml
+        hatch run coverage:report-uncovered-html
+
+    - name: Upload uncovered HTML report
+      uses: actions/upload-artifact@v3
+      with:
+        name: uncovered-html-report
+        path: htmlcov
+
+    - name: Generate coverage summary
+      run: hatch run coverage:generate-summary
+
+    - name: Write coverage summary report
+      if: github.event_name == 'pull_request'
+      run: hatch run coverage:write-summary-report
+
+    - name: Update coverage pull request comment
+      if: github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        path: coverage-report.md
