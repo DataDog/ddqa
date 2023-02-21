@@ -72,6 +72,7 @@ class CandidateListing(DataTable):
         try:
             commits = self.app.git.get_mutually_exclusive_commits(self.previous_ref, self.current_ref)
         except Exception as e:
+            print(f'Failed to get commits for {self.previous_ref}..{self.current_ref}: {e}')
             self.sidebar.label.update(' error ')
             self.sidebar.status.update(escape(str(e)))
             return
@@ -81,6 +82,7 @@ class CandidateListing(DataTable):
         ignored = 0
         processed_pr_numbers = set()
 
+        print(f'Beginning to load candidates for commits for {self.previous_ref}..{self.current_ref}')
         self.sidebar.status.update('Loading...')
         async with ResponsiveNetworkClient(self.sidebar.status) as client:
             for i, commit in enumerate(commits):
@@ -89,8 +91,11 @@ class CandidateListing(DataTable):
                     if model.id in processed_pr_numbers:
                         ignored += 1
                         continue
-                    else:
-                        processed_pr_numbers.add(model.id)
+
+                    processed_pr_numbers.add(model.id)
+                    print(f'Processing pull request #{model.id}')
+                else:
+                    print(f'Processing commit {model.id[:7]}')
 
                 index = i - ignored
                 candidate = Candidate(model, self.app.repo)
@@ -102,10 +107,12 @@ class CandidateListing(DataTable):
                 num_candidates += 1
 
         if not num_candidates:
+            print('No candidates found')
             self.sidebar.label.update(' No candidates ')
             self.sidebar.status.update(f'{self.previous_ref} -> {self.current_ref}')
             return
 
+        print('Finished processing candidates')
         self.sidebar.update_assignment_status()
 
     async def create(self) -> None:
@@ -129,9 +136,15 @@ class CandidateListing(DataTable):
         self.focus()
         display_updated = False
 
+        print(f'Candidates ready for creation: {total}')
         self.sidebar.status.update('Creating...')
         async with ResponsiveNetworkClient(self.sidebar.status) as client:
             for index, candidate in self.candidates.items():
+                if candidate.data.id.isdigit():
+                    print(f'Creating issue for pull request #{candidate.data.id}')
+                else:
+                    print(f'Creating issue for commit {candidate.data.id[:7]}')
+
                 self.sidebar.label.update(f' {index + 1} / {total} ')
 
                 assignments: dict[str, str] = {}
@@ -150,7 +163,7 @@ class CandidateListing(DataTable):
                 try:
                     created_issues = await self.app.jira.create_issues(client, candidate.data, assignments)
                 except Exception as e:
-                    self.sidebar.status.update(str(e))
+                    self.sidebar.status.update(escape(str(e)))
                     return
 
                 result = DataTable(classes='assignment-result')
@@ -170,6 +183,7 @@ class CandidateListing(DataTable):
                 if not display_updated:
                     display_updated = True
 
+        print('Finished creating issues')
         self.sidebar.status.update('Finished')
         self.sidebar.button.disabled = False
 

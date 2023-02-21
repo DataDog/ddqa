@@ -710,6 +710,7 @@ class TestCreation:
         )
 
         async with app.run_test() as pilot:
+            await app.wait_for_background_tasks()
             await pilot.pause(helpers.ASYNC_WAIT)
 
             sidebar = app.query_one(CandidateSidebar)
@@ -734,8 +735,11 @@ class TestCreation:
             assert str(assignments[1].label.render()) == 'Bar Baz'
 
             table.cursor_coordinate = Coordinate(1, 0)
+            await pilot.pause(helpers.ASYNC_WAIT)
+
             app.set_focus(assignments[1].switch)
             await pilot.press('enter')
+            await pilot.pause(helpers.ASYNC_WAIT)
 
             assert table.get_row_at(0) == ['✓', 'title2']
             assert table.get_row_at(1) == ['✓', 'subject3']
@@ -748,6 +752,8 @@ class TestCreation:
 
             app.set_focus(sidebar.button)
             await pilot.press('enter')
+            await app.wait_for_background_tasks()
+            await pilot.pause(helpers.ASYNC_WAIT)
 
             assert str(sidebar.status.render()) == 'Finished'
             assert str(sidebar.label.render()) == f' {num_candidates} / {num_candidates} '

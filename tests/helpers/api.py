@@ -7,9 +7,8 @@ from textwrap import dedent as _dedent
 import pytest
 from rich.console import Console
 
-# The default time to wait after artificial key presses for all triggered events to complete
-# https://github.com/Textualize/textual/issues/1606
-ASYNC_WAIT = 0.2
+# The default time to wait for all triggered events to complete
+ASYNC_WAIT = 0.5
 
 
 def dedent(text, *, terminal=False):

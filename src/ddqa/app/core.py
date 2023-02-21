@@ -8,6 +8,7 @@ import os
 from functools import cached_property
 from typing import TYPE_CHECKING
 
+from rich.console import Console
 from textual.app import App
 
 from ddqa.app.style import CSS
@@ -28,9 +29,16 @@ class Application(App):
     TITLE = 'Datadog QA'
     CSS = CSS
 
-    def __init__(self, config_file: ConfigFile, cache_dir: str = '', *args, **kwargs):
+    def __init__(self, config_file: ConfigFile, cache_dir: str = '', color: bool | None = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.console = Console(
+            force_terminal=color,
+            no_color=color is False,
+            markup=False,
+            emoji=False,
+            highlight=False,
+        )
         self.config_file = config_file
         self.__cache_dir = cache_dir
         self.__queued_screens: list[tuple[str, Screen]] = []
@@ -105,6 +113,9 @@ class Application(App):
 
     def run_in_background(self, coroutine) -> None:
         self.__background_tasks.append(asyncio.create_task(coroutine))
+
+    async def wait_for_background_tasks(self) -> None:
+        await asyncio.gather(*self.__background_tasks)
 
     def needs_syncing(self) -> bool:
         return not self.github.load_global_config(self.repo.global_config_source) or not any(

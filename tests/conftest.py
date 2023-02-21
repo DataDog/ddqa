@@ -17,7 +17,7 @@ import tomli_w
 from click.testing import CliRunner
 
 from ddqa.app.core import Application
-from ddqa.config.constants import ConfigEnvVars
+from ddqa.config.constants import AppEnvVars, ConfigEnvVars
 from ddqa.config.file import ConfigFile
 from ddqa.utils.fs import Path
 
@@ -120,6 +120,7 @@ def isolation() -> Generator[Path, None, None]:
         )
 
         default_env_vars = {
+            AppEnvVars.NO_COLOR: '1',
             ConfigEnvVars.CACHE: str(cache_dir),
             'DDQA_REPO_CONFIG': str(repo_config_file),
             # 2.5x the default of 80x24
