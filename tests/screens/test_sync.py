@@ -113,7 +113,7 @@ async def test_save_members(app, git_repository, helpers, mocker):
                 content=helpers.dedent(
                     """
                     jira_server = "https://foo.atlassian.net"
-                    
+
                     [members]
                     g = "j"
                     """
@@ -175,7 +175,7 @@ async def test_save_teams(app, git_repository, helpers, mocker):
                 content=helpers.dedent(
                     """
                     jira_server = "https://foo.atlassian.net"
-                    
+
                     [members]
                     g = "j"
                     """

@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 import json
 import time
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 
 import pytest
@@ -130,15 +131,6 @@ async def test_create_issues(app, git_repository, helpers, mocker):
         side_effect=[
             Response(
                 200,
-                request=Request('GET', ''),
-                content=json.dumps(
-                    {
-                        'accountId': 'qwerty1234567890',
-                    },
-                ),
-            ),
-            Response(
-                200,
                 request=Request('POST', ''),
                 content=json.dumps(
                     {
@@ -176,7 +168,6 @@ async def test_create_issues(app, git_repository, helpers, mocker):
         {'foo': 'github-foo', 'bar': 'github-bar'},
     )
     assert response_mock.call_args_list == [
-        mocker.call('GET', 'https://foobarbaz.atlassian.net/rest/api/2/myself', auth=('foo@bar.baz', 'bar')),
         mocker.call(
             'POST',
             'https://foobarbaz.atlassian.net/rest/api/2/issue',
@@ -206,7 +197,6 @@ async def test_create_issues(app, git_repository, helpers, mocker):
                     'issuetype': {'name': 'Foo-Task'},
                     'labels': ['ddqa-todo'],
                     'project': {'key': 'FOO'},
-                    'reporter': {'id': 'qwerty1234567890'},
                     'summary': 'title123',
                 },
             },
@@ -240,7 +230,6 @@ async def test_create_issues(app, git_repository, helpers, mocker):
                     'issuetype': {'name': 'Bar-Task'},
                     'labels': ['ddqa-todo'],
                     'project': {'key': 'BAR'},
-                    'reporter': {'id': 'qwerty1234567890'},
                     'summary': 'title123',
                 },
             },
@@ -250,6 +239,268 @@ async def test_create_issues(app, git_repository, helpers, mocker):
     assert created_issues == {
         'foo': 'https://foobarbaz.atlassian.net/browse/FOO-1',
         'bar': 'https://foobarbaz.atlassian.net/browse/BAR-1',
+    }
+
+
+async def test_search_issues(app, git_repository, mocker):
+    app.configure(
+        git_repository,
+        caching=True,
+        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+    )
+    repo_config = dict(app.repo.dict())
+    repo_config['teams'] = {
+        'foo': {
+            'jira_project': 'FOO',
+            'jira_issue_type': 'Foo-Task',
+            'github_team': 'foo-team',
+        },
+        'bar': {
+            'jira_project': 'BAR',
+            'jira_issue_type': 'Bar-Task',
+            'github_team': 'bar-team',
+        },
+    }
+    app.save_repo_config(repo_config)
+
+    response_mock = mocker.patch(
+        'httpx.AsyncClient.request',
+        side_effect=[
+            Response(
+                200,
+                request=Request('POST', ''),
+                content=json.dumps(
+                    {
+                        'issues': [
+                            {
+                                'fields': {
+                                    'assignee': {
+                                        'accountId': 'qwerty1234567890',
+                                        'avatarUrls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
+                                        'displayName': 'U.N. Owen',
+                                        'timeZone': 'America/New_York',
+                                    },
+                                    'description': 'Test description',
+                                    'labels': ['ddqa-todo'],
+                                    'project': {'key': 'FOO'},
+                                    'summary': 'Test summary',
+                                    'updated': '2023-02-13T12:08:50.058-0500',
+                                },
+                                'key': 'FOO-1',
+                            },
+                            {
+                                'fields': {
+                                    'assignee': {
+                                        'accountId': 'qwerty1234567890',
+                                        'avatarUrls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
+                                        'displayName': 'U.N. Owen',
+                                        'timeZone': 'America/New_York',
+                                    },
+                                    'description': 'Test description',
+                                    'labels': ['ddqa-todo'],
+                                    'project': {'key': 'BAR'},
+                                    'summary': 'Test summary',
+                                    'updated': '2023-02-13T12:08:50.058-0500',
+                                },
+                                'key': 'BAR-1',
+                            },
+                        ],
+                        'maxResults': 2,
+                        'startAt': 0,
+                        'total': 5,
+                    }
+                ),
+            ),
+            Response(
+                200,
+                request=Request('POST', ''),
+                content=json.dumps(
+                    {
+                        'issues': [
+                            {
+                                'fields': {
+                                    'assignee': {
+                                        'accountId': 'qwerty1234567890',
+                                        'avatarUrls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
+                                        'displayName': 'U.N. Owen',
+                                        'timeZone': 'America/New_York',
+                                    },
+                                    'description': 'Test description',
+                                    'labels': ['ddqa-in-progress'],
+                                    'project': {'key': 'FOO'},
+                                    'summary': 'Test summary',
+                                    'updated': '2023-02-13T12:08:50.058-0500',
+                                },
+                                'key': 'FOO-2',
+                            },
+                            {
+                                'fields': {
+                                    'assignee': {
+                                        'accountId': 'qwerty1234567890',
+                                        'avatarUrls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
+                                        'displayName': 'U.N. Owen',
+                                        'timeZone': 'America/New_York',
+                                    },
+                                    'description': 'Test description',
+                                    'labels': ['ddqa-in-progress'],
+                                    'project': {'key': 'BAR'},
+                                    'summary': 'Test summary',
+                                    'updated': '2023-02-13T12:08:50.058-0500',
+                                },
+                                'key': 'BAR-2',
+                            },
+                        ],
+                        'maxResults': 2,
+                        'startAt': 2,
+                        'total': 5,
+                    }
+                ),
+            ),
+            Response(
+                200,
+                request=Request('POST', ''),
+                content=json.dumps(
+                    {
+                        'issues': [
+                            {
+                                'fields': {
+                                    'assignee': {
+                                        'accountId': 'qwerty1234567890',
+                                        'avatarUrls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
+                                        'displayName': 'U.N. Owen',
+                                        'timeZone': 'America/New_York',
+                                    },
+                                    'description': 'Test description',
+                                    'labels': ['ddqa-done'],
+                                    'project': {'key': 'FOO'},
+                                    'summary': 'Test summary',
+                                    'updated': '2023-02-13T12:08:50.058-0500',
+                                },
+                                'key': 'FOO-3',
+                            },
+                        ],
+                        'maxResults': 2,
+                        'startAt': 4,
+                        'total': 5,
+                    }
+                ),
+            ),
+        ],
+    )
+
+    assert app.jira.PAGINATION_RESULT_SIZE == 100
+    app.jira.PAGINATION_RESULT_SIZE = 2
+
+    issues = []
+    async for issue in app.jira.search_issues(ResponsiveNetworkClient(Static())):
+        issues.append(issue)
+
+    assert response_mock.call_args_list == [
+        mocker.call(
+            'POST',
+            'https://foobarbaz.atlassian.net/rest/api/2/search',
+            auth=('foo@bar.baz', 'bar'),
+            json={
+                'jql': 'project in ("FOO", "BAR") and labels in ("ddqa-todo", "ddqa-in-progress", "ddqa-done")',
+                'fields': ['assignee', 'description', 'labels', 'project', 'summary', 'updated'],
+                'maxResults': 2,
+                'startAt': 0,
+            },
+        ),
+        mocker.call(
+            'POST',
+            'https://foobarbaz.atlassian.net/rest/api/2/search',
+            auth=('foo@bar.baz', 'bar'),
+            json={
+                'jql': 'project in ("FOO", "BAR") and labels in ("ddqa-todo", "ddqa-in-progress", "ddqa-done")',
+                'fields': ['assignee', 'description', 'labels', 'project', 'summary', 'updated'],
+                'maxResults': 2,
+                'startAt': 2,
+            },
+        ),
+        mocker.call(
+            'POST',
+            'https://foobarbaz.atlassian.net/rest/api/2/search',
+            auth=('foo@bar.baz', 'bar'),
+            json={
+                'jql': 'project in ("FOO", "BAR") and labels in ("ddqa-todo", "ddqa-in-progress", "ddqa-done")',
+                'fields': ['assignee', 'description', 'labels', 'project', 'summary', 'updated'],
+                'maxResults': 2,
+                'startAt': 4,
+            },
+        ),
+    ]
+
+    assert len(issues) == 5
+    assert issues[0].dict() == {
+        'key': 'FOO-1',
+        'project': 'FOO',
+        'assignee': {
+            'avatar_urls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
+            'id': 'qwerty1234567890',
+            'name': 'U.N. Owen',
+            'time_zone': 'America/New_York',
+        },
+        'description': 'Test description',
+        'labels': ['ddqa-todo'],
+        'summary': 'Test summary',
+        'updated': datetime(2023, 2, 13, 12, 8, 50, 58000, tzinfo=timezone(timedelta(days=-1, seconds=68400))),
+    }
+    assert issues[1].dict() == {
+        'key': 'BAR-1',
+        'project': 'BAR',
+        'assignee': {
+            'avatar_urls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
+            'id': 'qwerty1234567890',
+            'name': 'U.N. Owen',
+            'time_zone': 'America/New_York',
+        },
+        'description': 'Test description',
+        'labels': ['ddqa-todo'],
+        'summary': 'Test summary',
+        'updated': datetime(2023, 2, 13, 12, 8, 50, 58000, tzinfo=timezone(timedelta(days=-1, seconds=68400))),
+    }
+    assert issues[2].dict() == {
+        'key': 'FOO-2',
+        'project': 'FOO',
+        'assignee': {
+            'avatar_urls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
+            'id': 'qwerty1234567890',
+            'name': 'U.N. Owen',
+            'time_zone': 'America/New_York',
+        },
+        'description': 'Test description',
+        'labels': ['ddqa-in-progress'],
+        'summary': 'Test summary',
+        'updated': datetime(2023, 2, 13, 12, 8, 50, 58000, tzinfo=timezone(timedelta(days=-1, seconds=68400))),
+    }
+    assert issues[3].dict() == {
+        'key': 'BAR-2',
+        'project': 'BAR',
+        'assignee': {
+            'avatar_urls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
+            'id': 'qwerty1234567890',
+            'name': 'U.N. Owen',
+            'time_zone': 'America/New_York',
+        },
+        'description': 'Test description',
+        'labels': ['ddqa-in-progress'],
+        'summary': 'Test summary',
+        'updated': datetime(2023, 2, 13, 12, 8, 50, 58000, tzinfo=timezone(timedelta(days=-1, seconds=68400))),
+    }
+    assert issues[4].dict() == {
+        'key': 'FOO-3',
+        'project': 'FOO',
+        'assignee': {
+            'avatar_urls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
+            'id': 'qwerty1234567890',
+            'name': 'U.N. Owen',
+            'time_zone': 'America/New_York',
+        },
+        'description': 'Test description',
+        'labels': ['ddqa-done'],
+        'summary': 'Test summary',
+        'updated': datetime(2023, 2, 13, 12, 8, 50, 58000, tzinfo=timezone(timedelta(days=-1, seconds=68400))),
     }
 
 
@@ -277,14 +528,23 @@ async def test_rate_limit_handling(app, git_repository, mocker):
     response_mock = mocker.patch(
         'httpx.AsyncClient.request',
         side_effect=[
-            Response(500, headers={'Retry-After': '1'}),
-            Response(429, headers={'Retry-After': '1'}),
             Response(
-                200,
-                request=Request('GET', ''),
+                500,
+                request=Request('POST', ''),
+                headers={'Retry-After': '1'},
                 content=json.dumps(
                     {
-                        'accountId': 'qwerty1234567890',
+                        'key': 'FOO-1',
+                    },
+                ),
+            ),
+            Response(
+                429,
+                request=Request('POST', ''),
+                headers={'Retry-After': '1'},
+                content=json.dumps(
+                    {
+                        'key': 'FOO-1',
                     },
                 ),
             ),
@@ -325,9 +585,6 @@ async def test_rate_limit_handling(app, git_repository, mocker):
     assert time.time() - start >= 2
 
     assert response_mock.call_args_list == [
-        mocker.call('GET', 'https://foobarbaz.atlassian.net/rest/api/2/myself', auth=('foo@bar.baz', 'bar')),
-        mocker.call('GET', 'https://foobarbaz.atlassian.net/rest/api/2/myself', auth=('foo@bar.baz', 'bar')),
-        mocker.call('GET', 'https://foobarbaz.atlassian.net/rest/api/2/myself', auth=('foo@bar.baz', 'bar')),
         mocker.call(
             'POST',
             'https://foobarbaz.atlassian.net/rest/api/2/issue',
@@ -339,7 +596,36 @@ async def test_rate_limit_handling(app, git_repository, mocker):
                     'issuetype': {'name': 'Foo-Task'},
                     'labels': ['ddqa-todo'],
                     'project': {'key': 'FOO'},
-                    'reporter': {'id': 'qwerty1234567890'},
+                    'summary': 'title123',
+                },
+            },
+        ),
+        mocker.call(
+            'POST',
+            'https://foobarbaz.atlassian.net/rest/api/2/issue',
+            auth=('foo@bar.baz', 'bar'),
+            json={
+                'fields': {
+                    'assignee': {'id': 'jira-foo'},
+                    'description': 'Pull request: [#123|https://github.com/org/repo/pull/123]\n\ntest body',
+                    'issuetype': {'name': 'Foo-Task'},
+                    'labels': ['ddqa-todo'],
+                    'project': {'key': 'FOO'},
+                    'summary': 'title123',
+                },
+            },
+        ),
+        mocker.call(
+            'POST',
+            'https://foobarbaz.atlassian.net/rest/api/2/issue',
+            auth=('foo@bar.baz', 'bar'),
+            json={
+                'fields': {
+                    'assignee': {'id': 'jira-foo'},
+                    'description': 'Pull request: [#123|https://github.com/org/repo/pull/123]\n\ntest body',
+                    'issuetype': {'name': 'Foo-Task'},
+                    'labels': ['ddqa-todo'],
+                    'project': {'key': 'FOO'},
                     'summary': 'title123',
                 },
             },
@@ -355,7 +641,6 @@ async def test_rate_limit_handling(app, git_repository, mocker):
                     'issuetype': {'name': 'Bar-Task'},
                     'labels': ['ddqa-todo'],
                     'project': {'key': 'BAR'},
-                    'reporter': {'id': 'qwerty1234567890'},
                     'summary': 'title123',
                 },
             },

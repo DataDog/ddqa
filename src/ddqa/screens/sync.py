@@ -2,10 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Container
 from textual.screen import Screen
 from textual.widget import Widget
-from textual.widgets import Button, Footer, Header, Label, TextLog
+from textual.widgets import Button, Header, Label, TextLog
 
 from ddqa.utils.network import ResponsiveNetworkClient
 from ddqa.utils.toml import load_toml_data
@@ -90,7 +91,11 @@ class InteractiveSidebar(Widget):
 
 
 class SyncScreen(Screen):
-    BINDINGS = [('escape', 'app.exit', 'Exit app')]
+    BINDINGS = [
+        Binding('ctrl+c', 'quit', 'Quit', show=False, priority=True),
+        Binding('tab', 'focus_next', 'Focus Next', show=False),
+        Binding('shift+tab', 'focus_previous', 'Focus Previous', show=False),
+    ]
     DEFAULT_CSS = """
     #screen-sync {
         layout: grid;
@@ -120,4 +125,3 @@ class SyncScreen(Screen):
             Container(Placeholder(width_factor=2), id='screen-sync-placeholder'),
             id='screen-sync',
         )
-        yield Footer()

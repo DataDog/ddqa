@@ -8,9 +8,10 @@ import typing
 from rich.markdown import Markdown as RichMarkdown
 from rich.markup import escape
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import Button, DataTable, Footer, Header, Label, Markdown, Switch
+from textual.widgets import Button, DataTable, Header, Label, Markdown, Switch
 
 from ddqa.utils.network import ResponsiveNetworkClient
 from ddqa.utils.widgets import switch_to_widget
@@ -361,11 +362,15 @@ class CandidateRendering(LabeledBox):
 
 
 class CreateScreen(Screen):
-    BINDINGS = [('escape', 'app.exit', 'Exit app')]
+    BINDINGS = [
+        Binding('ctrl+c', 'quit', 'Quit', show=False, priority=True),
+        Binding('tab', 'focus_next', 'Focus Next', show=False),
+        Binding('shift+tab', 'focus_previous', 'Focus Previous', show=False),
+    ]
     DEFAULT_CSS = """
     #screen-create {
         layout: grid;
-        grid-size: 2;  /* two columns */
+        grid-size: 2;
         grid-columns: 1fr 5fr;
         grid-rows: 1fr;
     }
@@ -392,7 +397,6 @@ class CreateScreen(Screen):
             Container(CandidateRendering(), id='screen-create-rendering'),
             id='screen-create',
         )
-        yield Footer()
 
     async def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         listing = self.query_one(CandidateListing)
