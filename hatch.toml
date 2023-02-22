@@ -22,7 +22,7 @@ cov = [
 ]
 
 [[envs.all.matrix]]
-python = ["3.10", "3.11"]
+python = ["3.11"]
 
 [envs.lint]
 detached = true

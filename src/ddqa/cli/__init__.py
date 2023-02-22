@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2023-present Datadog, Inc. <dev@datadoghq.com>
 #
 # SPDX-License-Identifier: MIT
+import os
+
 import click
 
 from ddqa.__about__ import __version__
@@ -8,10 +10,15 @@ from ddqa.cli.config import config
 from ddqa.cli.create import create
 from ddqa.cli.status import status
 from ddqa.cli.sync import sync
-from ddqa.config.constants import ConfigEnvVars
+from ddqa.config.constants import AppEnvVars, ConfigEnvVars
 
 
 @click.group(context_settings={'help_option_names': ['-h', '--help']}, invoke_without_command=True)
+@click.option(
+    '--color/--no-color',
+    default=None,
+    help='Whether or not to display colored output (default is auto-detection) [env vars: `FORCE_COLOR`/`NO_COLOR`]',
+)
 @click.option(
     '--cache-dir',
     envvar=ConfigEnvVars.CACHE,
@@ -25,7 +32,7 @@ from ddqa.config.constants import ConfigEnvVars
 )
 @click.version_option(version=__version__, prog_name='ddqa')
 @click.pass_context
-def ddqa(ctx: click.Context, cache_dir, config_file_path):
+def ddqa(ctx: click.Context, color, cache_dir, config_file_path):
     """
     \b
          _     _
@@ -38,6 +45,12 @@ def ddqa(ctx: click.Context, cache_dir, config_file_path):
     from ddqa.app.core import Application
     from ddqa.config.file import ConfigFile
     from ddqa.utils.fs import Path
+
+    if color is None:
+        if os.environ.get(AppEnvVars.NO_COLOR) == '1':
+            color = False
+        elif os.environ.get(AppEnvVars.FORCE_COLOR) == '1':
+            color = True
 
     if config_file_path:
         config_file = ConfigFile(Path(config_file_path).resolve())
@@ -55,7 +68,7 @@ def ddqa(ctx: click.Context, cache_dir, config_file_path):
                 )
                 ctx.exit(1)
 
-    app = Application(config_file, cache_dir)
+    app = Application(config_file, cache_dir, color)
 
     if not ctx.invoked_subcommand:
         click.echo(ctx.get_help())

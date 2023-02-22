@@ -27,6 +27,7 @@ dependencies = [
   "click",
   "httpx",
   "pillow",
+  "platformdirs",
   "pydantic<2",
   "pyperclip",
   "rich",
