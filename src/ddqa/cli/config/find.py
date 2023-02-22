@@ -22,6 +22,6 @@ def find(app: Application, copy):
 
         pyperclip.copy(config_path)
     elif ' ' in config_path:
-        app.console.print(f'"{config_path}"')
+        app.print(f'"{config_path}"')
     else:
-        app.console.print(config_path)
+        app.print(config_path)

@@ -32,7 +32,7 @@ class Application(App):
     def __init__(self, config_file: ConfigFile, cache_dir: str = '', color: bool | None = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.console = Console(
+        self.__console = Console(
             force_terminal=color,
             no_color=color is False,
             markup=False,
@@ -116,6 +116,9 @@ class Application(App):
 
     async def wait_for_background_tasks(self) -> None:
         await asyncio.gather(*self.__background_tasks)
+
+    def print(self, *args, **kwargs) -> None:  # noqa: A003
+        self.__console.print(*args, **kwargs)
 
     def needs_syncing(self) -> bool:
         return not self.github.load_global_config(self.repo.global_config_source) or not any(

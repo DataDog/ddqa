@@ -22,4 +22,4 @@ def show(app: Application, all_keys):
         from rich.syntax import Syntax
 
         text = app.config_file.read() if all_keys else app.config_file.read_scrubbed()
-        app.console.print(Syntax(text.rstrip(), 'toml', background_color='default'))
+        app.print(Syntax(text.rstrip(), 'toml', background_color='default'))
