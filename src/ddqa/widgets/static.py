@@ -28,14 +28,14 @@ class Placeholder(Static):
         ascii_chars = '@S#%?*+;:, '
         buckets = 256 // (len(ascii_chars) - 1)
 
-        with BytesIO(read_binary('ddqa.data', 'logo.png')) as buffer, Image.open(buffer) as image:
-            old_width, old_height = image.size
+        with BytesIO(read_binary('ddqa.data', 'logo.png')) as buffer, Image.open(buffer) as raw_image:
+            old_width, old_height = raw_image.size
             new_width = int(shutil.get_terminal_size()[0] // self.__width_factor)
             new_height = int(old_height // (old_width / (new_width * self.__height_scale)))
 
             # Resize and convert to grayscale
             image = (
-                image
+                raw_image
                 # Account for transparency in our PNG logo palette image
                 .convert('RGBA')
                 # Convert to grayscale

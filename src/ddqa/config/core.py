@@ -49,8 +49,8 @@ class Config:
 
         data = dict(self.data)
         repos = dict(data.get('repos', {}))
-        for repo_name, repo_data in repos.items():
-            repo_data = dict(repo_data)
+        for repo_name, original_repo_data in repos.items():
+            repo_data = dict(original_repo_data)
             repo_config_file = (
                 Path(repo_data['path']) / '.ddqa' / 'config.toml'
                 if 'path' in repo_data and isinstance(repo_data['path'], str) and Path(repo_data['path']).is_dir()
