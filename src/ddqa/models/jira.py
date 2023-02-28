@@ -3,7 +3,26 @@
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
 
-from pydantic import BaseModel, HttpUrl, validator
+from datetime import datetime
+
+from pydantic import BaseModel, Field, HttpUrl, validator
+
+
+class Assignee(BaseModel):
+    id: str = Field(alias='accountId')  # noqa: A003
+    name: str = Field(alias='displayName')
+    time_zone: str = Field(alias='timeZone')
+    avatar_urls: dict[str, HttpUrl] = Field(alias='avatarUrls')
+
+
+class JiraIssue(BaseModel):
+    key: str
+    project: str
+    assignee: Assignee
+    description: str
+    labels: list[str]
+    summary: str
+    updated: datetime
 
 
 class JiraConfig(BaseModel):

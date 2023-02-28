@@ -4,10 +4,11 @@
 from contextlib import suppress
 
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Container
 from textual.screen import Screen
 from textual.widget import Widget
-from textual.widgets import Button, Footer, Header, Input, Label, TextLog
+from textual.widgets import Button, Header, Input, Label, TextLog
 
 from ddqa.utils.errors import error_tree
 from ddqa.widgets.input import LabeledInput
@@ -203,7 +204,11 @@ class ConfigurationInput(Widget):
 
 
 class ConfigureScreen(Screen):
-    BINDINGS = [('escape', 'app.exit', 'Exit app')]
+    BINDINGS = [
+        Binding('ctrl+c', 'quit', 'Quit', show=False, priority=True),
+        Binding('tab', 'focus_next', 'Focus Next', show=False),
+        Binding('shift+tab', 'focus_previous', 'Focus Previous', show=False),
+    ]
     DEFAULT_CSS = """
     #screen-configure {
         layout: grid;
@@ -228,7 +233,6 @@ class ConfigureScreen(Screen):
             Container(Placeholder(width_factor=2), id='screen-configure-placeholder'),
             id='screen-configure',
         )
-        yield Footer()
 
     def on_input_changed(self, _event: Input.Changed) -> None:
         text_log = self.query_one(TextLog)

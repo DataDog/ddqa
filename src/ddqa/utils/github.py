@@ -157,7 +157,6 @@ class GitHubRepository:
         response = await self.__api_get(
             client, self.PR_REVIEWS_API.format(org=self.org, repo=self.repo_name, number=candidate_data['id'])
         )
-        response.raise_for_status()
         pr_review_data = response.json()
 
         # Deduplicate
@@ -215,4 +214,5 @@ class GitHubRepository:
                 await client.wait(float(response.headers['X-RateLimit-Reset']) - time.time() + 1)
                 continue
 
+            client.check_status(response, **kwargs)
             return response

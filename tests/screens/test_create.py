@@ -663,15 +663,6 @@ class TestCreation:
             side_effect=[
                 Response(
                     200,
-                    request=Request('GET', ''),
-                    content=json.dumps(
-                        {
-                            'accountId': 'qwerty1234567890',
-                        },
-                    ),
-                ),
-                Response(
-                    200,
                     request=Request('POST', ''),
                     content=json.dumps(
                         {
@@ -760,7 +751,6 @@ class TestCreation:
             assert str(sidebar.button.label) == 'Exit'
 
             assert response_mock.call_args_list == [
-                mocker.call('GET', 'https://foobarbaz.atlassian.net/rest/api/2/myself', auth=('foo@bar.baz', 'bar')),
                 mocker.call(
                     'POST',
                     'https://foobarbaz.atlassian.net/rest/api/2/issue',
@@ -773,7 +763,7 @@ class TestCreation:
                                 Pull request: [#2|https://github.com/org/repo/pull/2]
                                 Author: [github-foo1|https://github.com/github-foo1]
                                 Labels: {{foo-label}}
-        
+
                                 foo2
                                 bar2
                                 """
@@ -781,7 +771,6 @@ class TestCreation:
                             'issuetype': {'name': 'Foo-Task'},
                             'labels': ['ddqa-todo'],
                             'project': {'key': 'FOO'},
-                            'reporter': {'id': 'qwerty1234567890'},
                             'summary': 'title2',
                         },
                     },
@@ -803,7 +792,6 @@ class TestCreation:
                             'issuetype': {'name': 'Bar-Task'},
                             'labels': ['ddqa-todo'],
                             'project': {'key': 'BAR'},
-                            'reporter': {'id': 'qwerty1234567890'},
                             'summary': 'subject3',
                         },
                     },
@@ -820,7 +808,7 @@ class TestCreation:
                                 Pull request: [#1|https://github.com/org/repo/pull/1]
                                 Author: [github-bar1|https://github.com/github-bar1]
                                 Labels: {{foo-label}}, {{bar-label}}
-        
+
                                 foo1
                                 bar1
                                 """
@@ -828,7 +816,6 @@ class TestCreation:
                             'issuetype': {'name': 'Foo-Task'},
                             'labels': ['ddqa-todo'],
                             'project': {'key': 'FOO'},
-                            'reporter': {'id': 'qwerty1234567890'},
                             'summary': 'title1',
                         },
                     },
@@ -845,7 +832,7 @@ class TestCreation:
                                 Pull request: [#1|https://github.com/org/repo/pull/1]
                                 Author: [github-bar1|https://github.com/github-bar1]
                                 Labels: {{foo-label}}, {{bar-label}}
-        
+
                                 foo1
                                 bar1
                                 """
@@ -853,7 +840,6 @@ class TestCreation:
                             'issuetype': {'name': 'Bar-Task'},
                             'labels': ['ddqa-todo'],
                             'project': {'key': 'BAR'},
-                            'reporter': {'id': 'qwerty1234567890'},
                             'summary': 'title1',
                         },
                     },

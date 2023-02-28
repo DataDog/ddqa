@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
 
+from collections.abc import Iterable
 from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
@@ -17,11 +18,16 @@ if TYPE_CHECKING:
 
 
 class JiraClient:
+    PAGINATION_RESULT_SIZE = 100
+
     # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-myself/#api-rest-api-2-myself-get
     SELF_INSPECTION_API = '/rest/api/2/myself'
 
     # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-post
     ISSUE_CREATION_API = '/rest/api/2/issue'
+
+    # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-search/#api-rest-api-2-search-post
+    ISSUE_SEARCH_API = '/rest/api/2/search'
 
     def __init__(self, config: JiraConfig, auth: JiraAuth, repo_config: RepoConfig, cache_dir: Path):
         self.__config = config
@@ -85,8 +91,7 @@ class JiraClient:
         created_issues: dict[str, str] = {}
         common_fields: dict[str, Any] = {
             'description': self.__construct_body(candidate),
-            'labels': [self.__format_label(self.repo_config.jira_statuses[0])],
-            'reporter': {'id': await self.get_current_user_id(client)},
+            'labels': [self.format_label(self.repo_config.jira_statuses[0])],
             'summary': candidate.title,
         }
 
@@ -105,9 +110,40 @@ class JiraClient:
             )
             response.raise_for_status()
 
-            created_issues[team] = f'{self.config.jira_server}/browse/{response.json()["key"]}'
+            created_issues[team] = f'{self.construct_issue_url(response.json()["key"])}'
 
         return created_issues
+
+    async def search_issues(self, client: ResponsiveNetworkClient):
+        from ddqa.models.jira import JiraIssue
+
+        offset = 0
+        query = (
+            f'project in {self.__format_jql_list(team.jira_project for team in self.repo_config.teams.values())}'
+            f' and '
+            f'labels in {self.__format_jql_list(map(self.format_label, self.repo_config.jira_statuses))}'
+        )
+
+        while True:
+            response = await self.__api_post(
+                client,
+                f'{self.config.jira_server}{self.ISSUE_SEARCH_API}',
+                json={
+                    'jql': query,
+                    'fields': ['assignee', 'description', 'labels', 'project', 'summary', 'updated'],
+                    'maxResults': self.PAGINATION_RESULT_SIZE,
+                    'startAt': offset,
+                },
+            )
+
+            data = response.json()
+            for issue in data['issues']:
+                offset += 1
+
+                yield JiraIssue(key=issue['key'], project=issue['fields'].pop('project')['key'], **issue['fields'])
+
+            if offset >= data['total']:
+                break
 
     async def __api_get(self, client: ResponsiveNetworkClient, *args, **kwargs):
         return await self.__api_request('GET', client, *args, **kwargs)
@@ -126,10 +162,14 @@ class JiraClient:
                 await client.wait(float(response.headers['Retry-After']) + 1)
                 continue
 
+            client.check_status(response, **kwargs)
             return response
 
+    def construct_issue_url(self, issue_key: str) -> str:
+        return f'{self.config.jira_server}/browse/{issue_key}'
+
     @staticmethod
-    def __format_label(status: str) -> str:
+    def format_label(status: str) -> str:
         return f'ddqa-{status.strip()}'.lower().replace(' ', '-')
 
     @staticmethod
@@ -167,3 +207,8 @@ class JiraClient:
         )
 
         return f'{metadata_section}\n\n{body}'
+
+    @staticmethod
+    def __format_jql_list(items: Iterable[str]) -> str:
+        normalized_items = [f'"{item}"' for item in items]
+        return f'({", ".join(normalized_items)})'

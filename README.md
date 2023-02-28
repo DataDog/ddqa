@@ -85,7 +85,13 @@ You'll need to create a [personal access token (classic)](https://docs.github.co
 
 ### Jira auth
 
-You'll need to create an [API token](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/).
+You'll need to create an [API token](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/) with the appropriate scopes.
+
+The following APIs are used:
+
+- [`/rest/api/2/issue`](https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-post)
+- [`/rest/api/2/myself`](https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-myself/#api-rest-api-2-myself-get)
+- [`/rest/api/2/search`](https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-search/#api-rest-api-2-search-post)
 
 ## License
 

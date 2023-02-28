@@ -37,3 +37,12 @@ class ResponsiveNetworkClient(httpx.AsyncClient):
             await asyncio.sleep(0.1)
 
         self.status.update(original_status)
+
+    def check_status(self, response: httpx.Response, **kwargs) -> None:
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            kwargs.pop('auth', None)
+            message = f'{e}\n\nData: {kwargs}\nResponse: {response.text.rstrip()}'
+            self.status.parent.styles.height = '3fr'
+            raise httpx.HTTPStatusError(message, request=response.request, response=response) from None

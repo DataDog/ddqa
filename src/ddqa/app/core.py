@@ -89,9 +89,6 @@ class Application(App):
 
             return Path(user_cache_dir('ddqa', appauthor=False))
 
-    def action_exit(self) -> None:
-        self.exit()
-
     async def on_mount(self) -> None:
         for name, screen in self.__queued_screens:
             self.install_screen(screen, name)
