@@ -116,11 +116,13 @@ async def test_create_issues(app, git_repository, helpers, mocker):
         'foo': {
             'jira_project': 'FOO',
             'jira_issue_type': 'Foo-Task',
+            'jira_component': 'Foo-Component',
             'github_team': 'foo-team',
         },
         'bar': {
             'jira_project': 'BAR',
             'jira_issue_type': 'Bar-Task',
+            'jira_component': 'Bar-Component',
             'github_team': 'bar-team',
         },
     }
@@ -175,6 +177,7 @@ async def test_create_issues(app, git_repository, helpers, mocker):
             json={
                 'fields': {
                     'assignee': {'id': 'jira-foo'},
+                    'components': [{'name': 'Foo-Component'}],
                     'description': helpers.dedent(
                         """
                         Pull request: [#123|https://github.com/org/repo/pull/123]
@@ -208,6 +211,7 @@ async def test_create_issues(app, git_repository, helpers, mocker):
             json={
                 'fields': {
                     'assignee': {'id': 'jira-bar'},
+                    'components': [{'name': 'Bar-Component'}],
                     'description': helpers.dedent(
                         """
                         Pull request: [#123|https://github.com/org/repo/pull/123]

@@ -97,13 +97,15 @@ class JiraClient:
 
         for team, member in assignments.items():
             team_config = self.repo_config.teams[team]
-            fields = {
+            fields: dict[str, Any] = {
                 'issuetype': {'name': team_config.jira_issue_type},
                 'project': {'key': team_config.jira_project},
                 **common_fields,
             }
             if member in self.config.members:
                 fields['assignee'] = {'id': self.config.members[member]}
+            if team_config.jira_component:
+                fields['components'] = [{'name': team_config.jira_component}]
 
             response = await self.__api_post(
                 client, f'{self.config.jira_server}{self.ISSUE_CREATION_API}', json={'fields': fields}
