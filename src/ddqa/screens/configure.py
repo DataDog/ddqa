@@ -184,9 +184,12 @@ class ConfigurationInput(Widget):
     async def on_button_pressed(self, _event: Button.Pressed) -> None:
         self.app.config_file.save()
 
-        del self.app.repo
-        del self.app.repo_path
-        del self.app.git
+        with suppress(AttributeError):
+            del self.app.repo
+        with suppress(AttributeError):
+            del self.app.repo_path
+        with suppress(AttributeError):
+            del self.app.git
 
         if self.app.needs_syncing():
             from ddqa.screens.sync import SyncScreen
