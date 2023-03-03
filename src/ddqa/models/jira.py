@@ -18,11 +18,15 @@ class Assignee(BaseModel):
 class JiraIssue(BaseModel):
     key: str
     project: str
-    assignee: Assignee
+    assignee: Assignee | None
     description: str
     labels: list[str]
     summary: str
     updated: datetime
+
+    @validator('description', pre=True)
+    def coerce_description(cls, v):  # noqa: N805
+        return v or ''
 
 
 class JiraConfig(BaseModel):

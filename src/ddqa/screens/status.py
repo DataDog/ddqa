@@ -151,7 +151,9 @@ class Status(LabeledBox):
         return self.__table
 
     def add_issue(self, issue: JiraIssue) -> None:
-        self.table.add_row(issue.key, issue.assignee.name, get_timedelta(issue.updated))
+        self.table.add_row(
+            issue.key, issue.assignee.name if issue.assignee is not None else '', get_timedelta(issue.updated)
+        )
 
     def sort_issues(self) -> None:
         self.table.sort('update-time', reverse=True)
@@ -291,7 +293,8 @@ class StatusScreen(Screen):
                 label = (set(issue.labels) & set(self.statuses)).pop()
                 self.cached_issues[issue.key] = issue
                 self.team_filter.add(project_to_team[issue.project], label, issue)
-                self.member_filter.add(issue.assignee.name, label, issue)
+                if issue.assignee is not None:
+                    self.member_filter.add(issue.assignee.name, label, issue)
 
                 self.statuses[label].add_issue(issue)
 
