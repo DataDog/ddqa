@@ -11,7 +11,9 @@ HOUR = MINUTE * 60
 DAY = HOUR * 24
 WEEK = DAY * 7
 MONTH = WEEK * 4
+YEAR = MONTH * 12
 TIME_UNITS: tuple[tuple[str, int], ...] = (
+    ('year', YEAR),
     ('month', MONTH),
     ('week', WEEK),
     ('day', DAY),
@@ -24,6 +26,8 @@ ELAPSED_PRECISION = Decimal('0.00')
 
 def format_elapsed_time(seconds: float) -> str:
     elapsed_time = Decimal(str(abs(seconds)))
+    if elapsed_time < 1:
+        return f'{elapsed_time.quantize(ELAPSED_PRECISION)}s'
 
     units: list[tuple[str, Decimal]] = []
     for unit, factor in TIME_UNITS:
