@@ -234,7 +234,12 @@ class CandidateSidebar(LabeledBox):
         return self.__button
 
     def update_assignment_status(self) -> None:
-        assigned = self.listing.assigned
+        assigned = 0
+        for candidate in self.listing.candidates.values():
+            if candidate.assigned:
+                assigned += 1
+
+        self.label.update(f' {assigned} / {len(self.listing.candidates)} ')
         self.status.update('Ready for creation' if assigned else 'No candidates assigned')
         self.button.disabled = not assigned
 
@@ -293,7 +298,7 @@ class CandidateRendering(LabeledBox):
         self.__body = Container(Placeholder(width_factor=2.5), id='candidate-body')
         self.__body_renderings: dict[str, Markdown] = {}
         self.__candidate_assignments = Vertical(id='candidate-assignments')
-        self.__assignment_results: dict[str, DataTable] = {}
+        self.__assignment_results: dict[str, Horizontal] = {}
 
         super().__init__(
             '',
@@ -354,10 +359,10 @@ class CandidateRendering(LabeledBox):
             for widget in self.query(LabeledSwitch).results():
                 widget.switch.value = candidate.assignments[str(widget.label.render())]
 
-    async def add_assignment_result(self, candidate_id: str, table: DataTable, *, update: bool = False) -> None:
-        self.__assignment_results[candidate_id] = table
+    async def add_assignment_result(self, candidate_id: str, table_box: Horizontal, *, update: bool = False) -> None:
+        self.__assignment_results[candidate_id] = table_box
         if update:
-            await switch_to_widget(table, self.candidate_assignments)
+            await switch_to_widget(table_box, self.candidate_assignments)
 
 
 class CreateScreen(Screen):

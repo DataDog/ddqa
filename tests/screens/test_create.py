@@ -212,7 +212,7 @@ async def test_population(app, git_repository, helpers, mock_pull_requests):
 
         assert table.cursor_coordinate == Coordinate(0, 0)
 
-        assert str(sidebar.label.render()) == f' {num_candidates} / {num_candidates} '
+        assert str(sidebar.label.render()) == f' 0 / {num_candidates} '
         assert str(sidebar.status.render()) == 'No candidates assigned'
         assert sidebar.button.disabled
 
@@ -373,7 +373,7 @@ class TestAssignment:
 
             assert table.cursor_coordinate == Coordinate(0, 0)
 
-            assert str(sidebar.label.render()) == f' {num_candidates} / {num_candidates} '
+            assert str(sidebar.label.render()) == f' 2 / {num_candidates} '
             assert str(sidebar.status.render()) == 'Ready for creation'
             assert not sidebar.button.disabled
 
@@ -450,7 +450,7 @@ class TestAssignment:
 
             assert table.cursor_coordinate == Coordinate(0, 0)
 
-            assert str(sidebar.label.render()) == f' {num_candidates} / {num_candidates} '
+            assert str(sidebar.label.render()) == f' 2 / {num_candidates} '
             assert str(sidebar.status.render()) == 'Ready for creation'
             assert not sidebar.button.disabled
 
@@ -470,6 +470,7 @@ class TestAssignment:
                 False,
                 True,
             ]
+            assert str(sidebar.label.render()) == f' 1 / {num_candidates} '
             assert str(sidebar.status.render()) == 'Ready for creation'
             assert not sidebar.button.disabled
 
@@ -484,6 +485,7 @@ class TestAssignment:
                 False,
                 False,
             ]
+            assert str(sidebar.label.render()) == f' 0 / {num_candidates} '
             assert str(sidebar.status.render()) == 'No candidates assigned'
             assert sidebar.button.disabled
 
@@ -497,6 +499,7 @@ class TestAssignment:
                 True,
                 False,
             ]
+            assert str(sidebar.label.render()) == f' 1 / {num_candidates} '
             assert str(sidebar.status.render()) == 'Ready for creation'
             assert not sidebar.button.disabled
 
@@ -568,7 +571,7 @@ class TestAssignment:
 
             assert table.cursor_coordinate == Coordinate(0, 0)
 
-            assert str(sidebar.label.render()) == f' {num_candidates} / {num_candidates} '
+            assert str(sidebar.label.render()) == f' 0 / {num_candidates} '
             assert str(sidebar.status.render()) == 'No candidates assigned'
             assert sidebar.button.disabled
 
