@@ -154,6 +154,7 @@ class JiraClient:
         return await self.__api_request('POST', client, *args, **kwargs)
 
     async def __api_request(self, method: str, client: ResponsiveNetworkClient, *args, **kwargs):
+        retry_wait = 2
         while True:
             response = await client.request(method, *args, auth=(self.auth.email, self.auth.token), **kwargs)
 
@@ -164,7 +165,13 @@ class JiraClient:
                 await client.wait(float(response.headers['Retry-After']) + 1)
                 continue
 
-            client.check_status(response, **kwargs)
+            try:
+                client.check_status(response, **kwargs)
+            except Exception as e:
+                await client.wait(retry_wait, context=str(e))
+                retry_wait *= retry_wait
+                continue
+
             return response
 
     def construct_issue_url(self, issue_key: str) -> str:
