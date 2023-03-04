@@ -188,12 +188,12 @@ class Issues(LabeledBox):
 class FiltersSidebar(LabeledBox):
     DEFAULT_CSS = """
     #sidebar-status {
-        height: 1fr;
+        height: auto;
         border-bottom: dashed #632CA6;
     }
 
     #sidebar-filters {
-        height: 9fr;
+        height: 1fr;
     }
 
     .issue-filter {

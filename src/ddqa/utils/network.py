@@ -44,5 +44,4 @@ class ResponsiveNetworkClient(httpx.AsyncClient):
         except httpx.HTTPStatusError as e:
             kwargs.pop('auth', None)
             message = f'{e}\n\nData: {kwargs}\nResponse: {response.text.rstrip()}'
-            self.status.parent.styles.height = '3fr'
             raise httpx.HTTPStatusError(message, request=response.request, response=response) from None

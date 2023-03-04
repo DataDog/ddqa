@@ -192,21 +192,20 @@ class CandidateListing(DataTable):
 class CandidateSidebar(LabeledBox):
     DEFAULT_CSS = """
     #sidebar-status {
-        height: 1fr;
+        height: auto;
         border-bottom: dashed #632CA6;
     }
 
     #sidebar-listing {
-        height: 9fr;
+        height: 1fr;
     }
 
     #sidebar-button {
         width: 100%;
-        offset-y: 1;
     }
 
     #sidebar-button-container {
-        height: 1fr;
+        height: auto;
     }
     """
 
