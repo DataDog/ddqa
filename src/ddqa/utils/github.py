@@ -205,6 +205,7 @@ class GitHubRepository:
         (directory / number).touch()
 
     async def __api_get(self, client: ResponsiveNetworkClient, *args, **kwargs):
+        retry_wait = 2
         while True:
             response = await client.get(*args, auth=(self.auth.user, self.auth.token), **kwargs)
 
@@ -214,5 +215,11 @@ class GitHubRepository:
                 await client.wait(float(response.headers['X-RateLimit-Reset']) - time.time() + 1)
                 continue
 
-            client.check_status(response, **kwargs)
+            try:
+                client.check_status(response, **kwargs)
+            except Exception as e:
+                await client.wait(retry_wait, context=str(e))
+                retry_wait *= retry_wait
+                continue
+
             return response
