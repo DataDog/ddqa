@@ -10,22 +10,24 @@ from decimal import Decimal
 from functools import cache, cached_property
 from typing import TYPE_CHECKING
 
+from textual import events
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
 from textual.coordinate import Coordinate
 from textual.screen import Screen
-from textual.widgets import DataTable, Header, Input, Label
+from textual.widgets import Button, DataTable, Header, Input, Label, Switch
 from textual_autocomplete import AutoComplete, Dropdown, DropdownItem
 
 from ddqa.utils.network import ResponsiveNetworkClient
 from ddqa.utils.time import format_elapsed_time
+from ddqa.widgets.input import LabeledSwitch
 from ddqa.widgets.layout import LabeledBox
 
 if TYPE_CHECKING:
     from ddqa.models.jira import JiraIssue
 
-COMPLETION_PRECISION = Decimal('0.0')
+COMPLETION_PRECISION = Decimal('0.00')
 
 
 class IssueFilter:
@@ -40,6 +42,15 @@ class IssueFilter:
     def add(self, key: str, label: str, issue: JiraIssue):
         self.issues[key][label].append(issue)
 
+    def update(self, issue: JiraIssue, old_label: str, new_label: str):
+        for key, labeled_issues in self.issues.items():
+            issues = labeled_issues[old_label]
+            for i, possible_issue in enumerate(issues):
+                if possible_issue.key == issue.key:
+                    issues.pop(i)
+                    self.issues[key][new_label].append(issue)
+                    return
+
     def progress(self, key: str) -> tuple[int, int, Decimal]:
         done = 0
         total = 0
@@ -49,8 +60,8 @@ class IssueFilter:
                 done += len(issues)
 
         percent = Decimal(done) / total
-        if not done or done == total:
-            percent.quantize(COMPLETION_PRECISION)
+        if done and done != total:
+            percent = percent.quantize(COMPLETION_PRECISION)
 
         return done, total, percent
 
@@ -116,6 +127,50 @@ def get_timedelta(dt: datetime):
     return FormattedTimeDelta(dt - datetime.now(tz=dt.tzinfo))
 
 
+class StatusChanger(LabeledBox):
+    DEFAULT_CSS = """
+    #status-choices {
+        height: 1fr;
+    }
+
+    #status-submission {
+        border: none;
+        width: 100%;
+    }
+    """
+
+    def __init__(self, statuses: list[str]) -> None:
+        self.__switches = {status: LabeledSwitch(label=status) for status in statuses}
+        self.__button = Button('Move', variant='primary', id='status-submission')
+
+        super().__init__(' Status ', Vertical(*self.__switches.values(), id='status-choices'), self.__button)
+
+    @property
+    def switches(self) -> dict[str, LabeledSwitch]:
+        return self.__switches
+
+    @property
+    def button(self) -> Button:
+        return self.__button
+
+
+class StatusTable(DataTable):
+    def __init__(self):
+        super().__init__()
+
+        self.cursor_type = 'row'
+        self.show_cursor = False
+        self.add_column('Issue')
+        self.add_column('Assignee')
+        self.add_column('Last update', key='update-time')
+
+    def on_click(self, event: events.Click) -> None:
+        super().on_click(event)
+
+        for data_table in self.app.query(StatusTable).results():
+            data_table.show_cursor = data_table is self
+
+
 class Status(LabeledBox):
     DEFAULT_CSS = """
     Status {
@@ -126,7 +181,7 @@ class Status(LabeledBox):
         width: auto;
     }
 
-    Status DataTable {
+    Status StatusTable {
         width: auto;
         margin-top: 1;
     }
@@ -134,11 +189,7 @@ class Status(LabeledBox):
 
     def __init__(self, name: str):
         self.__name = name
-        self.__table = DataTable()
-        self.__table.cursor_type = 'row'
-        self.__table.add_column('Issue')
-        self.__table.add_column('Assignee')
-        self.__table.add_column('Last update', key='update-time')
+        self.__table = StatusTable()
 
         super().__init__(f' {self.__name} ', self.__table)
 
@@ -147,12 +198,15 @@ class Status(LabeledBox):
         return self.__name
 
     @property
-    def table(self) -> DataTable:
+    def table(self) -> StatusTable:
         return self.__table
 
     def add_issue(self, issue: JiraIssue) -> None:
         self.table.add_row(
-            issue.key, issue.assignee.name if issue.assignee is not None else '', get_timedelta(issue.updated)
+            issue.key,
+            issue.assignee.name if issue.assignee is not None else '',
+            get_timedelta(issue.updated),
+            key=issue.key,
         )
 
     def sort_issues(self) -> None:
@@ -185,14 +239,14 @@ class Issues(LabeledBox):
         return self.__info
 
 
-class FiltersSidebar(LabeledBox):
+class OptionsSidebar(LabeledBox):
     DEFAULT_CSS = """
     #sidebar-status {
         height: auto;
         border-bottom: dashed #632CA6;
     }
 
-    #sidebar-filters {
+    #sidebar-options {
         height: 1fr;
     }
 
@@ -203,12 +257,12 @@ class FiltersSidebar(LabeledBox):
 
     def __init__(self):
         self.__status = Label()
-        self.__filters = Vertical()
+        self.__options = Vertical()
 
         super().__init__(
             '',
             Container(self.__status, id='sidebar-status'),
-            Container(self.__filters, id='sidebar-filters'),
+            Container(self.__options, id='sidebar-options'),
         )
 
     @property
@@ -216,8 +270,8 @@ class FiltersSidebar(LabeledBox):
         return self.__status
 
     @property
-    def filters(self) -> Vertical:
-        return self.__filters
+    def options(self) -> Vertical:
+        return self.__options
 
 
 class StatusScreen(Screen):
@@ -243,6 +297,15 @@ class StatusScreen(Screen):
     }
     """
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.__current_user_id = ''
+
+    @property
+    def current_user_id(self) -> str:
+        return self.__current_user_id
+
     @cached_property
     def cached_issues(self) -> dict[str, JiraIssue]:
         return {}
@@ -264,17 +327,21 @@ class StatusScreen(Screen):
         return {self.app.jira.format_label(status): Status(status) for status in self.app.repo.jira_statuses}
 
     @cached_property
-    def sidebar(self) -> FiltersSidebar:
-        return self.query_one(FiltersSidebar)
+    def sidebar(self) -> OptionsSidebar:
+        return self.query_one(OptionsSidebar)
 
     @cached_property
     def issues(self) -> Issues:
         return self.query_one(Issues)
 
+    @cached_property
+    def status_changer(self) -> StatusChanger:
+        return StatusChanger(self.app.repo.jira_statuses)
+
     def compose(self) -> ComposeResult:
         yield Header()
         yield Container(
-            Container(FiltersSidebar(), id='screen-status-sidebar'),
+            Container(OptionsSidebar(), id='screen-status-sidebar'),
             Container(Issues(self.statuses.values()), id='screen-status-rendering'),
             id='screen-status',
         )
@@ -290,7 +357,7 @@ class StatusScreen(Screen):
         self.sidebar.status.update('Loading...')
         async with ResponsiveNetworkClient(self.sidebar.status) as client:
             async for issue in self.app.jira.search_issues(client):
-                label = (set(issue.labels) & set(self.statuses)).pop()
+                label = self.__get_status_label(issue.labels)
                 self.cached_issues[issue.key] = issue
                 self.team_filter.add(project_to_team[issue.project], label, issue)
                 if issue.assignee is not None:
@@ -302,6 +369,8 @@ class StatusScreen(Screen):
                 if label == self.final_label:
                     done += 1
 
+            self.__current_user_id = await self.app.jira.get_current_user_id(client)
+
         for status in self.statuses.values():
             status.sort_issues()
 
@@ -310,18 +379,20 @@ class StatusScreen(Screen):
             return
 
         percent = Decimal(done) / total
-        if not done or done == total:
-            percent.quantize(COMPLETION_PRECISION)
+        if done and done != total:
+            percent = percent.quantize(COMPLETION_PRECISION)
 
         self.sidebar.status.update(f'{done} / {total} ({percent}%)')
-        self.__refocus()
 
-        await self.sidebar.filters.mount(
+        await self.sidebar.options.mount(
             Horizontal(LabeledBox(' Team ', FilterAutoComplete(self.team_filter)), classes='issue-filter')
         )
-        await self.sidebar.filters.mount(
+        await self.sidebar.options.mount(
             Horizontal(LabeledBox(' Member ', FilterAutoComplete(self.member_filter)), classes='issue-filter')
         )
+        await self.sidebar.options.mount(Horizontal(self.status_changer))
+
+        self.__refocus()
 
     async def on_auto_complete_selected(self, event: AutoComplete.Selected) -> None:
         choice = str(event.item.main)
@@ -366,20 +437,107 @@ class StatusScreen(Screen):
                 status.sort_issues()
 
             percent = Decimal(done) / total
-            if not done or done == total:
-                percent.quantize(COMPLETION_PRECISION)
+            if done and done != total:
+                percent = percent.quantize(COMPLETION_PRECISION)
 
             self.sidebar.status.update(f'{done} / {total} ({percent}%)')
             self.__refocus()
 
     async def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        if not event.sender.show_cursor:
+            return
+
         issue_key = event.sender.get_cell_at(Coordinate(event.cursor_row, 0))
         issue = self.cached_issues[issue_key]
-        self.issues.info.update(f'[link={self.app.jira.construct_issue_url(issue.key)}]{issue.summary}[/link]')
+        self.issues.label.update(f' [link={self.app.jira.construct_issue_url(issue.key)}]{issue.key}[/link] ')
+        self.issues.info.update(issue.summary)
+
+        current_status = str(self.statuses[self.__get_status_label(issue.labels)].name)
+        self.status_changer.switches[current_status].switch.value = True
+
+    async def on_switch_changed(self, event: Switch.Changed) -> None:
+        if not event.value:
+            if not any(labeled_switch.switch.value for labeled_switch in self.status_changer.switches.values()):
+                self.status_changer.button.disabled = True
+
+            return
+
+        for labeled_switch in self.status_changer.switches.values():
+            if labeled_switch.switch is not event.sender:
+                labeled_switch.switch.value = False
+
+        current_issue = self.cached_issues[str(self.issues.label.render()).strip()]
+        if current_issue.assignee is not None:
+            self.status_changer.button.disabled = current_issue.assignee.id != self.current_user_id
+
+    async def on_button_pressed(self, _event: Button.Pressed) -> None:
+        current_issue = self.cached_issues[str(self.issues.label.render()).strip()]
+        for labeled_switch in self.status_changer.switches.values():
+            if labeled_switch.switch.value:
+                current_status = str(labeled_switch.label.render())
+                break
+        else:  # no cov
+            message = 'No status selected'
+            raise ValueError(message)
+
+        old_label = self.__get_status_label(current_issue.labels)
+        async with ResponsiveNetworkClient(self.sidebar.status) as client:
+            await self.app.jira.update_issue_status(client, current_issue, current_status)
+
+        new_label = self.__get_status_label(current_issue.labels)
+        for issue_filter in [self.team_filter, self.member_filter]:
+            issue_filter.update(current_issue, old_label, new_label)
+
+        old_status = self.statuses[old_label]
+        preserved_issue_keys = []
+        for row_key in old_status.table.rows:
+            issue_key = str(row_key.value)
+            if issue_key != current_issue.key:
+                preserved_issue_keys.append(issue_key)
+
+        old_status.clear_issues()
+        for issue_key in preserved_issue_keys:
+            old_status.add_issue(self.cached_issues[issue_key])
+        old_status.sort_issues()
+
+        new_status = self.statuses[new_label]
+        new_status.add_issue(current_issue)
+        new_status.sort_issues()
+
+        new_status.table.cursor_coordinate = Coordinate(0, 0)
+        await new_status.table.post_message(
+            events.Click(
+                sender=self.app,
+                x=0,
+                y=0,
+                delta_x=0,
+                delta_y=0,
+                button=0,
+                shift=False,
+                meta=False,
+                ctrl=False,
+            )
+        )
+
+        self.status_changer.switches[str(new_status.name)].switch.value = True
+
+    def __get_status_label(self, labels: list[str]) -> str:
+        for label in labels:
+            if label in self.statuses:
+                return label
+
+        message = f'Unknown status: {labels}'
+        raise ValueError(message)
 
     def __refocus(self) -> None:
-        # Focus on the first available row
+        # Focus on the first available row of the first table with entries
+        focused = False
         for status in self.statuses.values():
-            if status.table.is_valid_row_index(0):
+            if focused:
+                status.table.show_cursor = False
+            elif status.table.is_valid_row_index(0):
                 status.table.cursor_coordinate = Coordinate(0, 0)
-                break
+                status.table.show_cursor = True
+                focused = True
+            else:
+                status.table.show_cursor = False

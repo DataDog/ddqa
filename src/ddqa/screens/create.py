@@ -201,6 +201,7 @@ class CandidateSidebar(LabeledBox):
     }
 
     #sidebar-button {
+        border: none;
         width: 100%;
     }
 
