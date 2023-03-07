@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from ddqa.models.config.auth import JiraAuth
     from ddqa.models.config.repo import RepoConfig
     from ddqa.models.github import TestCandidate
-    from ddqa.models.jira import JiraConfig
+    from ddqa.models.jira import JiraConfig, JiraIssue
     from ddqa.utils.network import ResponsiveNetworkClient
 
 
@@ -24,10 +24,10 @@ class JiraClient:
     SELF_INSPECTION_API = '/rest/api/2/myself'
 
     # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-post
-    ISSUE_CREATION_API = '/rest/api/2/issue'
+    ISSUE_API = '/rest/api/2/issue'
 
     # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-search/#api-rest-api-2-search-post
-    ISSUE_SEARCH_API = '/rest/api/2/search'
+    SEARCH_API = '/rest/api/2/search'
 
     def __init__(self, config: JiraConfig, auth: JiraAuth, repo_config: RepoConfig, cache_dir: Path):
         self.__config = config
@@ -76,8 +76,6 @@ class JiraClient:
             return self.__cached_current_user_id
 
         response = await self.__api_get(client, f'{self.config.jira_server}{self.SELF_INSPECTION_API}')
-        response.raise_for_status()
-
         current_user_id = response.json()['accountId']
         user_ids[key] = current_user_id
         self.cached_user_id_file.write_atomic(json.dumps(user_ids), 'w', encoding='utf-8')
@@ -108,10 +106,8 @@ class JiraClient:
                 fields['components'] = [{'name': team_config.jira_component}]
 
             response = await self.__api_post(
-                client, f'{self.config.jira_server}{self.ISSUE_CREATION_API}', json={'fields': fields}
+                client, f'{self.config.jira_server}{self.ISSUE_API}', json={'fields': fields}
             )
-            response.raise_for_status()
-
             created_issues[team] = f'{self.construct_issue_url(response.json()["key"])}'
 
         return created_issues
@@ -129,7 +125,7 @@ class JiraClient:
         while True:
             response = await self.__api_post(
                 client,
-                f'{self.config.jira_server}{self.ISSUE_SEARCH_API}',
+                f'{self.config.jira_server}{self.SEARCH_API}',
                 json={
                     'jql': query,
                     'fields': ['assignee', 'description', 'labels', 'project', 'summary', 'updated'],
@@ -147,8 +143,24 @@ class JiraClient:
             if offset >= data['total']:
                 break
 
+    async def update_issue_status(self, client: ResponsiveNetworkClient, issue: JiraIssue, status: str) -> None:
+        from datetime import datetime
+
+        labels = [self.format_label(status)]
+        labels.extend(label for label in issue.labels if not label.startswith('ddqa-'))
+
+        await self.__api_put(
+            client, f'{self.config.jira_server}{self.ISSUE_API}/{issue.key}', json={'fields': {'labels': labels}}
+        )
+
+        issue.labels[:] = labels
+        issue.updated = datetime.now(tz=issue.updated.tzinfo)
+
     async def __api_get(self, client: ResponsiveNetworkClient, *args, **kwargs):
         return await self.__api_request('GET', client, *args, **kwargs)
+
+    async def __api_put(self, client: ResponsiveNetworkClient, *args, **kwargs):
+        return await self.__api_request('PUT', client, *args, **kwargs)
 
     async def __api_post(self, client: ResponsiveNetworkClient, *args, **kwargs):
         return await self.__api_request('POST', client, *args, **kwargs)

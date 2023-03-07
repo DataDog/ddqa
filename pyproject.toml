@@ -31,7 +31,7 @@ dependencies = [
   "pydantic<2",
   "pyperclip",
   "rich",
-  "textual>=0.11.1",
+  "textual>=0.11.1,<0.14.0",
   "textual-autocomplete>=2.0.1b0",
   "tomli-w",
 ]

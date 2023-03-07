@@ -160,6 +160,7 @@ class JiraTokenInput(ValidatedInput):
 class ConfigurationInput(Widget):
     DEFAULT_CSS = """
     ConfigurationInput > Button {
+        border: none;
         margin: 1;
         width: 100%;
     }
