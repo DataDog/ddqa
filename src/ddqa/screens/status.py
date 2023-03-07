@@ -51,24 +51,20 @@ class IssueFilter:
                     self.issues[key][new_label].append(issue)
                     return
 
-    def progress(self, key: str) -> tuple[int, int, Decimal]:
-        done = 0
-        total = 0
-        for label, issues in self.issues[key].items():
-            total += len(issues)
-            if label == self.__final_label:
-                done += len(issues)
-
-        percent = Decimal(done) / total
-        if done and done != total:
-            percent = percent.quantize(COMPLETION_PRECISION)
-
-        return done, total, percent
-
     def dropdown_items(self) -> list[DropdownItem]:
         items: list[DropdownItem] = []
         for key in self.issues:
-            _, _, percent = self.progress(key)
+            done = 0
+            total = 0
+            for label, issues in self.issues[key].items():
+                total += len(issues)
+                if label == self.__final_label:
+                    done += len(issues)
+
+            percent = (Decimal(done) / total) * 100
+            if 0 < percent < 100:  # noqa: PLR2004
+                percent = percent.quantize(COMPLETION_PRECISION)
+
             items.append(DropdownItem(key, f'{percent}%'))
 
         return items
@@ -351,38 +347,28 @@ class StatusScreen(Screen):
 
     async def __on_mount(self) -> None:
         project_to_team = {config.jira_project: team for team, config in self.app.repo.teams.items()}
-        done = 0
-        total = 0
+        issues_found = False
 
         self.sidebar.status.update('Loading...')
         async with ResponsiveNetworkClient(self.sidebar.status) as client:
             async for issue in self.app.jira.search_issues(client):
+                issues_found = True
+
                 label = self.__get_status_label(issue.labels)
                 self.cached_issues[issue.key] = issue
                 self.team_filter.add(project_to_team[issue.project], label, issue)
-                if issue.assignee is not None:
-                    self.member_filter.add(issue.assignee.name, label, issue)
+                self.member_filter.add(':unassigned' if issue.assignee is None else issue.assignee.name, label, issue)
 
                 self.statuses[label].add_issue(issue)
-
-                total += 1
-                if label == self.final_label:
-                    done += 1
 
             self.__current_user_id = await self.app.jira.get_current_user_id(client)
 
         for status in self.statuses.values():
             status.sort_issues()
 
-        if not total:
+        if not issues_found:
             self.sidebar.status.update('No issues found')
             return
-
-        percent = Decimal(done) / total
-        if done and done != total:
-            percent = percent.quantize(COMPLETION_PRECISION)
-
-        self.sidebar.status.update(f'{done} / {total} ({percent}%)')
 
         await self.sidebar.options.mount(
             Horizontal(LabeledBox(' Team ', FilterAutoComplete(self.team_filter)), classes='issue-filter')
@@ -392,6 +378,7 @@ class StatusScreen(Screen):
         )
         await self.sidebar.options.mount(Horizontal(self.status_changer))
 
+        self.__update_completion_status()
         self.__refocus()
 
     async def on_auto_complete_selected(self, event: AutoComplete.Selected) -> None:
@@ -411,37 +398,28 @@ class StatusScreen(Screen):
 
             status.sort_issues()
 
-        done, total, percent = event.sender.issue_filter.progress(choice)
-        self.sidebar.status.update(f'{done} / {total} ({percent}%)')
+        self.__update_completion_status()
         self.__refocus()
 
     async def on_input_submitted(self, event: Input.Submitted) -> None:
-        if not event.value:
-            done = 0
-            total = 0
-            for status in self.statuses.values():
-                status.clear_issues()
+        if event.value:
+            return
 
-            for labeled_issues in self.team_filter.issues.values():
-                for label, issues in labeled_issues.items():
-                    status = self.statuses[label]
+        for status in self.statuses.values():
+            status.clear_issues()
 
-                    for issue in issues:
-                        status.add_issue(issue)
+        for labeled_issues in self.team_filter.issues.values():
+            for label, issues in labeled_issues.items():
+                status = self.statuses[label]
 
-                    total += len(issues)
-                    if label == self.final_label:
-                        done += len(issues)
+                for issue in issues:
+                    status.add_issue(issue)
 
-            for status in self.statuses.values():
-                status.sort_issues()
+        for status in self.statuses.values():
+            status.sort_issues()
 
-            percent = Decimal(done) / total
-            if done and done != total:
-                percent = percent.quantize(COMPLETION_PRECISION)
-
-            self.sidebar.status.update(f'{done} / {total} ({percent}%)')
-            self.__refocus()
+        self.__update_completion_status()
+        self.__refocus()
 
     async def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         if not event.sender.show_cursor:
@@ -518,8 +496,8 @@ class StatusScreen(Screen):
                 ctrl=False,
             )
         )
-
         self.status_changer.switches[str(new_status.name)].switch.value = True
+        self.__update_completion_status()
 
     def __get_status_label(self, labels: list[str]) -> str:
         for label in labels:
@@ -541,3 +519,17 @@ class StatusScreen(Screen):
                 focused = True
             else:
                 status.table.show_cursor = False
+
+    def __update_completion_status(self) -> None:
+        counts = []
+        for status in self.statuses.values():
+            counts.append(len(status.table.rows))
+
+        total = sum(counts)
+        done = counts[-1]
+
+        percent = (Decimal(done) / total) * 100
+        if 0 < percent < 100:  # noqa: PLR2004
+            percent = percent.quantize(COMPLETION_PRECISION)
+
+        self.sidebar.status.update(f'{done} / {total} ({percent}%)')
