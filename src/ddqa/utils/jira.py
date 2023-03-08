@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
 
+import json
 from collections.abc import Iterable
 from functools import cached_property
 from typing import TYPE_CHECKING, Any
@@ -26,6 +27,9 @@ class JiraClient:
     # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-post
     ISSUE_API = '/rest/api/2/issue'
 
+    # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-issueidorkey-transitions-get
+    TRANSITIONS_API = '/rest/api/2/issue/{issue_key}/transitions'
+
     # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-search/#api-rest-api-2-search-post
     SEARCH_API = '/rest/api/2/search'
 
@@ -35,6 +39,9 @@ class JiraClient:
         self.__repo_config = repo_config
         self.__cache_dir = cache_dir
         self.__cached_current_user_id = ''
+
+        # project key -> issue type -> status name -> transition ID
+        self.__transitions: dict[str, dict[str, dict[str, str]]] = {}
 
     @property
     def config(self) -> JiraConfig:
@@ -56,6 +63,12 @@ class JiraClient:
     def cached_user_id_file(self) -> Path:
         path = self.cache_dir / 'user_ids.json'
         path.parent.ensure_dir_exists()
+        return path
+
+    @cached_property
+    def cache_dir_projects(self) -> Path:
+        path = self.cache_dir / 'projects'
+        path.ensure_dir_exists()
         return path
 
     async def get_current_user_id(self, client: ResponsiveNetworkClient) -> str:
@@ -128,7 +141,16 @@ class JiraClient:
                 f'{self.config.jira_server}{self.SEARCH_API}',
                 json={
                     'jql': query,
-                    'fields': ['assignee', 'description', 'labels', 'project', 'summary', 'updated'],
+                    'fields': [
+                        'assignee',
+                        'description',
+                        'issuetype',
+                        'labels',
+                        'project',
+                        'status',
+                        'summary',
+                        'updated',
+                    ],
                     'maxResults': self.PAGINATION_RESULT_SIZE,
                     'startAt': offset,
                 },
@@ -138,7 +160,15 @@ class JiraClient:
             for issue in data['issues']:
                 offset += 1
 
-                yield JiraIssue(key=issue['key'], project=issue['fields'].pop('project')['key'], **issue['fields'])
+                jira_issue = JiraIssue(
+                    key=issue['key'],
+                    project=issue['fields'].pop('project')['key'],
+                    type=issue['fields'].pop('issuetype')['name'],
+                    **issue['fields'],
+                )
+                await self.__get_transitions(client, jira_issue)
+
+                yield jira_issue
 
             if offset >= data['total']:
                 break
@@ -155,6 +185,28 @@ class JiraClient:
 
         issue.labels[:] = labels
         issue.updated = datetime.now(tz=issue.updated.tzinfo)
+
+    async def __get_transitions(self, client: ResponsiveNetworkClient, issue: JiraIssue) -> None:
+        issue_types = self.__transitions.setdefault(issue.project, {})
+        if issue.type in issue_types:
+            return
+
+        transitions_file = self.cache_dir_projects / issue.project / 'transitions.json'
+        if transitions_file.is_file():
+            issue_types.update(json.loads(transitions_file.read_text()))
+            if issue.type in issue_types:
+                return
+
+        response = await self.__api_get(
+            client, f'{self.config.jira_server}{self.TRANSITIONS_API.format(issue_key=issue.key)}'
+        )
+
+        transitions = issue_types.setdefault(issue.type, {})
+        for data in response.json()['transitions']:
+            transitions[data['to']['name']] = data['id']
+
+        transitions_file.parent.ensure_dir_exists()
+        transitions_file.write_atomic(json.dumps(issue_types), 'w', encoding='utf-8')
 
     async def __api_get(self, client: ResponsiveNetworkClient, *args, **kwargs):
         return await self.__api_request('GET', client, *args, **kwargs)
