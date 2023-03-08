@@ -38,6 +38,12 @@ class Path(_PathBase):
     def ensure_dir_exists(self) -> None:
         self.mkdir(parents=True, exist_ok=True)
 
+    def read_text(self, encoding: str | None = None, errors: str | None = None) -> str:
+        if encoding is None:
+            encoding = 'utf-8'
+
+        return super().read_text(encoding=encoding, errors=errors)
+
     def expand(self) -> Path:
         return Path(os.path.expanduser(os.path.expandvars(self)))
 

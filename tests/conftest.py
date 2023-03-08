@@ -112,6 +112,7 @@ def isolation() -> Generator[Path, None, None]:
                         'foo': {
                             'jira_project': 'FOO',
                             'jira_issue_type': 'Foo-Task',
+                            'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
                             'github_team': 'foo-team',
                         },
                     },

@@ -69,5 +69,9 @@ class Config:
 
             repos[repo_name] = repo_data
 
+        selected_repo = data.get('repo', '')
+        if selected_repo and selected_repo in repos:
+            repos = {selected_repo: repos[selected_repo]}
+
         data['repos'] = repos
         return ReposConfig(**data).repos

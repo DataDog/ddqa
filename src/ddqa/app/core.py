@@ -79,6 +79,35 @@ class Application(App):
         return JiraClient(jira_config, self.config.auth.jira, self.repo, self.cache_dir)
 
     @cached_property
+    def qa_statuses(self) -> dict[str, dict[str, str]]:
+        qa_statuses: dict[str, dict[str, str]] = {}
+
+        for team, config in self.repo.teams.items():
+            statuses = {}
+            if isinstance(config.jira_statuses, dict):
+                missing_statuses = set(self.repo.jira_statuses).difference(config.jira_statuses)
+                if missing_statuses:
+                    ordered_statuses = [status for status in self.repo.jira_statuses if status in missing_statuses]
+                    message = f'repos -> {team} -> jira_statuses\n  missing statuses: {", ".join(ordered_statuses)}'
+                    raise ValueError(message)
+
+                statuses.update(config.jira_statuses)
+            else:
+                if (num_statuses := len(config.jira_statuses)) != (expected_statuses := len(self.repo.jira_statuses)):
+                    message = (
+                        f'repos -> {team} -> jira_statuses\n'
+                        f'  expected {expected_statuses} statuses, found {num_statuses}'
+                    )
+                    raise ValueError(message)
+
+                for repo_status, team_status in zip(self.repo.jira_statuses, config.jira_statuses, strict=False):
+                    statuses[repo_status] = team_status
+
+            qa_statuses[team] = statuses
+
+        return qa_statuses
+
+    @cached_property
     def cache_dir(self) -> Path:
         if self.__cache_dir:
             return Path(self.__cache_dir)
@@ -150,6 +179,11 @@ class Application(App):
                             errors.append(f'repos -> {repo_name} -> path\n  field required')
                         elif not os.path.isdir(repo_path):
                             errors.append(f'repos -> {repo_name} -> path\n  directory does not exist: {repo_path}')
+
+                        try:
+                            _ = self.qa_statuses
+                        except Exception as e:
+                            errors.append(str(e))
 
         try:
             _ = self.config.auth

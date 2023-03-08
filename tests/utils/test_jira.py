@@ -116,12 +116,14 @@ async def test_create_issues(app, git_repository, helpers, mocker):
         'foo': {
             'jira_project': 'FOO',
             'jira_issue_type': 'Foo-Task',
+            'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
             'jira_component': 'Foo-Component',
             'github_team': 'foo-team',
         },
         'bar': {
             'jira_project': 'BAR',
             'jira_issue_type': 'Bar-Task',
+            'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
             'jira_component': 'Bar-Component',
             'github_team': 'bar-team',
         },
@@ -257,11 +259,13 @@ async def test_search_issues(app, git_repository, mocker):
         'foo': {
             'jira_project': 'FOO',
             'jira_issue_type': 'Foo-Task',
+            'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
             'github_team': 'foo-team',
         },
         'bar': {
             'jira_project': 'BAR',
             'jira_issue_type': 'Bar-Task',
+            'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
             'github_team': 'bar-team',
         },
     }
@@ -284,6 +288,7 @@ async def test_search_issues(app, git_repository, mocker):
                                         'displayName': 'U.N. Owen',
                                         'timeZone': 'America/New_York',
                                     },
+                                    'components': [{'name': 'Baz-Component'}],
                                     'description': 'Test description',
                                     'issuetype': {'name': 'Foo-Task'},
                                     'labels': ['ddqa-todo'],
@@ -302,6 +307,7 @@ async def test_search_issues(app, git_repository, mocker):
                                         'displayName': 'U.N. Owen',
                                         'timeZone': 'America/New_York',
                                     },
+                                    'components': [{'name': 'Baz-Component'}],
                                     'description': 'Test description',
                                     'issuetype': {'name': 'Bar-Task'},
                                     'labels': ['ddqa-todo'],
@@ -359,6 +365,7 @@ async def test_search_issues(app, git_repository, mocker):
                                         'displayName': 'U.N. Owen',
                                         'timeZone': 'America/New_York',
                                     },
+                                    'components': [{'name': 'Baz-Component'}],
                                     'description': 'Test description',
                                     'issuetype': {'name': 'Foo-Task'},
                                     'labels': ['ddqa-in-progress'],
@@ -377,6 +384,7 @@ async def test_search_issues(app, git_repository, mocker):
                                         'displayName': 'U.N. Owen',
                                         'timeZone': 'America/New_York',
                                     },
+                                    'components': [{'name': 'Baz-Component'}],
                                     'description': 'Test description',
                                     'issuetype': {'name': 'Bar-Task'},
                                     'labels': ['ddqa-in-progress'],
@@ -408,6 +416,7 @@ async def test_search_issues(app, git_repository, mocker):
                                         'displayName': 'U.N. Owen',
                                         'timeZone': 'America/New_York',
                                     },
+                                    'components': [{'name': 'Baz-Component'}],
                                     'description': 'Test description',
                                     'issuetype': {'name': 'Foo-Task'},
                                     'labels': ['ddqa-done'],
@@ -432,7 +441,7 @@ async def test_search_issues(app, git_repository, mocker):
     app.jira.PAGINATION_RESULT_SIZE = 2
 
     issues = []
-    async for issue in app.jira.search_issues(ResponsiveNetworkClient(Static())):
+    async for issue in app.jira.search_issues(ResponsiveNetworkClient(Static()), ('qa-1.2.3', 'label-9000')):
         issues.append(issue)
 
     assert response_mock.call_args_list == [
@@ -441,8 +450,18 @@ async def test_search_issues(app, git_repository, mocker):
             'https://foobarbaz.atlassian.net/rest/api/2/search',
             auth=('foo@bar.baz', 'bar'),
             json={
-                'jql': 'project in ("FOO", "BAR") and labels in ("ddqa-todo", "ddqa-in-progress", "ddqa-done")',
-                'fields': ['assignee', 'description', 'issuetype', 'labels', 'project', 'status', 'summary', 'updated'],
+                'jql': 'project in ("FOO", "BAR") and labels in ("qa-1.2.3", "label-9000")',
+                'fields': [
+                    'assignee',
+                    'components',
+                    'description',
+                    'issuetype',
+                    'labels',
+                    'project',
+                    'status',
+                    'summary',
+                    'updated',
+                ],
                 'maxResults': 2,
                 'startAt': 0,
             },
@@ -458,8 +477,18 @@ async def test_search_issues(app, git_repository, mocker):
             'https://foobarbaz.atlassian.net/rest/api/2/search',
             auth=('foo@bar.baz', 'bar'),
             json={
-                'jql': 'project in ("FOO", "BAR") and labels in ("ddqa-todo", "ddqa-in-progress", "ddqa-done")',
-                'fields': ['assignee', 'description', 'issuetype', 'labels', 'project', 'status', 'summary', 'updated'],
+                'jql': 'project in ("FOO", "BAR") and labels in ("qa-1.2.3", "label-9000")',
+                'fields': [
+                    'assignee',
+                    'components',
+                    'description',
+                    'issuetype',
+                    'labels',
+                    'project',
+                    'status',
+                    'summary',
+                    'updated',
+                ],
                 'maxResults': 2,
                 'startAt': 2,
             },
@@ -469,8 +498,18 @@ async def test_search_issues(app, git_repository, mocker):
             'https://foobarbaz.atlassian.net/rest/api/2/search',
             auth=('foo@bar.baz', 'bar'),
             json={
-                'jql': 'project in ("FOO", "BAR") and labels in ("ddqa-todo", "ddqa-in-progress", "ddqa-done")',
-                'fields': ['assignee', 'description', 'issuetype', 'labels', 'project', 'status', 'summary', 'updated'],
+                'jql': 'project in ("FOO", "BAR") and labels in ("qa-1.2.3", "label-9000")',
+                'fields': [
+                    'assignee',
+                    'components',
+                    'description',
+                    'issuetype',
+                    'labels',
+                    'project',
+                    'status',
+                    'summary',
+                    'updated',
+                ],
                 'maxResults': 2,
                 'startAt': 4,
             },
@@ -493,6 +532,7 @@ async def test_search_issues(app, git_repository, mocker):
         'labels': ['ddqa-todo'],
         'summary': 'Test summary',
         'updated': datetime(2023, 2, 13, 12, 8, 50, 58000, tzinfo=timezone(timedelta(days=-1, seconds=68400))),
+        'components': ['Baz-Component'],
     }
     assert issues[1].dict() == {
         'key': 'BAR-1',
@@ -509,6 +549,7 @@ async def test_search_issues(app, git_repository, mocker):
         'labels': ['ddqa-todo'],
         'summary': 'Test summary',
         'updated': datetime(2023, 2, 13, 12, 8, 50, 58000, tzinfo=timezone(timedelta(days=-1, seconds=68400))),
+        'components': ['Baz-Component'],
     }
     assert issues[2].dict() == {
         'key': 'FOO-2',
@@ -525,6 +566,7 @@ async def test_search_issues(app, git_repository, mocker):
         'labels': ['ddqa-in-progress'],
         'summary': 'Test summary',
         'updated': datetime(2023, 2, 13, 12, 8, 50, 58000, tzinfo=timezone(timedelta(days=-1, seconds=68400))),
+        'components': ['Baz-Component'],
     }
     assert issues[3].dict() == {
         'key': 'BAR-2',
@@ -541,6 +583,7 @@ async def test_search_issues(app, git_repository, mocker):
         'labels': ['ddqa-in-progress'],
         'summary': 'Test summary',
         'updated': datetime(2023, 2, 13, 12, 8, 50, 58000, tzinfo=timezone(timedelta(days=-1, seconds=68400))),
+        'components': ['Baz-Component'],
     }
     assert issues[4].dict() == {
         'key': 'FOO-3',
@@ -557,6 +600,7 @@ async def test_search_issues(app, git_repository, mocker):
         'labels': ['ddqa-done'],
         'summary': 'Test summary',
         'updated': datetime(2023, 2, 13, 12, 8, 50, 58000, tzinfo=timezone(timedelta(days=-1, seconds=68400))),
+        'components': ['Baz-Component'],
     }
 
 
@@ -571,11 +615,13 @@ async def test_rate_limit_handling(app, git_repository, mocker):
         'foo': {
             'jira_project': 'FOO',
             'jira_issue_type': 'Foo-Task',
+            'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
             'github_team': 'foo-team',
         },
         'bar': {
             'jira_project': 'BAR',
             'jira_issue_type': 'Bar-Task',
+            'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
             'github_team': 'bar-team',
         },
     }

@@ -9,6 +9,7 @@ from pydantic import BaseModel
 class TeamConfig(BaseModel):
     jira_project: str
     jira_issue_type: str
+    jira_statuses: list[str] | dict[str, str]
     jira_component: str = ''
     github_team: str
     github_labels: list[str] = []

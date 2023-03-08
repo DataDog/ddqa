@@ -145,7 +145,6 @@ class TestRepoNameInput:
 
             assert app.config.data['repo'] == ''
             assert not input_box.value
-            assert save_button.disabled is True
             assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
                 """
                 Configuration errors
@@ -153,14 +152,15 @@ class TestRepoNameInput:
                       field required
                 """
             )
+            assert save_button.disabled is True
 
             app.set_focus(input_box)
             await pilot.press(*'agent')
 
             assert app.config.data['repo'] == 'agent'
             assert input_box.value == 'agent'
-            assert save_button.disabled is False
             assert not text_log.lines
+            assert save_button.disabled is False
 
 
 class TestRepoPathInput:

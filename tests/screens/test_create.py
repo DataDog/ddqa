@@ -318,12 +318,14 @@ class TestAssignment:
             'foo': {
                 'jira_project': 'FOO',
                 'jira_issue_type': 'Foo-Task',
+                'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
                 'github_team': 'foo-team',
                 'github_labels': ['foo-label'],
             },
             'bar': {
                 'jira_project': 'BAR',
                 'jira_issue_type': 'Bar-Task',
+                'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
                 'github_team': 'bar-team',
                 'github_labels': ['bar-label'],
             },
@@ -395,12 +397,14 @@ class TestAssignment:
             'foo': {
                 'jira_project': 'FOO',
                 'jira_issue_type': 'Foo-Task',
+                'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
                 'github_team': 'foo-team',
                 'github_labels': ['foo-label'],
             },
             'bar': {
                 'jira_project': 'BAR',
                 'jira_issue_type': 'Bar-Task',
+                'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
                 'github_team': 'bar-team',
                 'github_labels': ['bar-label'],
             },
@@ -516,12 +520,14 @@ class TestAssignment:
             'foo': {
                 'jira_project': 'FOO',
                 'jira_issue_type': 'Foo-Task',
+                'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
                 'github_team': 'foo-team',
                 'github_labels': ['foo-label'],
             },
             'bar': {
                 'jira_project': 'BAR',
                 'jira_issue_type': 'Bar-Task',
+                'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
                 'github_team': 'bar-team',
                 'github_labels': ['bar-label'],
             },
@@ -601,12 +607,14 @@ class TestCreation:
             'Foo Baz': {
                 'jira_project': 'FOO',
                 'jira_issue_type': 'Foo-Task',
+                'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
                 'github_team': 'foo-team',
                 'github_labels': ['foo-label'],
             },
             'Bar Baz': {
                 'jira_project': 'BAR',
                 'jira_issue_type': 'Bar-Task',
+                'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
                 'github_team': 'bar-team',
                 'github_labels': ['bar-label'],
             },
