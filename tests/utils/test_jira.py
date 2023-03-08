@@ -285,8 +285,10 @@ async def test_search_issues(app, git_repository, mocker):
                                         'timeZone': 'America/New_York',
                                     },
                                     'description': 'Test description',
+                                    'issuetype': {'name': 'Foo-Task'},
                                     'labels': ['ddqa-todo'],
                                     'project': {'key': 'FOO'},
+                                    'status': {'id': '42', 'name': 'In Progress'},
                                     'summary': 'Test summary',
                                     'updated': '2023-02-13T12:08:50.058-0500',
                                 },
@@ -301,8 +303,10 @@ async def test_search_issues(app, git_repository, mocker):
                                         'timeZone': 'America/New_York',
                                     },
                                     'description': 'Test description',
+                                    'issuetype': {'name': 'Bar-Task'},
                                     'labels': ['ddqa-todo'],
                                     'project': {'key': 'BAR'},
+                                    'status': {'id': '42', 'name': 'In Progress'},
                                     'summary': 'Test summary',
                                     'updated': '2023-02-13T12:08:50.058-0500',
                                 },
@@ -312,6 +316,32 @@ async def test_search_issues(app, git_repository, mocker):
                         'maxResults': 2,
                         'startAt': 0,
                         'total': 5,
+                    }
+                ),
+            ),
+            Response(
+                200,
+                request=Request('GET', ''),
+                content=json.dumps(
+                    {
+                        'transitions': [
+                            {'id': '123', 'to': {'name': 'Foo-Status1'}},
+                            {'id': '456', 'to': {'name': 'Foo-Status2'}},
+                            {'id': '789', 'to': {'name': 'Foo-Status3'}},
+                        ],
+                    }
+                ),
+            ),
+            Response(
+                200,
+                request=Request('GET', ''),
+                content=json.dumps(
+                    {
+                        'transitions': [
+                            {'id': '123', 'to': {'name': 'Bar-Status1'}},
+                            {'id': '456', 'to': {'name': 'Bar-Status2'}},
+                            {'id': '789', 'to': {'name': 'Bar-Status3'}},
+                        ],
                     }
                 ),
             ),
@@ -330,8 +360,10 @@ async def test_search_issues(app, git_repository, mocker):
                                         'timeZone': 'America/New_York',
                                     },
                                     'description': 'Test description',
+                                    'issuetype': {'name': 'Foo-Task'},
                                     'labels': ['ddqa-in-progress'],
                                     'project': {'key': 'FOO'},
+                                    'status': {'id': '42', 'name': 'In Progress'},
                                     'summary': 'Test summary',
                                     'updated': '2023-02-13T12:08:50.058-0500',
                                 },
@@ -346,8 +378,10 @@ async def test_search_issues(app, git_repository, mocker):
                                         'timeZone': 'America/New_York',
                                     },
                                     'description': 'Test description',
+                                    'issuetype': {'name': 'Bar-Task'},
                                     'labels': ['ddqa-in-progress'],
                                     'project': {'key': 'BAR'},
+                                    'status': {'id': '42', 'name': 'In Progress'},
                                     'summary': 'Test summary',
                                     'updated': '2023-02-13T12:08:50.058-0500',
                                 },
@@ -375,8 +409,10 @@ async def test_search_issues(app, git_repository, mocker):
                                         'timeZone': 'America/New_York',
                                     },
                                     'description': 'Test description',
+                                    'issuetype': {'name': 'Foo-Task'},
                                     'labels': ['ddqa-done'],
                                     'project': {'key': 'FOO'},
+                                    'status': {'id': '42', 'name': 'In Progress'},
                                     'summary': 'Test summary',
                                     'updated': '2023-02-13T12:08:50.058-0500',
                                 },
@@ -406,10 +442,16 @@ async def test_search_issues(app, git_repository, mocker):
             auth=('foo@bar.baz', 'bar'),
             json={
                 'jql': 'project in ("FOO", "BAR") and labels in ("ddqa-todo", "ddqa-in-progress", "ddqa-done")',
-                'fields': ['assignee', 'description', 'labels', 'project', 'summary', 'updated'],
+                'fields': ['assignee', 'description', 'issuetype', 'labels', 'project', 'status', 'summary', 'updated'],
                 'maxResults': 2,
                 'startAt': 0,
             },
+        ),
+        mocker.call(
+            'GET', 'https://foobarbaz.atlassian.net/rest/api/2/issue/FOO-1/transitions', auth=('foo@bar.baz', 'bar')
+        ),
+        mocker.call(
+            'GET', 'https://foobarbaz.atlassian.net/rest/api/2/issue/BAR-1/transitions', auth=('foo@bar.baz', 'bar')
         ),
         mocker.call(
             'POST',
@@ -417,7 +459,7 @@ async def test_search_issues(app, git_repository, mocker):
             auth=('foo@bar.baz', 'bar'),
             json={
                 'jql': 'project in ("FOO", "BAR") and labels in ("ddqa-todo", "ddqa-in-progress", "ddqa-done")',
-                'fields': ['assignee', 'description', 'labels', 'project', 'summary', 'updated'],
+                'fields': ['assignee', 'description', 'issuetype', 'labels', 'project', 'status', 'summary', 'updated'],
                 'maxResults': 2,
                 'startAt': 2,
             },
@@ -428,7 +470,7 @@ async def test_search_issues(app, git_repository, mocker):
             auth=('foo@bar.baz', 'bar'),
             json={
                 'jql': 'project in ("FOO", "BAR") and labels in ("ddqa-todo", "ddqa-in-progress", "ddqa-done")',
-                'fields': ['assignee', 'description', 'labels', 'project', 'summary', 'updated'],
+                'fields': ['assignee', 'description', 'issuetype', 'labels', 'project', 'status', 'summary', 'updated'],
                 'maxResults': 2,
                 'startAt': 4,
             },
@@ -439,6 +481,8 @@ async def test_search_issues(app, git_repository, mocker):
     assert issues[0].dict() == {
         'key': 'FOO-1',
         'project': 'FOO',
+        'type': 'Foo-Task',
+        'status': {'id': '42', 'name': 'In Progress'},
         'assignee': {
             'avatar_urls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
             'id': 'qwerty1234567890',
@@ -453,6 +497,8 @@ async def test_search_issues(app, git_repository, mocker):
     assert issues[1].dict() == {
         'key': 'BAR-1',
         'project': 'BAR',
+        'type': 'Bar-Task',
+        'status': {'id': '42', 'name': 'In Progress'},
         'assignee': {
             'avatar_urls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
             'id': 'qwerty1234567890',
@@ -467,6 +513,8 @@ async def test_search_issues(app, git_repository, mocker):
     assert issues[2].dict() == {
         'key': 'FOO-2',
         'project': 'FOO',
+        'type': 'Foo-Task',
+        'status': {'id': '42', 'name': 'In Progress'},
         'assignee': {
             'avatar_urls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
             'id': 'qwerty1234567890',
@@ -481,6 +529,8 @@ async def test_search_issues(app, git_repository, mocker):
     assert issues[3].dict() == {
         'key': 'BAR-2',
         'project': 'BAR',
+        'type': 'Bar-Task',
+        'status': {'id': '42', 'name': 'In Progress'},
         'assignee': {
             'avatar_urls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
             'id': 'qwerty1234567890',
@@ -495,6 +545,8 @@ async def test_search_issues(app, git_repository, mocker):
     assert issues[4].dict() == {
         'key': 'FOO-3',
         'project': 'FOO',
+        'type': 'Foo-Task',
+        'status': {'id': '42', 'name': 'In Progress'},
         'assignee': {
             'avatar_urls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
             'id': 'qwerty1234567890',

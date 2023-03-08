@@ -8,6 +8,11 @@ from datetime import datetime
 from pydantic import BaseModel, Field, HttpUrl, validator
 
 
+class Status(BaseModel):
+    id: str  # noqa: A003
+    name: str
+
+
 class Assignee(BaseModel):
     id: str = Field(alias='accountId')  # noqa: A003
     name: str = Field(alias='displayName')
@@ -18,6 +23,8 @@ class Assignee(BaseModel):
 class JiraIssue(BaseModel):
     key: str
     project: str
+    type: str  # noqa: A003
+    status: Status
     assignee: Assignee | None
     description: str
     labels: list[str]

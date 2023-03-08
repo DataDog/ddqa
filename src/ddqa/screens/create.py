@@ -146,8 +146,6 @@ class CandidateListing(DataTable):
                 else:
                     self.app.print(f'Creating issue for commit {candidate.data.id[:7]}')
 
-                self.sidebar.label.update(f' {index + 1} / {total} ')
-
                 assignments: dict[str, str] = {}
                 for team, assigned in candidate.assignments.items():
                     if not assigned:
@@ -166,6 +164,8 @@ class CandidateListing(DataTable):
                 except Exception as e:
                     self.sidebar.status.update(escape(str(e)))
                     return
+
+                self.sidebar.label.update(f' {index + 1} / {total} ')
 
                 result = DataTable(classes='assignment-result')
                 result.add_columns('Team', 'Assignee', 'Issue')
