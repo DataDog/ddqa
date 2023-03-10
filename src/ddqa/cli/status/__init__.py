@@ -12,10 +12,11 @@ if TYPE_CHECKING:
 
 
 @click.command(short_help='Display the QA dashboard')
+@click.argument('labels', required=True, nargs=-1)
 @click.pass_obj
-def status(app: Application):
+def status(app: Application, labels: tuple[str, ...]):
     """Display the QA dashboard."""
     from ddqa.screens.status import StatusScreen
 
-    app.select_screen('status', StatusScreen())
+    app.select_screen('status', StatusScreen(labels))
     app.run()

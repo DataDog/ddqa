@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable
+from collections.abc import AsyncIterator, Iterable
 from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
@@ -125,14 +125,14 @@ class JiraClient:
 
         return created_issues
 
-    async def search_issues(self, client: ResponsiveNetworkClient):
+    async def search_issues(self, client: ResponsiveNetworkClient, labels: tuple[str, ...]) -> AsyncIterator[JiraIssue]:
         from ddqa.models.jira import JiraIssue
 
         offset = 0
         query = (
             f'project in {self.__format_jql_list(team.jira_project for team in self.repo_config.teams.values())}'
             f' and '
-            f'labels in {self.__format_jql_list(map(self.format_label, self.repo_config.jira_statuses))}'
+            f'labels in {self.__format_jql_list(labels)}'
         )
 
         while True:
@@ -143,6 +143,7 @@ class JiraClient:
                     'jql': query,
                     'fields': [
                         'assignee',
+                        'components',
                         'description',
                         'issuetype',
                         'labels',
@@ -164,6 +165,7 @@ class JiraClient:
                     key=issue['key'],
                     project=issue['fields'].pop('project')['key'],
                     type=issue['fields'].pop('issuetype')['name'],
+                    components=[component['name'] for component in issue['fields'].pop('components')],
                     **issue['fields'],
                 )
                 await self.__get_transitions(client, jira_issue)
@@ -173,18 +175,20 @@ class JiraClient:
             if offset >= data['total']:
                 break
 
-    async def update_issue_status(self, client: ResponsiveNetworkClient, issue: JiraIssue, status: str) -> None:
+    async def update_issue_status(self, client: ResponsiveNetworkClient, issue: JiraIssue, status: str) -> JiraIssue:
         from datetime import datetime
 
-        labels = [self.format_label(status)]
-        labels.extend(label for label in issue.labels if not label.startswith('ddqa-'))
-
-        await self.__api_put(
-            client, f'{self.config.jira_server}{self.ISSUE_API}/{issue.key}', json={'fields': {'labels': labels}}
+        await self.__api_post(
+            client,
+            f'{self.config.jira_server}{self.TRANSITIONS_API.format(issue_key=issue.key)}',
+            json={'transition': {'id': self.__transitions[issue.project][issue.type][status]}},
         )
 
-        issue.labels[:] = labels
-        issue.updated = datetime.now(tz=issue.updated.tzinfo)
+        new_issue = issue.copy(deep=True)
+        new_issue.status.name = status
+        new_issue.updated = datetime.now(tz=issue.updated.tzinfo)
+
+        return new_issue
 
     async def __get_transitions(self, client: ResponsiveNetworkClient, issue: JiraIssue) -> None:
         issue_types = self.__transitions.setdefault(issue.project, {})
@@ -233,7 +237,7 @@ class JiraClient:
                 client.check_status(response, **kwargs)
             except Exception as e:
                 await client.wait(retry_wait, context=str(e))
-                retry_wait *= retry_wait
+                retry_wait *= 2
                 continue
 
             return response

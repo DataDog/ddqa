@@ -53,8 +53,8 @@ class RepoNameInput(ValidatedInput):
         repos = self.app.config.data.setdefault('repos', {})
         new_repo = value not in repos
 
-        config = repos.setdefault(value, {})
         if previous_repo in repos:
+            config = repos.setdefault(value, {})
             config['path'] = repos.get(previous_repo, {}).get('path', '')
 
             if previous_repo == self.__added:

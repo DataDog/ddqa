@@ -30,6 +30,7 @@ class JiraIssue(BaseModel):
     labels: list[str]
     summary: str
     updated: datetime
+    components: list[str]
 
     @validator('description', pre=True)
     def coerce_description(cls, v):  # noqa: N805

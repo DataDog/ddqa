@@ -99,8 +99,6 @@ class GitHubRepository:
         members_file = self.cache_dir_team_members / f'{team}.txt'
         if refresh or not members_file.is_file():
             response = await self.__api_get(client, self.TEAM_MEMBERS_API.format(org=self.org, team=team))
-            response.raise_for_status()
-
             members_file.write_text(
                 '\n'.join(
                     user['login']
@@ -125,7 +123,6 @@ class GitHubRepository:
             # https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests
             params={'q': f'sha:{commit.hash}+repo:{self.repo_id}'},
         )
-        response.raise_for_status()
         pr_data = response.json()
 
         if not pr_data['items']:
@@ -219,7 +216,7 @@ class GitHubRepository:
                 client.check_status(response, **kwargs)
             except Exception as e:
                 await client.wait(retry_wait, context=str(e))
-                retry_wait *= retry_wait
+                retry_wait *= 2
                 continue
 
             return response

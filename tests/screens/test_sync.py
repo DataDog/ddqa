@@ -127,11 +127,13 @@ async def test_save_members(app, git_repository, helpers, mocker):
         'foo': {
             'jira_project': 'FOO',
             'jira_issue_type': 'Foo-Task',
+            'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
             'github_team': 'foo-team',
         },
         'bar': {
             'jira_project': 'BAR',
             'jira_issue_type': 'Bar-Task',
+            'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
             'github_team': 'bar-team',
         },
     }
@@ -208,11 +210,13 @@ async def test_save_teams(app, git_repository, helpers, mocker):
         'foo': {
             'jira_project': 'FOO',
             'jira_issue_type': 'Foo-Task',
+            'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
             'github_team': 'foo-team',
         },
         'bar': {
             'jira_project': 'BAR',
             'jira_issue_type': 'Bar-Task',
+            'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
             'github_team': 'bar-team',
         },
     }
