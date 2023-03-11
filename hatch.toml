@@ -1,5 +1,5 @@
 [envs.default]
-python = "3.11"
+python = "3.10"
 dependencies = [
   "coverage[toml]>=6.5",
   "pytest",
@@ -22,7 +22,7 @@ cov = [
 ]
 
 [[envs.all.matrix]]
-python = ["3.11"]
+python = ["3.10"]
 
 [envs.lint]
 detached = true
@@ -53,16 +53,27 @@ all = [
 detached = true
 dependencies = [
   "pyoxidizer>=0.24.0",
+  "pip-tools>=6.12.3",
 ]
 
 [envs.build.env-vars]
-FLAVOR = "standalone_static"
-
-[envs.build.overrides]
-platform.macos.env-vars = [
-  { key = "FLAVOR", value = "standalone_dynamic" },
-]
+PIP_FIND_LINKS = "dist"
 
 [envs.build.scripts]
-debug = "pyoxidizer build exe --path app --var-env flavor FLAVOR {args}"
-release = "debug --release"
+_template = "pyoxidizer build --path app {args}"
+debug = [
+  "hatch build -t wheel",
+  "_template install",
+]
+release = [
+  "hatch build -t wheel",
+  "_template install --release",
+]
+msi = [
+  "hatch build -t wheel",
+  "_template msi_installer --release",
+]
+setup = [
+  "pip-compile -o requirements.txt pyproject.toml",
+  "python scripts/fix_requirements.py",
+]

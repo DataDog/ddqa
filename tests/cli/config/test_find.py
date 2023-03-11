@@ -9,7 +9,7 @@ from ddqa.config.constants import ConfigEnvVars
 
 
 def test_copy(ddqa, config_file, mocker):
-    mock = mocker.patch('pyperclip.copy')
+    mock = mocker.patch('ddqa.utils.clipboard.copy')
     result = ddqa('config', 'find', '-c')
 
     assert result.exit_code == 0, result.output

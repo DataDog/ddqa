@@ -4,6 +4,6 @@
 import sys
 
 if __name__ == '__main__':
-    from ddqa.cli import ddqa
+    from ddqa.cli import main
 
-    sys.exit(ddqa())
+    sys.exit(main())

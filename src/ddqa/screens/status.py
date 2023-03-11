@@ -31,7 +31,7 @@ COMPLETION_PRECISION = Decimal('0.00')
 
 
 class IssueFilter(ABC):
-    def __init__(self):
+    def __init__(self) -> None:
         self.__issues: dict[str, dict[str, JiraIssue]] = {}
 
     @property
