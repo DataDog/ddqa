@@ -45,12 +45,15 @@ class Candidate:
 
 
 class CandidateListing(DataTable):
-    def __init__(self, sidebar: CandidateSidebar, previous_ref: str, current_ref: str, *args, **kwargs):
+    def __init__(
+        self, sidebar: CandidateSidebar, previous_ref: str, current_ref: str, labels: tuple[str, ...], *args, **kwargs
+    ):
         super().__init__(*args, **kwargs)
 
         self.sidebar = sidebar
         self.previous_ref = previous_ref
         self.current_ref = current_ref
+        self.labels = labels
 
         self.candidates: dict[int, Candidate] = {}
 
@@ -160,7 +163,7 @@ class CandidateListing(DataTable):
                     assignments[team] = assignee
 
                 try:
-                    created_issues = await self.app.jira.create_issues(client, candidate.data, assignments)
+                    created_issues = await self.app.jira.create_issues(client, candidate.data, self.labels, assignments)
                 except Exception as e:
                     self.sidebar.status.update(escape(str(e)))
                     return
@@ -210,9 +213,9 @@ class CandidateSidebar(LabeledBox):
     }
     """
 
-    def __init__(self, previous_ref: str, current_ref: str):
+    def __init__(self, previous_ref: str, current_ref: str, labels: tuple[str, ...]):
         self.__status = Label()
-        self.__listing = CandidateListing(self, previous_ref, current_ref)
+        self.__listing = CandidateListing(self, previous_ref, current_ref, labels)
         self.__button = Button('Create', variant='primary', disabled=True, id='sidebar-button')
 
         super().__init__(
@@ -389,16 +392,29 @@ class CreateScreen(Screen):
     }
     """
 
-    def __init__(self, previous_ref: str, current_ref: str, *args, **kwargs):
+    def __init__(self, previous_ref: str, current_ref: str, labels: tuple[str, ...], *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.previous_ref = previous_ref
-        self.current_ref = current_ref
+        self.__previous_ref = previous_ref
+        self.__current_ref = current_ref
+        self.__labels = labels
+
+    @property
+    def previous_ref(self) -> str:
+        return self.__previous_ref
+
+    @property
+    def current_ref(self) -> str:
+        return self.__current_ref
+
+    @property
+    def labels(self) -> tuple[str, ...]:
+        return self.__labels
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield Container(
-            Container(CandidateSidebar(self.previous_ref, self.current_ref), id='screen-create-sidebar'),
+            Container(CandidateSidebar(self.previous_ref, self.current_ref, self.labels), id='screen-create-sidebar'),
             Container(CandidateRendering(), id='screen-create-rendering'),
             id='screen-create',
         )

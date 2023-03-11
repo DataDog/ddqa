@@ -97,12 +97,16 @@ class JiraClient:
         return self.__cached_current_user_id
 
     async def create_issues(
-        self, client: ResponsiveNetworkClient, candidate: TestCandidate, assignments: dict[str, str]
+        self,
+        client: ResponsiveNetworkClient,
+        candidate: TestCandidate,
+        labels: tuple[str, ...],
+        assignments: dict[str, str],
     ) -> dict[str, str]:
         created_issues: dict[str, str] = {}
         common_fields: dict[str, Any] = {
             'description': self.__construct_body(candidate),
-            'labels': [self.format_label(self.repo_config.jira_statuses[0])],
+            'labels': list(labels),
             'summary': candidate.title,
         }
 
@@ -224,16 +228,16 @@ class JiraClient:
     async def __api_request(self, method: str, client: ResponsiveNetworkClient, *args, **kwargs):
         retry_wait = 2
         while True:
-            response = await client.request(method, *args, auth=(self.auth.email, self.auth.token), **kwargs)
-
-            # https://developer.atlassian.com/cloud/jira/platform/rate-limiting/#rate-limit-responses
-            if 'Retry-After' in response.headers and (
-                response.status_code == 429 or 500 <= response.status_code < 600  # noqa: PLR2004
-            ):
-                await client.wait(float(response.headers['Retry-After']) + 1)
-                continue
-
             try:
+                response = await client.request(method, *args, auth=(self.auth.email, self.auth.token), **kwargs)
+
+                # https://developer.atlassian.com/cloud/jira/platform/rate-limiting/#rate-limit-responses
+                if 'Retry-After' in response.headers and (
+                    response.status_code == 429 or 500 <= response.status_code < 600  # noqa: PLR2004
+                ):
+                    await client.wait(float(response.headers['Retry-After']) + 1)
+                    continue
+
                 client.check_status(response, **kwargs)
             except Exception as e:
                 await client.wait(retry_wait, context=str(e))
