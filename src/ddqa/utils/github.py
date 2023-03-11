@@ -204,15 +204,15 @@ class GitHubRepository:
     async def __api_get(self, client: ResponsiveNetworkClient, *args, **kwargs):
         retry_wait = 2
         while True:
-            response = await client.get(*args, auth=(self.auth.user, self.auth.token), **kwargs)
-
-            # https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#rate-limiting
-            # https://docs.github.com/en/rest/guides/best-practices-for-integrators?apiVersion=2022-11-28#dealing-with-rate-limits
-            if response.status_code == 403 and response.headers['X-RateLimit-Remaining'] == '0':  # noqa: PLR2004
-                await client.wait(float(response.headers['X-RateLimit-Reset']) - time.time() + 1)
-                continue
-
             try:
+                response = await client.get(*args, auth=(self.auth.user, self.auth.token), **kwargs)
+
+                # https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#rate-limiting
+                # https://docs.github.com/en/rest/guides/best-practices-for-integrators?apiVersion=2022-11-28#dealing-with-rate-limits
+                if response.status_code == 403 and response.headers['X-RateLimit-Remaining'] == '0':  # noqa: PLR2004
+                    await client.wait(float(response.headers['X-RateLimit-Reset']) - time.time() + 1)
+                    continue
+
                 client.check_status(response, **kwargs)
             except Exception as e:
                 await client.wait(retry_wait, context=str(e))

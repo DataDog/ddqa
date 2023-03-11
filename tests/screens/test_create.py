@@ -49,7 +49,7 @@ def mock_remote_url():
 
 @pytest.fixture
 def app(app):
-    app.select_screen('create', CreateScreen('previous_ref', 'current_ref'))
+    app.select_screen('create', CreateScreen('previous_ref', 'current_ref', ('qa-1.2.3', 'label-9000')))
     return app
 
 
@@ -780,7 +780,7 @@ class TestCreation:
                                 """
                             ),
                             'issuetype': {'name': 'Foo-Task'},
-                            'labels': ['ddqa-todo'],
+                            'labels': ['qa-1.2.3', 'label-9000'],
                             'project': {'key': 'FOO'},
                             'summary': 'title2',
                         },
@@ -801,7 +801,7 @@ class TestCreation:
                                 """
                             ),
                             'issuetype': {'name': 'Bar-Task'},
-                            'labels': ['ddqa-todo'],
+                            'labels': ['qa-1.2.3', 'label-9000'],
                             'project': {'key': 'BAR'},
                             'summary': 'subject3',
                         },
@@ -825,7 +825,7 @@ class TestCreation:
                                 """
                             ),
                             'issuetype': {'name': 'Foo-Task'},
-                            'labels': ['ddqa-todo'],
+                            'labels': ['qa-1.2.3', 'label-9000'],
                             'project': {'key': 'FOO'},
                             'summary': 'title1',
                         },
@@ -849,7 +849,7 @@ class TestCreation:
                                 """
                             ),
                             'issuetype': {'name': 'Bar-Task'},
-                            'labels': ['ddqa-todo'],
+                            'labels': ['qa-1.2.3', 'label-9000'],
                             'project': {'key': 'BAR'},
                             'summary': 'title1',
                         },

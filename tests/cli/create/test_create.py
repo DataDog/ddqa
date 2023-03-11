@@ -35,7 +35,7 @@ def test_bad_config(ddqa, mocker):
     push_screen = mocker.patch('ddqa.app.core.Application.push_screen', return_value=AwaitableMock())
     mocker.patch.object(Application, 'run', mock_run)
 
-    result = ddqa('create', 'foo', 'bar')
+    result = ddqa('create', 'foo', 'bar', '-l', 'qa-1.2.3')
 
     assert result.exit_code == 0, result.output
     assert not result.output
@@ -65,7 +65,7 @@ def test_needs_syncing(ddqa, isolation, config_file, mocker):
     push_screen = mocker.patch('ddqa.app.core.Application.push_screen', return_value=AwaitableMock())
     mocker.patch.object(Application, 'run', mock_run)
 
-    result = ddqa('create', 'foo', 'bar')
+    result = ddqa('create', 'foo', 'bar', '-l', 'qa-1.2.3')
 
     assert result.exit_code == 0, result.output
     assert not result.output
@@ -93,7 +93,7 @@ def test_valid_setup(ddqa, isolation, config_file, mocker):
     mocker.patch('ddqa.app.core.Application.needs_syncing', return_value=False)
     mocker.patch.object(Application, 'run', mock_run)
 
-    result = ddqa('create', 'foo', 'bar')
+    result = ddqa('create', 'foo', 'bar', '-l', 'qa-1.2.3')
 
     assert result.exit_code == 0, result.output
     assert not result.output

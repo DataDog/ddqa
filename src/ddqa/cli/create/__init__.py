@@ -14,10 +14,18 @@ if TYPE_CHECKING:
 @click.command(short_help='Create QA items')
 @click.argument('previous_ref')
 @click.argument('current_ref')
+@click.option(
+    '-l',
+    '--label',
+    'labels',
+    required=True,
+    multiple=True,
+    help='Labels that will be attached to created issues',
+)
 @click.pass_obj
-def create(app: Application, previous_ref: str, current_ref: str):
+def create(app: Application, previous_ref: str, current_ref: str, labels: tuple[str, ...]):
     """Create QA items."""
     from ddqa.screens.create import CreateScreen
 
-    app.select_screen('create', CreateScreen(previous_ref, current_ref))
+    app.select_screen('create', CreateScreen(previous_ref, current_ref, labels))
     app.run()
