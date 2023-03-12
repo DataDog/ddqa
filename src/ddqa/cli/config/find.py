@@ -18,9 +18,9 @@ def find(app: Application, copy):
     """Show the location of the config file."""
     config_path = str(app.config_file.path)
     if copy:
-        import pyperclip
+        from ddqa.utils import clipboard
 
-        pyperclip.copy(config_path)
+        clipboard.copy(config_path)
     elif ' ' in config_path:
         app.print(f'"{config_path}"')
     else:

@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 import os
+import sys
 
 import click
 
@@ -92,10 +93,14 @@ ddqa.add_command(sync)
 
 def main():  # no cov
     try:
-        return ddqa(windows_expand_args=False)
+        return ddqa(prog_name='ddqa', windows_expand_args=False)
     except Exception:
         from rich.console import Console
 
+        suppressed_modules = []
+        if not getattr(sys, 'frozen', False):
+            suppressed_modules.append(click)
+
         console = Console()
-        console.print_exception(suppress=[click])
+        console.print_exception(suppress=suppressed_modules)
         return 1
