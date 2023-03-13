@@ -174,6 +174,7 @@ class Status(LabeledBox):
     Status StatusTable {
         width: auto;
         margin-top: 1;
+        scrollbar-gutter: stable;
     }
     """
 
