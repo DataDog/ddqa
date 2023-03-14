@@ -159,28 +159,42 @@ class JiraTokenInput(ValidatedInput):
 
 class ConfigurationInput(Widget):
     DEFAULT_CSS = """
+    ConfigurationInput {
+        layout: grid;
+        grid-size: 1 3;
+        grid-rows: 6fr 4fr 1fr;
+    }
+
+    #input-box {
+        height: 100%;
+        width: 100%;
+        scrollbar-gutter: stable;
+    }
+
     ConfigurationInput > Button {
         border: none;
-        margin: 1;
         width: 100%;
+        height: auto;
     }
 
     ConfigurationInput > TextLog {
-        margin: 1;
-        padding-bottom: 2;
-        height: 1fr;
+        height: 100%;
+        scrollbar-gutter: stable;
     }
     """
 
     def compose(self) -> ComposeResult:
-        yield LabeledInput(Label('Repo name:'), RepoNameInput())
-        yield LabeledInput(Label('Repo path:'), RepoPathInput())
-        yield LabeledInput(Label('GitHub user:'), GitHubUserInput())
-        yield LabeledInput(Label('GitHub token:'), GitHubTokenInput())
-        yield LabeledInput(Label('Jira email:'), JiraEmailInput())
-        yield LabeledInput(Label('Jira token:'), JiraTokenInput())
-        yield Button('Save', variant='primary', disabled=True)
+        yield Container(
+            LabeledInput(Label('Repo name:'), RepoNameInput()),
+            LabeledInput(Label('Repo path:'), RepoPathInput()),
+            LabeledInput(Label('GitHub user:'), GitHubUserInput()),
+            LabeledInput(Label('GitHub token:'), GitHubTokenInput()),
+            LabeledInput(Label('Jira email:'), JiraEmailInput()),
+            LabeledInput(Label('Jira token:'), JiraTokenInput()),
+            id='input-box',
+        )
         yield TextLog()
+        yield Button('Save', variant='primary', disabled=True)
 
     async def on_button_pressed(self, _event: Button.Pressed) -> None:
         self.app.config_file.save()
