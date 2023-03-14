@@ -3,4 +3,5 @@
 # SPDX-License-Identifier: MIT
 CSS = """
 $primary: #632CA6;
+$secondary: #9574CD;
 """

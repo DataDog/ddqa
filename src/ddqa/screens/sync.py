@@ -27,7 +27,7 @@ class InteractiveSidebar(Widget):
     InteractiveSidebar > Button {
         border: none;
         width: 100%;
-        height: 1fr;
+        height: auto;
     }
     """
 
