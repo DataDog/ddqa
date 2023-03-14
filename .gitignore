@@ -16,6 +16,7 @@ __pycache__/
 /.vscode/
 /app/build/
 /dist/
+/site/
 
 # Root files
 /.coverage*

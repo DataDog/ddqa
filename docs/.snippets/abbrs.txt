@@ -1,0 +1,2 @@
+*[PyPI]: Python Package Index
+*[DDQA]: Datadog QA
