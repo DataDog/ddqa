@@ -21,7 +21,7 @@ class GitHubRepository:
     # https://docs.github.com/en/rest/search?apiVersion=2022-11-28#search-issues-and-pull-requests
     ISSUE_SEARCH_API = 'https://api.github.com/search/issues'
 
-    # https://docs.github.com/en/rest/search?apiVersion=2022-11-28#search-issues-and-pull-requests
+    # https://docs.github.com/en/rest/pulls/reviews?apiVersion=2022-11-28#list-reviews-for-a-pull-request
     PR_REVIEWS_API = 'https://api.github.com/repos/{org}/{repo}/pulls/{number}/reviews'
 
     # https://docs.github.com/en/rest/teams/members?apiVersion=2022-11-28#list-team-members

@@ -219,9 +219,6 @@ class JiraClient:
     async def __api_get(self, client: ResponsiveNetworkClient, *args, **kwargs):
         return await self.__api_request('GET', client, *args, **kwargs)
 
-    async def __api_put(self, client: ResponsiveNetworkClient, *args, **kwargs):
-        return await self.__api_request('PUT', client, *args, **kwargs)
-
     async def __api_post(self, client: ResponsiveNetworkClient, *args, **kwargs):
         return await self.__api_request('POST', client, *args, **kwargs)
 

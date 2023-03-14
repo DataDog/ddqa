@@ -65,7 +65,7 @@ class TestRepoNameInput:
             save_button = app.query_one(Button)
             text_log = app.query_one(TextLog)
 
-            assert app.config.data['repo'] == ''
+            assert not app.config.data['repo']
             assert not input_box.value
             assert save_button.disabled is True
             assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
@@ -92,7 +92,7 @@ class TestRepoNameInput:
             text_log = app.query_one(TextLog)
 
             assert app.config.data['repo'] == ['foo']
-            assert input_box.value == ''
+            assert not input_box.value
             assert save_button.disabled is True
             assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
                 """
@@ -143,7 +143,7 @@ class TestRepoNameInput:
             save_button = app.query_one(Button)
             text_log = app.query_one(TextLog)
 
-            assert app.config.data['repo'] == ''
+            assert not app.config.data['repo']
             assert not input_box.value
             assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
                 """
@@ -329,7 +329,7 @@ class TestGitHubUserInput:
             text_log = app.query_one(TextLog)
 
             assert app.config.data['github'] == {'user': ['foo'], 'token': 'bar'}
-            assert input_box.value == ''
+            assert not input_box.value
             assert save_button.disabled is True
             assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
                 """
@@ -422,7 +422,7 @@ class TestGitHubTokenInput:
 
             assert app.config.data['github'] == {'user': 'foo', 'token': ['bar']}
             assert input_box.password is True
-            assert input_box.value == ''
+            assert not input_box.value
             assert save_button.disabled is True
             assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
                 """
@@ -515,7 +515,7 @@ class TestJiraEmailInput:
             text_log = app.query_one(TextLog)
 
             assert app.config.data['jira'] == {'email': ['foo'], 'token': 'bar'}
-            assert input_box.value == ''
+            assert not input_box.value
             assert save_button.disabled is True
             assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
                 """
@@ -608,7 +608,7 @@ class TestJiraTokenInput:
 
             assert app.config.data['jira'] == {'email': 'foo', 'token': ['bar']}
             assert input_box.password is True
-            assert input_box.value == ''
+            assert not input_box.value
             assert save_button.disabled is True
             assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
                 """

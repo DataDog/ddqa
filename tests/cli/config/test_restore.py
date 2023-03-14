@@ -16,7 +16,7 @@ def test_standard(ddqa, config_file, helpers):
     )
 
     config_file.load()
-    assert config_file.model.app.repo == ''
+    assert not config_file.model.app.repo
 
 
 def test_allow_invalid_config(ddqa, config_file, helpers):

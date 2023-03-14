@@ -1,0 +1,122 @@
+site_name: Datadog QA
+site_description: Datadog's QA manager for releases of GitHub repositories
+site_author: Datadog
+site_url: https://datadoghq.dev/ddqa/
+repo_name: datadog/ddqa
+repo_url: https://github.com/DataDog/ddqa
+edit_uri: blob/master/docs
+copyright: 'Copyright &copy; Datadog, Inc. 2017-present'
+
+docs_dir: docs
+site_dir: site
+theme:
+  name: material
+  language: en
+  favicon: assets/images/favicon.ico
+  logo: assets/images/logo.svg
+  icon:
+    repo: fontawesome/brands/github-alt
+  font:
+    text: Roboto
+    code: Roboto Mono
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.instant
+
+nav:
+  - About: index.md
+  - Installation: install.md
+  - Configuration:
+    - User: config/user.md
+    - Repository: config/repo.md
+
+plugins:
+  # Built-in
+  search: {}
+  # Extra
+  glightbox: {}
+  minify:
+    minify_html: true
+  git-revision-date-localized:
+    type: date
+
+markdown_extensions:
+  # Built-in
+  - markdown.extensions.abbr:
+  - markdown.extensions.admonition:
+  - markdown.extensions.attr_list:
+  - markdown.extensions.footnotes:
+  - markdown.extensions.meta:
+  - markdown.extensions.tables:
+  - markdown.extensions.toc:
+      permalink: true
+  # Extra
+  - pymdownx.arithmatex:
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret:
+  - pymdownx.critic:
+  - pymdownx.details:
+  - pymdownx.emoji:
+      # https://github.com/twitter/twemoji
+      # https://raw.githubusercontent.com/facelessuser/pymdown-extensions/master/pymdownx/twemoji_db.py
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.highlight:
+      guess_lang: false
+      linenums_style: pymdownx-inline
+      use_pygments: true
+  - pymdownx.inlinehilite:
+  - pymdownx.keys:
+  - pymdownx.magiclink:
+      repo_url_shortener: true
+      repo_url_shorthand: true
+      social_url_shortener: true
+      social_url_shorthand: true
+      normalize_issue_symbols: true
+      provider: github
+      user: DataDog
+      repo: ddqa
+  - pymdownx.mark:
+  - pymdownx.progressbar:
+  - pymdownx.saneheaders:
+  - pymdownx.smartsymbols:
+  - pymdownx.snippets:
+      check_paths: true
+      base_path:
+        - docs/.snippets
+      auto_append:
+        - links.txt
+        - abbrs.txt
+  - pymdownx.superfences:
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde:
+
+extra:
+  social:
+    - icon: fontawesome/solid/blog
+      link: https://www.datadoghq.com/blog/engineering/
+    - icon: fontawesome/brands/github-alt
+      link: https://github.com/DataDog
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/datadoghq
+    - icon: fontawesome/brands/instagram
+      link: https://www.instagram.com/datadoghq
+extra_css:
+  - assets/css/custom.css
+  - https://cdn.jsdelivr.net/gh/tonsky/FiraCode@5.2/distr/fira_code.css
