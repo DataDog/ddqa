@@ -328,7 +328,7 @@ class StatusScreen(Screen):
 
     @property
     def initial_status(self) -> str:
-        return self.app.repo.jira_statuses[0]
+        return self.app.repo.qa_statuses[0]
 
     @cached_property
     def cached_issues(self) -> dict[str, JiraIssue]:
@@ -336,7 +336,7 @@ class StatusScreen(Screen):
 
     @cached_property
     def statuses(self) -> dict[str, Status]:
-        return {status: Status(status) for status in self.app.repo.jira_statuses}
+        return {status: Status(status) for status in self.app.repo.qa_statuses}
 
     @cached_property
     def sidebar(self) -> OptionsSidebar:
@@ -348,7 +348,7 @@ class StatusScreen(Screen):
 
     @cached_property
     def status_changer(self) -> StatusChanger:
-        return StatusChanger(self.app.repo.jira_statuses)
+        return StatusChanger(self.app.repo.qa_statuses)
 
     @cached_property
     def team_statuses(self) -> dict[str, dict[str, str]]:

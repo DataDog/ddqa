@@ -107,7 +107,7 @@ def isolation() -> Generator[Path, None, None]:
             tomli_w.dumps(
                 {
                     'global_config_source': 'https://www.google.com',
-                    'jira_statuses': ['TODO', 'IN PROGRESS', 'DONE'],
+                    'qa_statuses': ['TODO', 'IN PROGRESS', 'DONE'],
                     'teams': {
                         'foo': {
                             'jira_project': 'FOO',
