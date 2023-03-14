@@ -85,22 +85,22 @@ class Application(App):
         for team, config in self.repo.teams.items():
             statuses = {}
             if isinstance(config.jira_statuses, dict):
-                missing_statuses = set(self.repo.jira_statuses).difference(config.jira_statuses)
+                missing_statuses = set(self.repo.qa_statuses).difference(config.jira_statuses)
                 if missing_statuses:
-                    ordered_statuses = [status for status in self.repo.jira_statuses if status in missing_statuses]
+                    ordered_statuses = [status for status in self.repo.qa_statuses if status in missing_statuses]
                     message = f'repos -> {team} -> jira_statuses\n  missing statuses: {", ".join(ordered_statuses)}'
                     raise ValueError(message)
 
                 statuses.update(config.jira_statuses)
             else:
-                if (num_statuses := len(config.jira_statuses)) != (expected_statuses := len(self.repo.jira_statuses)):
+                if (num_statuses := len(config.jira_statuses)) != (expected_statuses := len(self.repo.qa_statuses)):
                     message = (
                         f'repos -> {team} -> jira_statuses\n'
                         f'  expected {expected_statuses} statuses, found {num_statuses}'
                     )
                     raise ValueError(message)
 
-                for repo_status, team_status in zip(self.repo.jira_statuses, config.jira_statuses, strict=False):
+                for repo_status, team_status in zip(self.repo.qa_statuses, config.jira_statuses, strict=False):
                     statuses[repo_status] = team_status
 
             qa_statuses[team] = statuses

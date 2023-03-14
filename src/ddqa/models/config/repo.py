@@ -12,7 +12,7 @@ from ddqa.models.config.team import TeamConfig
 
 class RepoConfig(BaseModel):
     global_config_source: HttpUrl
-    jira_statuses: Annotated[list[str], Field(min_items=2)]
+    qa_statuses: Annotated[list[str], Field(min_items=2)]
     teams: dict[str, TeamConfig]
     ignored_labels: list[str] = []
 
