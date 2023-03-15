@@ -265,7 +265,7 @@ async def test_rendering(app, git_repository, helpers, mock_pull_requests):
         rendering = app.query_one(CandidateRendering)
         rendered_label = rendering.label.render()
         rendered_label_text = str(rendered_label)
-        assert rendered_label_text == ' PR 2 '
+        assert rendered_label_text == ' #2 '
         assert len(rendered_label.spans) == 1
         rendered_label_span = rendered_label.spans[0]
         assert rendered_label_span.start == 1
@@ -286,7 +286,7 @@ async def test_rendering(app, git_repository, helpers, mock_pull_requests):
 
         rendered_label = rendering.label.render()
         rendered_label_text = str(rendered_label)
-        assert rendered_label_text == ' Commit hash3 '
+        assert rendered_label_text == ' hash3 '
         assert len(rendered_label.spans) == 1
         rendered_label_span = rendered_label.spans[0]
         assert rendered_label_span.start == 1

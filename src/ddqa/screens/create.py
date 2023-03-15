@@ -97,9 +97,8 @@ class CandidateListing(DataTable):
                         continue
 
                     processed_pr_numbers.add(model.id)
-                    self.app.print(f'Processing pull request #{model.id}')
-                else:
-                    self.app.print(f'Processing commit {model.id[:7]}')
+
+                self.app.print(f'Processing {model.long_display()}')
 
                 index = i - ignored
                 candidate = Candidate(model, self.app.repo)
@@ -144,23 +143,17 @@ class CandidateListing(DataTable):
         self.sidebar.status.update('Creating...')
         async with ResponsiveNetworkClient(self.sidebar.status) as client:
             for index, candidate in self.candidates.items():
-                if candidate.data.id.isdigit():
-                    self.app.print(f'Creating issue for pull request #{candidate.data.id}')
-                else:
-                    self.app.print(f'Creating issue for commit {candidate.data.id[:7]}')
+                self.app.print(f'Creating issue for {candidate.data.long_display()}')
 
                 assignments: dict[str, str] = {}
                 for team, assigned in candidate.assignments.items():
                     if not assigned:
                         continue
 
-                    team_members = await self.app.github.get_team_members(client, self.app.repo.teams[team].github_team)
-                    team_members.discard(candidate.data.user)
-                    for reviewer in candidate.data.reviewers:
-                        team_members.discard(reviewer.name)
-
-                    assignee = secrets.choice(sorted(team_members)) if team_members else ''
-                    assignments[team] = assignee
+                    potential_assignees = await self.__get_potential_assignees(
+                        client, candidate.data, self.app.repo.teams[team].github_team
+                    )
+                    assignments[team] = secrets.choice(sorted(potential_assignees)) if potential_assignees else ''
 
                 try:
                     created_issues = await self.app.jira.create_issues(client, candidate.data, self.labels, assignments)
@@ -190,6 +183,24 @@ class CandidateListing(DataTable):
         self.app.print('Finished creating issues')
         self.sidebar.status.update('Finished')
         self.sidebar.button.disabled = False
+
+    async def __get_potential_assignees(
+        self, client: ResponsiveNetworkClient, candidate: TestCandidate, team: str
+    ) -> set:
+        team_members = await self.app.github.get_team_members(client, team)
+        if not team_members:
+            return team_members
+
+        team_members.discard(candidate.user)
+        if not team_members:
+            return {candidate.user}
+
+        team_member_reviewers = {reviewer.name for reviewer in candidate.reviewers if reviewer.name in team_members}
+        if len(team_member_reviewers) == len(team_members):
+            return team_member_reviewers
+
+        team_members -= team_member_reviewers
+        return team_members
 
 
 class CandidateSidebar(LabeledBox):
@@ -340,11 +351,7 @@ class CandidateRendering(LabeledBox):
 
     async def render_candidate(self, candidate: Candidate):
         data = candidate.data
-        self.label.update(
-            f' [link={data.url}]PR {data.id}[/link] '
-            if data.id.isdigit()
-            else f' [link={data.url}]Commit {data.id[:7]}[/link] '
-        )
+        self.label.update(f' [link={data.url}]{data.short_display()}[/link] ')
         self.title.update(RichMarkdown(data.title))
         self.labels.update(' '.join(f'[black on #{label.color}]{label.name}[/]' for label in data.labels))
 

@@ -24,3 +24,9 @@ class TestCandidate(BaseModel):
     body: str = ''
     labels: list[PullRequestLabel] = []
     reviewers: list[PullRequestReviewer] = []
+
+    def short_display(self) -> str:
+        return f'#{self.id}' if self.id.isdigit() else self.id[:7]
+
+    def long_display(self) -> str:
+        return f'pull request #{self.id}' if self.id.isdigit() else f'commit {self.id[:7]}'
