@@ -33,8 +33,8 @@ dependencies = [
   "platformdirs",
   "pydantic<2",
   "rich",
-  "textual>=0.11.1,<0.14.0",
-  "textual-autocomplete>=2.0.1b0",
+  "textual~=0.19.0",
+  "textual-autocomplete>=2.1.0b0",
   "tomli; python_version < '3.11'",
   "tomli-w",
 ]

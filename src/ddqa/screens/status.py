@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from textual import events
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import Container, HorizontalScroll, VerticalScroll
 from textual.coordinate import Coordinate
 from textual.screen import Screen
 from textual.widgets import Button, DataTable, Header, Input, Label, Switch
@@ -133,7 +133,7 @@ class StatusChanger(LabeledBox):
         self.__switches = {status: LabeledSwitch(label=status) for status in statuses}
         self.__button = Button('Move', variant='primary', id='status-submission')
 
-        super().__init__(' Status ', Vertical(*self.__switches.values(), id='status-choices'), self.__button)
+        super().__init__(' Status ', VerticalScroll(*self.__switches.values(), id='status-choices'), self.__button)
 
     @property
     def switches(self) -> dict[str, LabeledSwitch]:
@@ -175,6 +175,7 @@ class Status(LabeledBox):
         width: auto;
         margin-top: 1;
         scrollbar-gutter: stable;
+        max-height: 1fr;
     }
     """
 
@@ -233,8 +234,8 @@ class Issues(LabeledBox):
         super().__init__(
             '',
             Container(
-                Horizontal(self.__info, id='issue-info'),
-                Horizontal(*statuses, id='statuses-box'),
+                HorizontalScroll(self.__info, id='issue-info'),
+                HorizontalScroll(*statuses, id='statuses-box'),
                 id='issues-box',
             ),
         )
@@ -262,7 +263,7 @@ class OptionsSidebar(LabeledBox):
 
     def __init__(self):
         self.__status = Label()
-        self.__options = Vertical()
+        self.__options = VerticalScroll()
 
         super().__init__(
             '',
@@ -275,7 +276,7 @@ class OptionsSidebar(LabeledBox):
         return self.__status
 
     @property
-    def options(self) -> Vertical:
+    def options(self) -> VerticalScroll:
         return self.__options
 
 
@@ -388,7 +389,7 @@ class StatusScreen(Screen):
         )
 
     def on_mount(self) -> None:
-        self.call_after_refresh(lambda: self.app.run_in_background(self.__on_mount()))
+        self.run_worker(self.__on_mount())
 
     async def __on_mount(self) -> None:
         issues_found = False
@@ -418,12 +419,12 @@ class StatusScreen(Screen):
             status.sort_issues()
 
         await self.sidebar.options.mount(
-            Horizontal(LabeledBox(' Team ', FilterAutoComplete(self.team_filter)), classes='issue-filter')
+            HorizontalScroll(LabeledBox(' Team ', FilterAutoComplete(self.team_filter)), classes='issue-filter')
         )
         await self.sidebar.options.mount(
-            Horizontal(LabeledBox(' Member ', FilterAutoComplete(self.member_filter)), classes='issue-filter')
+            HorizontalScroll(LabeledBox(' Member ', FilterAutoComplete(self.member_filter)), classes='issue-filter')
         )
-        await self.sidebar.options.mount(Horizontal(self.status_changer))
+        await self.sidebar.options.mount(HorizontalScroll(self.status_changer))
 
         self.__update_completion_status()
         self.__refocus()
@@ -431,13 +432,13 @@ class StatusScreen(Screen):
     async def on_auto_complete_selected(self, event: AutoComplete.Selected) -> None:
         choice = str(event.item.main)
         for widget in self.query(Input).results():
-            if widget is not event.sender.input:
+            if widget is not event._sender.input:
                 widget.value = ''
 
         for status in self.statuses.values():
             status.clear_issues()
 
-        for issue in event.sender.issue_filter.issues[choice].values():
+        for issue in event._sender.issue_filter.issues[choice].values():
             self.statuses[self.get_qa_status(issue)].add_issue(issue)
 
         for status in self.statuses.values():
@@ -464,10 +465,10 @@ class StatusScreen(Screen):
         self.__refocus()
 
     async def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
-        if not event.sender.show_cursor:
+        if not event.data_table.show_cursor:
             return
 
-        issue_key = event.sender.get_cell_at(Coordinate(event.cursor_row, 0))
+        issue_key = event.data_table.get_cell_at(Coordinate(event.cursor_row, 0))
         issue = self.cached_issues[issue_key]
         self.issues.label.update(f' [link={self.app.jira.construct_issue_url(issue.key)}]{issue.key}[/link] ')
         self.issues.info.update(issue.summary)
@@ -483,7 +484,7 @@ class StatusScreen(Screen):
             return
 
         for labeled_switch in self.status_changer.switches.values():
-            if labeled_switch.switch is not event.sender:
+            if labeled_switch.switch is not event.switch:
                 labeled_switch.switch.value = False
 
         current_issue = self.cached_issues[str(self.issues.label.render()).strip()]
@@ -526,9 +527,8 @@ class StatusScreen(Screen):
         new_status.sort_issues()
 
         new_status.table.cursor_coordinate = Coordinate(0, 0)
-        await new_status.table.post_message(
+        new_status.table.post_message(
             events.Click(
-                sender=self.app,
                 x=0,
                 y=0,
                 delta_x=0,

@@ -9,7 +9,7 @@ from rich.markdown import Markdown as RichMarkdown
 from rich.markup import escape
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import Container, HorizontalScroll, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, DataTable, Header, Label, Markdown, Switch
 
@@ -45,6 +45,13 @@ class Candidate:
 
 
 class CandidateListing(DataTable):
+    DEFAULT_CSS = """
+    CandidateListing {
+        height: 1fr;
+        max-height: 1fr;
+    }
+    """
+
     def __init__(
         self, sidebar: CandidateSidebar, previous_ref: str, current_ref: str, labels: tuple[str, ...], *args, **kwargs
     ):
@@ -70,7 +77,7 @@ class CandidateListing(DataTable):
         self.cursor_type = 'row'
         self.focus()
 
-        self.call_after_refresh(lambda: self.app.run_in_background(self.__on_mount()))
+        self.run_worker(self.__on_mount())
 
     async def __on_mount(self) -> None:
         try:
@@ -173,7 +180,9 @@ class CandidateListing(DataTable):
                     )
 
                 await self.app.query_one(CandidateRendering).add_assignment_result(
-                    candidate.data.id, Horizontal(result, classes='assignment-result-box'), update=not display_updated
+                    candidate.data.id,
+                    HorizontalScroll(result, classes='assignment-result-box'),
+                    update=not display_updated,
                 )
                 self.update_cell(str(index), 'status', len(created_issues), update_width=True)
 
@@ -266,7 +275,7 @@ class CandidateSidebar(LabeledBox):
             for widget in self.app.query_one('#candidate-assignments').children:
                 await widget.remove()
 
-            self.app.run_in_background(self.listing.create())
+            self.run_worker(self.listing.create())
         else:
             self.app.exit()
 
@@ -304,6 +313,7 @@ class CandidateRendering(LabeledBox):
 
     .assignment-result {
         width: auto;
+        max-height: 1fr;
     }
     """
 
@@ -312,8 +322,8 @@ class CandidateRendering(LabeledBox):
         self.__labels = Label()
         self.__body = Container(Placeholder(width_factor=2.5), id='candidate-body')
         self.__body_renderings: dict[str, Markdown] = {}
-        self.__candidate_assignments = Vertical(id='candidate-assignments')
-        self.__assignment_results: dict[str, Horizontal] = {}
+        self.__candidate_assignments = VerticalScroll(id='candidate-assignments')
+        self.__assignment_results: dict[str, HorizontalScroll] = {}
 
         super().__init__(
             '',
@@ -335,7 +345,7 @@ class CandidateRendering(LabeledBox):
         return self.__labels
 
     @property
-    def candidate_assignments(self) -> Vertical:
+    def candidate_assignments(self) -> VerticalScroll:
         return self.__candidate_assignments
 
     async def on_mount(self) -> None:
@@ -343,7 +353,7 @@ class CandidateRendering(LabeledBox):
         width = 3
         for i in range(0, len(teams), width):
             await self.candidate_assignments.mount(
-                Horizontal(
+                HorizontalScroll(
                     *[LabeledSwitch(label=team, classes='assignment-box') for team in teams[i : i + width]],
                     classes='assignment-row',
                 )
@@ -370,7 +380,9 @@ class CandidateRendering(LabeledBox):
             for widget in self.query(LabeledSwitch).results():
                 widget.switch.value = candidate.assignments[str(widget.label.render())]
 
-    async def add_assignment_result(self, candidate_id: str, table_box: Horizontal, *, update: bool = False) -> None:
+    async def add_assignment_result(
+        self, candidate_id: str, table_box: HorizontalScroll, *, update: bool = False
+    ) -> None:
         self.__assignment_results[candidate_id] = table_box
         if update:
             await switch_to_widget(table_box, self.candidate_assignments)
@@ -436,7 +448,7 @@ class CreateScreen(Screen):
         sidebar = self.query_one(CandidateSidebar)
 
         candidate = listing.candidates[listing.cursor_row]
-        candidate.assignments[str(event.input.parent.label.render())] = event.value
+        candidate.assignments[str(event.switch.parent.label.render())] = event.value
 
         sidebar.update_assignment_status()
         listing.update_cell(str(listing.cursor_row), 'status', candidate.status_indicator)
