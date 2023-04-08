@@ -1,11 +1,11 @@
 # SPDX-FileCopyrightText: 2023-present Datadog, Inc. <dev@datadoghq.com>
 #
 # SPDX-License-Identifier: MIT
-from textual.containers import Horizontal
+from textual.containers import HorizontalScroll
 from textual.widgets import Label, Switch
 
 
-class LabeledInput(Horizontal):
+class LabeledInput(HorizontalScroll):
     DEFAULT_CSS = """
     LabeledInput {
         height: 3;
@@ -23,7 +23,7 @@ class LabeledInput(Horizontal):
     """
 
 
-class LabeledSwitch(Horizontal):
+class LabeledSwitch(HorizontalScroll):
     DEFAULT_CSS = """
     LabeledSwitch {
         height: auto;

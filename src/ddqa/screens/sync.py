@@ -42,7 +42,7 @@ class InteractiveSidebar(Widget):
         yield Button('Exit' if self.__manual_execution else 'Continue', variant='primary', disabled=True)
 
     def on_mount(self) -> None:
-        self.call_after_refresh(lambda: self.app.run_in_background(self.__on_mount()))
+        self.run_worker(self.__on_mount())
 
     async def __on_mount(self) -> None:
         status = self.query_one(Label)

@@ -712,7 +712,7 @@ class TestCreation:
         )
 
         async with app.run_test() as pilot:
-            await app.wait_for_background_tasks()
+            await app.workers.wait_for_complete()
             await pilot.pause(helpers.ASYNC_WAIT)
 
             sidebar = app.query_one(CandidateSidebar)
@@ -754,7 +754,7 @@ class TestCreation:
 
             app.set_focus(sidebar.button)
             await pilot.press('enter')
-            await app.wait_for_background_tasks()
+            await app.workers.wait_for_complete()
             await pilot.pause(helpers.ASYNC_WAIT)
 
             assert str(sidebar.status.render()) == 'Finished'

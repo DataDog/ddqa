@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
 
-import asyncio
 import os
 from functools import cached_property
 from typing import TYPE_CHECKING
@@ -42,9 +41,6 @@ class Application(App):
         self.config_file = config_file
         self.__cache_dir = cache_dir
         self.__queued_screens: list[tuple[str, Screen]] = []
-
-        # Hold references to long-running background tasks
-        self.__background_tasks: list[asyncio.Task] = []
 
     @property
     def config(self) -> Config:
@@ -136,12 +132,6 @@ class Application(App):
 
     def select_screen(self, name: str, screen: Screen) -> None:
         self.__queued_screens.append((name, screen))
-
-    def run_in_background(self, coroutine) -> None:
-        self.__background_tasks.append(asyncio.create_task(coroutine))
-
-    async def wait_for_background_tasks(self) -> None:
-        await asyncio.gather(*self.__background_tasks)
 
     def print(self, *args, **kwargs) -> None:  # noqa: A003
         self.__console.print(*args, **kwargs)
