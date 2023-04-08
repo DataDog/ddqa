@@ -16,12 +16,11 @@ from textual.binding import Binding
 from textual.containers import Container, HorizontalScroll, VerticalScroll
 from textual.coordinate import Coordinate
 from textual.screen import Screen
-from textual.widgets import Button, DataTable, Header, Input, Label, Switch
+from textual.widgets import Button, DataTable, Header, Input, Label, RadioButton, RadioSet
 from textual_autocomplete import AutoComplete, Dropdown, DropdownItem
 
 from ddqa.utils.network import ResponsiveNetworkClient
 from ddqa.utils.time import format_elapsed_time
-from ddqa.widgets.input import LabeledSwitch
 from ddqa.widgets.layout import LabeledBox
 
 if TYPE_CHECKING:
@@ -120,7 +119,10 @@ def get_timedelta(dt: datetime):
 class StatusChanger(LabeledBox):
     DEFAULT_CSS = """
     #status-choices {
+        border: none;
+        width: 100%;
         height: 1fr;
+        margin-top: 1;
     }
 
     #status-submission {
@@ -130,14 +132,19 @@ class StatusChanger(LabeledBox):
     """
 
     def __init__(self, statuses: list[str]) -> None:
-        self.__switches = {status: LabeledSwitch(label=status) for status in statuses}
+        self.__radio_buttons = {status: RadioButton(label=status) for status in statuses}
+        self.__radio_set = RadioSet(*self.__radio_buttons.values(), id='status-choices')
         self.__button = Button('Move', variant='primary', id='status-submission')
 
-        super().__init__(' Status ', VerticalScroll(*self.__switches.values(), id='status-choices'), self.__button)
+        super().__init__(' Status ', self.__radio_set, self.__button)
 
     @property
-    def switches(self) -> dict[str, LabeledSwitch]:
-        return self.__switches
+    def radio_set(self) -> RadioSet:
+        return self.__radio_set
+
+    @property
+    def radio_buttons(self) -> dict[str, RadioButton]:
+        return self.__radio_buttons
 
     @property
     def button(self) -> Button:
@@ -474,32 +481,20 @@ class StatusScreen(Screen):
         self.issues.info.update(issue.summary)
 
         current_status = self.get_qa_status(issue)
-        self.status_changer.switches[current_status].switch.value = True
+        self.status_changer.radio_buttons[current_status].value = True
 
-    async def on_switch_changed(self, event: Switch.Changed) -> None:
-        if not event.value:
-            if not any(labeled_switch.switch.value for labeled_switch in self.status_changer.switches.values()):
-                self.status_changer.button.disabled = True
-
-            return
-
-        for labeled_switch in self.status_changer.switches.values():
-            if labeled_switch.switch is not event.switch:
-                labeled_switch.switch.value = False
-
+    async def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
         current_issue = self.cached_issues[str(self.issues.label.render()).strip()]
-        if current_issue.assignee is not None:
-            self.status_changer.button.disabled = current_issue.assignee.id != self.current_user_id
+        current_status = self.get_qa_status(current_issue)
+        self.status_changer.button.disabled = (
+            current_issue.assignee is None
+            or current_issue.assignee.id != self.current_user_id
+            or str(event.pressed.label) == current_status
+        )
 
     async def on_button_pressed(self, _event: Button.Pressed) -> None:
         old_issue = self.cached_issues[str(self.issues.label.render()).strip()]
-        for labeled_switch in self.status_changer.switches.values():
-            if labeled_switch.switch.value:
-                selected_status = str(labeled_switch.label.render())
-                break
-        else:  # no cov
-            message = 'No status selected'
-            raise ValueError(message)
+        selected_status = str(self.status_changer.radio_set.pressed_button.label)
 
         async with ResponsiveNetworkClient(self.sidebar.status) as client:
             new_issue = await self.app.jira.update_issue_status(
@@ -539,7 +534,7 @@ class StatusScreen(Screen):
                 ctrl=False,
             )
         )
-        self.status_changer.switches[str(new_status.name)].switch.value = True
+        self.status_changer.button.disabled = True
         self.__update_completion_status()
 
     def __get_status_label(self, labels: list[str]) -> str:
