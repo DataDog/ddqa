@@ -5,7 +5,7 @@ site_url: https://datadoghq.dev/ddqa/
 repo_name: datadog/ddqa
 repo_url: https://github.com/DataDog/ddqa
 edit_uri: blob/master/docs
-copyright: 'Copyright &copy; Datadog, Inc. 2017-present'
+copyright: 'Copyright &copy; Datadog, Inc. 2023-present'
 
 docs_dir: docs
 site_dir: site
