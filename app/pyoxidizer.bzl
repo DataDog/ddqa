@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2023-present Datadog, Inc. <dev@datadoghq.com>
 #
 # SPDX-License-Identifier: MIT
+VERSION = VARS["version"]
+
 def make_exe():
     # https://gregoryszorc.com/docs/pyoxidizer/main/pyoxidizer_config_type_python_distribution.html#starlark_pyoxidizer.default_python_distribution
     dist = default_python_distribution(python_version = "3.10", flavor="standalone")
@@ -21,7 +23,7 @@ def make_exe():
         packaging_policy=policy,
         config=python_config,
     )
-    exe.add_python_resources(exe.pip_download([".", "--no-deps"]))
+    exe.add_python_resources(exe.pip_download(["ddqa==" + VERSION]))
 
     return exe
 
