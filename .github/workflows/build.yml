@@ -18,21 +18,12 @@ env:
   PYTHON_VERSION: "3.10"
 
 jobs:
-  run:
-    name: Build distribution for ${{ matrix.target == 'aarch64-apple-darwin' && 'macOS M1' || startsWith(matrix.os, 'macos-') && 'macOS Intel' || startsWith(matrix.os, 'windows-') && 'Windows' || 'Linux' }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-        - os: ubuntu-22.04
-          target: x86_64-unknown-linux-gnu
-        - os: windows-2022
-          target: x86_64-pc-windows-msvc
-        - os: macos-10.15
-          target: x86_64-apple-darwin
-        - os: macos-12
-          target: aarch64-apple-darwin
+  linux:
+    name: Build distribution for Linux
+    runs-on: ubuntu-22.04
+
+    env:
+      TARGET_TRIPLE: "x86_64-unknown-linux-gnu"
 
     steps:
     - uses: actions/checkout@v3
@@ -42,9 +33,8 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
-    - if: runner.os != 'Windows'
-      name: Install Rust target
-      run: rustup target add ${{ matrix.target }}
+    - name: Install Rust target
+      run: rustup target add ${{ env.TARGET_TRIPLE }}
 
     - name: Install Hatch
       run: pip install --upgrade hatch
@@ -53,26 +43,144 @@ jobs:
       run: hatch run build:setup
 
     - name: Build distribution
-      run: hatch run build:release --target-triple ${{ matrix.target }}
+      run: hatch run build:release --target-triple ${{ env.TARGET_TRIPLE }}
 
     - name: Setup distribution artifact directory
       run: |
-        mv app/build/${{ matrix.target }}/release targets
-        mv targets/install targets/${{ matrix.target }}
+        mv app/build/${{ env.TARGET_TRIPLE }}/release targets
+        mv targets/install targets/${{ env.TARGET_TRIPLE }}
 
-    - if: runner.os == 'Windows'
-      name: Build MSI
-      run: hatch run build:msi --target-triple ${{ matrix.target }}
-
-    - if: runner.os == 'Windows'
-      name: Setup MSI artifact
-      run: mv app/build/${{ matrix.target }}/release/msi_installer/*.msi targets
-
-    - if: runner.os != 'Windows'
-      name: Strip binary and set executable bit
+    - name: Strip binary and set executable bit
       run: |
-        strip targets/${{ matrix.target }}/ddqa
-        chmod +x targets/${{ matrix.target }}/ddqa
+        strip targets/${{ env.TARGET_TRIPLE }}/ddqa
+        chmod +x targets/${{ env.TARGET_TRIPLE }}/ddqa
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: artifacts
+        path: targets
+        if-no-files-found: error
+
+  windows:
+    name: Build distribution for Windows
+    runs-on: windows-2022
+
+    env:
+      TARGET_TRIPLE: "x86_64-pc-windows-msvc"
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install Hatch
+      run: pip install --upgrade hatch
+
+    - name: Set up environment
+      run: hatch run build:setup
+
+    - name: Build distribution
+      run: hatch run build:release --target-triple ${{ env.TARGET_TRIPLE }}
+
+    - name: Setup distribution artifact directory
+      run: |
+        mv app/build/${{ env.TARGET_TRIPLE }}/release targets
+        mv targets/install targets/${{ env.TARGET_TRIPLE }}
+
+    - name: Build MSI
+      run: hatch run build:msi --target-triple ${{ env.TARGET_TRIPLE }}
+
+    - name: Setup MSI artifact
+      run: mv app/build/${{ env.TARGET_TRIPLE }}/release/msi_installer/*.msi targets
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: artifacts
+        path: targets
+        if-no-files-found: error
+
+  macos-intel:
+    name: Build distribution for macOS Intel
+    runs-on: macos-10.15
+
+    env:
+      TARGET_TRIPLE: "x86_64-apple-darwin"
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install Rust target
+      run: rustup target add ${{ env.TARGET_TRIPLE }}
+
+    - name: Install Hatch
+      run: pip install --upgrade hatch
+
+    - name: Set up environment
+      run: hatch run build:setup
+
+    - name: Build distribution
+      run: hatch run build:release --target-triple ${{ env.TARGET_TRIPLE }}
+
+    - name: Setup distribution artifact directory
+      run: |
+        mv app/build/${{ env.TARGET_TRIPLE }}/release targets
+        mv targets/install targets/${{ env.TARGET_TRIPLE }}
+
+    - name: Strip binary and set executable bit
+      run: |
+        strip targets/${{ env.TARGET_TRIPLE }}/ddqa
+        chmod +x targets/${{ env.TARGET_TRIPLE }}/ddqa
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: artifacts
+        path: targets
+        if-no-files-found: error
+
+  macos-arm:
+    name: Build distribution for macOS ARM
+    runs-on: macos-12
+
+    env:
+      TARGET_TRIPLE: "aarch64-apple-darwin"
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install Rust target
+      run: rustup target add ${{ env.TARGET_TRIPLE }}
+
+    - name: Install Hatch
+      run: pip install --upgrade hatch
+
+    - name: Set up environment
+      run: hatch run build:setup
+
+    - name: Build distribution
+      run: hatch run build:release --target-triple ${{ env.TARGET_TRIPLE }}
+
+    - name: Setup distribution artifact directory
+      run: |
+        mv app/build/${{ env.TARGET_TRIPLE }}/release targets
+        mv targets/install targets/${{ env.TARGET_TRIPLE }}
+
+    - name: Strip binary and set executable bit
+      run: |
+        strip targets/${{ env.TARGET_TRIPLE }}/ddqa
+        chmod +x targets/${{ env.TARGET_TRIPLE }}/ddqa
 
     - uses: actions/upload-artifact@v3
       with:
