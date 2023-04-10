@@ -83,7 +83,6 @@ build-check = [
 detached = true
 dependencies = [
   "pyoxidizer>=0.24.0",
-  "pip-tools>=6.12.3",
 ]
 
 [envs.build.env-vars]
@@ -102,8 +101,4 @@ release = [
 msi = [
   "hatch build -t wheel",
   "_template msi_installer --release",
-]
-setup = [
-  "pip-compile -o requirements.txt pyproject.toml",
-  "python scripts/fix_requirements.py",
 ]

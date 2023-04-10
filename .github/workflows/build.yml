@@ -39,9 +39,6 @@ jobs:
     - name: Install Hatch
       run: pip install --upgrade hatch
 
-    - name: Set up environment
-      run: hatch run build:setup
-
     - name: Build distribution
       run: hatch run build:release --target-triple ${{ env.TARGET_TRIPLE }}
 
@@ -78,9 +75,6 @@ jobs:
 
     - name: Install Hatch
       run: pip install --upgrade hatch
-
-    - name: Set up environment
-      run: hatch run build:setup
 
     - name: Build distribution
       run: hatch run build:release --target-triple ${{ env.TARGET_TRIPLE }}
@@ -123,9 +117,6 @@ jobs:
     - name: Install Hatch
       run: pip install --upgrade hatch
 
-    - name: Set up environment
-      run: hatch run build:setup
-
     - name: Build distribution
       run: hatch run build:release --target-triple ${{ env.TARGET_TRIPLE }}
 
@@ -165,9 +156,6 @@ jobs:
 
     - name: Install Hatch
       run: pip install --upgrade hatch
-
-    - name: Set up environment
-      run: hatch run build:setup
 
     - name: Build distribution
       run: hatch run build:release --target-triple ${{ env.TARGET_TRIPLE }}

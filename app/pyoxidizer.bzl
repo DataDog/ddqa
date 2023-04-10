@@ -21,7 +21,7 @@ def make_exe():
         packaging_policy=policy,
         config=python_config,
     )
-    exe.add_python_resources(exe.pip_download(["-r", "requirements.txt", "--no-deps"]))
+    exe.add_python_resources(exe.pip_download([".", "--no-deps"]))
 
     return exe
 
