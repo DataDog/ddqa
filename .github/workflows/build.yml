@@ -82,18 +82,15 @@ jobs:
     - name: Build MSI
       run: hatch run build:msi --target-triple ${{ env.TARGET_TRIPLE }} --var version $(hatch version)
 
-    - name: Setup MSI artifact
-      run: mv app/build/${{ env.TARGET_TRIPLE }}/release/msi_installer/*.msi targets
-
     - uses: actions/upload-artifact@v3
       with:
         name: artifacts
-        path: targets
+        path: app/build/${{ env.TARGET_TRIPLE }}/release/msi/*.msi
         if-no-files-found: error
 
   macos-intel:
     name: Build distribution for macOS Intel
-    runs-on: macos-10.15
+    runs-on: macos-11
 
     env:
       TARGET_TRIPLE: "x86_64-apple-darwin"

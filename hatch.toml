@@ -100,5 +100,5 @@ release = [
 ]
 msi = [
   "hatch build -t wheel",
-  "_template msi_installer --release",
+  "_template msi --release",
 ]
