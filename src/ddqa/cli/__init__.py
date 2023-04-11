@@ -6,7 +6,7 @@ import sys
 
 import click
 
-from ddqa.__about__ import __version__
+from ddqa._version import __version__
 from ddqa.cli.config import config
 from ddqa.cli.create import create
 from ddqa.cli.status import status

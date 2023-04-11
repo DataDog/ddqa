@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
@@ -46,7 +46,11 @@ Source = "https://github.com/DataDog/ddqa"
 ddqa = "ddqa.cli:main"
 
 [tool.hatch.version]
-path = "src/ddqa/__about__.py"
+source = "vcs"
+raw-options = { version_scheme = "python-simplified-semver", local_scheme = "no-local-version" }
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/ddqa/_version.py"
 
 [tool.black]
 target-version = ["py310"]
@@ -149,7 +153,7 @@ source_pkgs = ["ddqa", "tests"]
 branch = true
 parallel = true
 omit = [
-  "src/ddqa/__about__.py",
+  "src/ddqa/_version.py.py",
 ]
 
 [tool.coverage.paths]
