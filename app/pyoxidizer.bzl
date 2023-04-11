@@ -9,11 +9,12 @@ def make_exe():
 
     # https://gregoryszorc.com/docs/pyoxidizer/main/pyoxidizer_config_type_python_packaging_policy.html#starlark_pyoxidizer.PythonPackagingPolicy
     policy = dist.make_python_packaging_policy()
-    policy.resources_location = "in-memory"
-    policy.resources_location_fallback = "filesystem-relative:site-packages"
+    policy.set_resource_handling_mode("files")
+    policy.resources_location = "filesystem-relative:lib"
 
     # https://gregoryszorc.com/docs/pyoxidizer/main/pyoxidizer_config_type_python_interpreter_config.html#starlark_pyoxidizer.PythonInterpreterConfig
     python_config = dist.make_python_interpreter_config()
+    python_config.module_search_paths = ["$ORIGIN/lib"]
     python_config.run_module = "ddqa"
     python_config.sys_frozen = True
 
@@ -40,17 +41,24 @@ def make_install(exe):
     return files
 
 def make_msi(exe):
+    version = VERSION.replace(".dev", ".")
+
     # https://gregoryszorc.com/docs/pyoxidizer/main/tugger_starlark_type_wix_msi_builder.html#starlark_tugger.WiXMSIBuilder
-    return exe.to_wix_msi_builder(
+    msi = exe.to_wix_msi_builder(
         "ddqa",
         "Datadog QA",
-        VERSION.replace(".dev", "."),
+        version,
         "Datadog, Inc.",
     )
+    msi.msi_filename = "ddqa-" + version + "-x64.msi"
+    msi.help_url = "https://datadoghq.dev/ddqa/"
+    msi.license_path = CWD + "/../LICENSE.txt"
+
+    return msi
 
 register_target("exe", make_exe)
 register_target("resources", make_embedded_resources, depends=["exe"], default_build_script=True)
 register_target("install", make_install, depends=["exe"], default=True)
-register_target("msi_installer", make_msi, depends=["exe"])
+register_target("msi", make_msi, depends=["exe"])
 
 resolve_targets()
