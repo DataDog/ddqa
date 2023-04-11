@@ -79,14 +79,6 @@ jobs:
     - name: Install Hatch
       run: pip install --upgrade hatch
 
-    - name: Build distribution
-      run: hatch run build:release --target-triple ${{ env.TARGET_TRIPLE }} --var version $(hatch version)
-
-    - name: Setup distribution artifact directory
-      run: |
-        mv app/build/${{ env.TARGET_TRIPLE }}/release targets
-        mv targets/install targets/${{ env.TARGET_TRIPLE }}
-
     - name: Build MSI
       run: hatch run build:msi --target-triple ${{ env.TARGET_TRIPLE }} --var version $(hatch version)
 
