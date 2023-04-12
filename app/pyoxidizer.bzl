@@ -9,12 +9,9 @@ def make_exe():
 
     # https://gregoryszorc.com/docs/pyoxidizer/main/pyoxidizer_config_type_python_packaging_policy.html#starlark_pyoxidizer.PythonPackagingPolicy
     policy = dist.make_python_packaging_policy()
-    policy.set_resource_handling_mode("files")
-    policy.resources_location = "filesystem-relative:lib"
 
     # https://gregoryszorc.com/docs/pyoxidizer/main/pyoxidizer_config_type_python_interpreter_config.html#starlark_pyoxidizer.PythonInterpreterConfig
     python_config = dist.make_python_interpreter_config()
-    python_config.module_search_paths = ["$ORIGIN/lib"]
     python_config.run_module = "ddqa"
     python_config.sys_frozen = True
 
