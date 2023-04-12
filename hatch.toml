@@ -102,3 +102,7 @@ msi = [
   "hatch build -t wheel",
   "_template msi --release",
 ]
+macos-app-bundle = [
+  "hatch build -t wheel",
+  "_template macos_app_bundle --release",
+]

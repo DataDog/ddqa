@@ -1,0 +1,17 @@
+name: Install rcodesign
+
+runs:
+  using: composite
+
+  steps:
+  - run: >-
+      curl -L
+      "https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.22.0/$ARCHIVE_NAME.tar.gz"
+      |
+      tar --strip-components=1 -xzf - -C /usr/local/bin "$ARCHIVE_NAME/rcodesign"
+    env:
+      ARCHIVE_NAME: "apple-codesign-0.22.0-x86_64-apple-darwin"
+    shell: bash
+
+  - run: chmod +x /usr/local/bin/rcodesign
+    shell: bash

@@ -37,28 +37,29 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Install Rust target
-      run: rustup target add ${{ env.TARGET_TRIPLE }}
+      run: rustup target add $TARGET_TRIPLE
 
     - name: Install Hatch
       run: pip install --upgrade hatch
 
     - name: Build distribution
-      run: hatch run build:release --target-triple ${{ env.TARGET_TRIPLE }} --var version $(hatch version)
-
-    - name: Setup distribution artifact directory
-      run: |
-        mv app/build/${{ env.TARGET_TRIPLE }}/release targets
-        mv targets/install targets/${{ env.TARGET_TRIPLE }}
+      run: hatch run build:release --target-triple $TARGET_TRIPLE --var version $(hatch version)
 
     - name: Strip binary and set executable bit
-      run: |
-        strip targets/${{ env.TARGET_TRIPLE }}/ddqa
-        chmod +x targets/${{ env.TARGET_TRIPLE }}/ddqa
+      run: |-
+        strip app/build/$TARGET_TRIPLE/release/install/ddqa
+        chmod +x app/build/$TARGET_TRIPLE/release/install/ddqa
 
-    - uses: actions/upload-artifact@v3
+    - name: Compress distribution
+      run: |-
+        mv app/build/$TARGET_TRIPLE/release/install dist-$TARGET_TRIPLE
+        tar -czvf dist-$TARGET_TRIPLE.tar.gz dist-$TARGET_TRIPLE
+
+    - name: Upload distribution
+      uses: actions/upload-artifact@v3
       with:
-        name: artifacts
-        path: targets
+        name: dist-${{ env.TARGET_TRIPLE }}
+        path: dist-${{ env.TARGET_TRIPLE }}.tar.gz
         if-no-files-found: error
 
   windows:
@@ -79,12 +80,28 @@ jobs:
     - name: Install Hatch
       run: pip install --upgrade hatch
 
-    - name: Build MSI
-      run: hatch run build:msi --target-triple ${{ env.TARGET_TRIPLE }} --var version $(hatch version)
+    - name: Build distribution
+      run: hatch run build:release --target-triple $TARGET_TRIPLE --var version $(hatch version)
 
-    - uses: actions/upload-artifact@v3
+    - name: Compress distribution
+      run: |-
+        mv app/build/$TARGET_TRIPLE/release/install dist-$TARGET_TRIPLE
+        tar -czvf dist-$TARGET_TRIPLE.tar.gz dist-$TARGET_TRIPLE
+
+    - name: Upload distribution
+      uses: actions/upload-artifact@v3
       with:
-        name: artifacts
+        name: dist-${{ env.TARGET_TRIPLE }}
+        path: dist-${{ env.TARGET_TRIPLE }}.tar.gz
+        if-no-files-found: error
+
+    - name: Build MSI
+      run: hatch run build:msi --target-triple $TARGET_TRIPLE --var version $(hatch version)
+
+    - name: Upload MSI
+      uses: actions/upload-artifact@v3
+      with:
+        name: msi-${{ env.TARGET_TRIPLE }}
         path: app/build/${{ env.TARGET_TRIPLE }}/release/msi/*.msi
         if-no-files-found: error
 
@@ -104,28 +121,46 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Install Rust target
-      run: rustup target add ${{ env.TARGET_TRIPLE }}
+      run: rustup target add $TARGET_TRIPLE
 
     - name: Install Hatch
       run: pip install --upgrade hatch
 
     - name: Build distribution
-      run: hatch run build:release --target-triple ${{ env.TARGET_TRIPLE }} --var version $(hatch version)
-
-    - name: Setup distribution artifact directory
-      run: |
-        mv app/build/${{ env.TARGET_TRIPLE }}/release targets
-        mv targets/install targets/${{ env.TARGET_TRIPLE }}
+      run: hatch run build:release --target-triple $TARGET_TRIPLE --var version $(hatch version)
 
     - name: Strip binary and set executable bit
-      run: |
-        strip targets/${{ env.TARGET_TRIPLE }}/ddqa
-        chmod +x targets/${{ env.TARGET_TRIPLE }}/ddqa
+      run: |-
+        strip app/build/$TARGET_TRIPLE/release/install/ddqa
+        chmod +x app/build/$TARGET_TRIPLE/release/install/ddqa
 
-    - uses: actions/upload-artifact@v3
+    - name: Compress distribution
+      run: |-
+        mv app/build/$TARGET_TRIPLE/release/install dist-$TARGET_TRIPLE
+        tar -czvf dist-$TARGET_TRIPLE.tar.gz dist-$TARGET_TRIPLE
+
+    - name: Upload distribution
+      uses: actions/upload-artifact@v3
       with:
-        name: artifacts
-        path: targets
+        name: dist-${{ env.TARGET_TRIPLE }}
+        path: dist-${{ env.TARGET_TRIPLE }}.tar.gz
+        if-no-files-found: error
+
+    - name: Build application bundle
+      run: hatch run build:macos-app-bundle --target-triple $TARGET_TRIPLE --var version $(hatch version)
+
+    - name: Compress application bundle
+      run: |-
+        mkdir app-bundle
+        filename="$(ls app/build/$TARGET_TRIPLE/release/macos_app_bundle)"
+        mv app/build/$TARGET_TRIPLE/release/macos_app_bundle/$filename $filename
+        tar -czvf app-bundle/$TARGET_TRIPLE.tar.gz $filename
+
+    - name: Upload application bundle
+      uses: actions/upload-artifact@v3
+      with:
+        name: macos-app-bundles
+        path: app-bundle
         if-no-files-found: error
 
   macos-arm:
@@ -144,26 +179,129 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Install Rust target
-      run: rustup target add ${{ env.TARGET_TRIPLE }}
+      run: rustup target add $TARGET_TRIPLE
 
     - name: Install Hatch
       run: pip install --upgrade hatch
 
     - name: Build distribution
-      run: hatch run build:release --target-triple ${{ env.TARGET_TRIPLE }} --var version $(hatch version)
-
-    - name: Setup distribution artifact directory
-      run: |
-        mv app/build/${{ env.TARGET_TRIPLE }}/release targets
-        mv targets/install targets/${{ env.TARGET_TRIPLE }}
+      run: hatch run build:release --target-triple $TARGET_TRIPLE --var version $(hatch version)
 
     - name: Strip binary and set executable bit
-      run: |
-        strip targets/${{ env.TARGET_TRIPLE }}/ddqa
-        chmod +x targets/${{ env.TARGET_TRIPLE }}/ddqa
+      run: |-
+        strip app/build/$TARGET_TRIPLE/release/install/ddqa
+        chmod +x app/build/$TARGET_TRIPLE/release/install/ddqa
 
-    - uses: actions/upload-artifact@v3
+    - name: Compress distribution
+      run: |-
+        mv app/build/$TARGET_TRIPLE/release/install dist-$TARGET_TRIPLE
+        tar -czvf dist-$TARGET_TRIPLE.tar.gz dist-$TARGET_TRIPLE
+
+    - name: Upload distribution
+      uses: actions/upload-artifact@v3
       with:
-        name: artifacts
-        path: targets
+        name: dist-${{ env.TARGET_TRIPLE }}
+        path: dist-${{ env.TARGET_TRIPLE }}.tar.gz
+        if-no-files-found: error
+
+    - name: Build application bundle
+      run: hatch run build:macos-app-bundle --target-triple $TARGET_TRIPLE --var version $(hatch version)
+
+    - name: Compress application bundle
+      run: |-
+        mkdir app-bundle
+        filename="$(ls app/build/$TARGET_TRIPLE/release/macos_app_bundle)"
+        mv app/build/$TARGET_TRIPLE/release/macos_app_bundle/$filename $filename
+        tar -czvf app-bundle/$TARGET_TRIPLE.tar.gz $filename
+
+    - name: Upload application bundle
+      uses: actions/upload-artifact@v3
+      with:
+        name: macos-app-bundles
+        path: app-bundle
+        if-no-files-found: error
+
+  macos:
+    name: Finalize macOS distributions
+    needs:
+    - macos-intel
+    - macos-arm
+    runs-on: macos-12
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install create-dmg
+      run: brew install create-dmg
+
+    - name: Install rcodesign
+      env:
+        ARCHIVE_NAME: "apple-codesign-0.22.0-x86_64-apple-darwin"
+      run: >-
+        curl -L
+        "https://github.com/indygreg/apple-platform-rs/releases/download/apple-codesign%2F0.22.0/$ARCHIVE_NAME.tar.gz"
+        |
+        tar --strip-components=1 -xzvf - -C /usr/local/bin "$ARCHIVE_NAME/rcodesign"
+
+    - name: Download application bundles
+      uses: actions/download-artifact@v3
+      with:
+        name: macos-app-bundles
+        path: macos-app-bundle-archives
+
+    - name: Extract
+      id: extract
+      run: |-
+        mkdir staged
+        mkdir signed
+        archive="$(ls macos-app-bundle-archives | head -1)"
+        tar -xzvf macos-app-bundle-archives/$archive -C staged
+        app_bundle="$(ls staged)"
+        echo "app-bundle=$app_bundle" >> "$GITHUB_OUTPUT"
+        echo "app-name=${app_bundle:0:${#app_bundle}-4}" >> "$GITHUB_OUTPUT"
+
+    - name: Write credentials
+      env:
+        APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE: "${{ secrets.APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE }}"
+        APPLE_DEVELOPER_ID_APPLICATION_PRIVATE_KEY: "${{ secrets.APPLE_DEVELOPER_ID_APPLICATION_PRIVATE_KEY }}"
+        APPLE_APP_STORE_CONNECT_API_DATA: "${{ secrets.APPLE_APP_STORE_CONNECT_API_DATA }}"
+      run: |-
+        echo "$APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE" > /tmp/certificate.pem
+        echo "$APPLE_DEVELOPER_ID_APPLICATION_PRIVATE_KEY" > /tmp/private-key.pem
+        echo "$APPLE_APP_STORE_CONNECT_API_DATA" > /tmp/app-store-connect.json
+
+    - name: Code sign application bundle
+      run: >-
+        rcodesign sign
+        --pem-source /tmp/certificate.pem
+        --pem-source /tmp/private-key.pem
+        --entitlements-xml-path app/macos/entitlements.plist
+        "staged/${{ steps.extract.outputs.app-bundle }}"
+        "signed/${{ steps.extract.outputs.app-bundle }}"
+
+    - name: Create DMG
+      run: create-dmg "${{ steps.extract.outputs.app-name }}.dmg" "signed/${{ steps.extract.outputs.app-bundle }}"
+
+    - name: Code sign DMG
+      run: >-
+        rcodesign sign
+        --pem-source /tmp/certificate.pem
+        --pem-source /tmp/private-key.pem
+        --entitlements-xml-path app/macos/entitlements.plist
+        "${{ steps.extract.outputs.app-name }}.dmg"
+        "${{ steps.extract.outputs.app-name }}.dmg"
+
+    - name: Notarize DMG
+      run: >-
+        rcodesign notary-submit
+        --api-key-path /tmp/app-store-connect.json
+        --staple
+        "${{ steps.extract.outputs.app-name }}.dmg"
+
+    - name: Upload DMG
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: dmg-${{ steps.extract.outputs.app-name }}
+        path: "${{ steps.extract.outputs.app-name }}.dmg"
         if-no-files-found: error
