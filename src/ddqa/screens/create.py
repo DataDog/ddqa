@@ -21,6 +21,7 @@ from ddqa.widgets.static import Placeholder
 
 if typing.TYPE_CHECKING:
     from ddqa.models.config.repo import RepoConfig
+    from ddqa.models.config.team import TeamConfig
     from ddqa.models.github import TestCandidate
 
 
@@ -158,7 +159,7 @@ class CandidateListing(DataTable):
                         continue
 
                     potential_assignees = await self.__get_potential_assignees(
-                        client, candidate.data, self.app.repo.teams[team].github_team
+                        client, candidate.data, self.app.repo.teams[team]
                     )
                     assignments[team] = secrets.choice(sorted(potential_assignees)) if potential_assignees else ''
 
@@ -194,13 +195,14 @@ class CandidateListing(DataTable):
         self.sidebar.button.disabled = False
 
     async def __get_potential_assignees(
-        self, client: ResponsiveNetworkClient, candidate: TestCandidate, team: str
+        self, client: ResponsiveNetworkClient, candidate: TestCandidate, team: TeamConfig
     ) -> set:
-        team_members = await self.app.github.get_team_members(client, team)
+        team_members = await self.app.github.get_team_members(client, team.github_team)
         if not team_members:
             return team_members
 
         team_members.discard(candidate.user)
+        team_members.difference_update(team.exclude_members)
         if not team_members:
             return {candidate.user}
 

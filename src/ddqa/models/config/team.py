@@ -13,3 +13,4 @@ class TeamConfig(BaseModel):
     jira_component: str = ''
     github_team: str
     github_labels: list[str] = []
+    exclude_members: list[str] = []
