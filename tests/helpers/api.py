@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2023-present Datadog, Inc. <dev@datadoghq.com>
 #
 # SPDX-License-Identifier: MIT
+from __future__ import annotations
+
 import re
 from textwrap import dedent as _dedent
 
@@ -9,6 +11,29 @@ from rich.console import Console
 
 # The default time to wait for all triggered events to complete
 ASYNC_WAIT = 0.5
+
+_initial_value = object()
+
+
+class MutatingEqualityValue:
+    def __init__(self, initial=_initial_value):
+        self.value = initial
+
+    def inverse(self):
+        return InverseEqualityValue(self)
+
+    def __eq__(self, other):
+        original = self.value
+        self.value = other
+        return original is _initial_value or original == other
+
+
+class InverseEqualityValue:
+    def __init__(self, value: MutatingEqualityValue):
+        self.value = value
+
+    def __eq__(self, other):
+        return self.value.value != other
 
 
 def dedent(text, *, terminal=False):

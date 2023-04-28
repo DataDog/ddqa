@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import typing
+from collections import defaultdict
 
 from rich.markdown import Markdown as RichMarkdown
 from rich.markup import escape
@@ -127,8 +128,6 @@ class CandidateListing(DataTable):
         self.sidebar.update_assignment_status()
 
     async def create(self) -> None:
-        import secrets
-
         candidates: dict[int, Candidate] = {}
         for candidate in self.candidates.values():
             if candidate.assigned:
@@ -147,6 +146,8 @@ class CandidateListing(DataTable):
         self.focus()
         display_updated = False
 
+        assignment_counts: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+
         self.app.print(f'Candidates ready for creation: {total}')
         self.sidebar.status.update('Creating...')
         async with ResponsiveNetworkClient(self.sidebar.status) as client:
@@ -158,10 +159,9 @@ class CandidateListing(DataTable):
                     if not assigned:
                         continue
 
-                    potential_assignees = await self.__get_potential_assignees(
-                        client, candidate.data, self.app.repo.teams[team]
+                    assignments[team] = await self.__get_assignee(
+                        client, candidate.data, self.app.repo.teams[team], assignment_counts
                     )
-                    assignments[team] = secrets.choice(sorted(potential_assignees)) if potential_assignees else ''
 
                 try:
                     created_issues = await self.app.jira.create_issues(client, candidate.data, self.labels, assignments)
@@ -194,24 +194,37 @@ class CandidateListing(DataTable):
         self.sidebar.status.update('Finished')
         self.sidebar.button.disabled = False
 
-    async def __get_potential_assignees(
-        self, client: ResponsiveNetworkClient, candidate: TestCandidate, team: TeamConfig
-    ) -> set:
+    async def __get_assignee(
+        self,
+        client: ResponsiveNetworkClient,
+        candidate: TestCandidate,
+        team: TeamConfig,
+        assignment_counts: dict[str, dict[str, int]],
+    ) -> str:
+        import secrets
+
         team_members = await self.app.github.get_team_members(client, team.github_team)
         if not team_members:
-            return team_members
+            return ''
 
         team_members.discard(candidate.user)
         team_members.difference_update(team.exclude_members)
         if not team_members:
-            return {candidate.user}
+            return candidate.user
 
-        team_member_reviewers = {reviewer.name for reviewer in candidate.reviewers if reviewer.name in team_members}
-        if len(team_member_reviewers) == len(team_members):
-            return team_member_reviewers
+        counts = assignment_counts[team.github_team]
+        reviewers = {reviewer.name for reviewer in candidate.reviewers}
+        member_keys = {member: (counts[member], member in reviewers) for member in team_members}
 
-        team_members -= team_member_reviewers
-        return team_members
+        priorities: dict[tuple[int, bool], list[str]] = defaultdict(list)
+        for member, key in member_keys.items():
+            priorities[key].append(member)
+
+        potential_assignees = priorities[sorted(priorities)[0]]
+        assignee = secrets.choice(sorted(potential_assignees))
+        counts[assignee] += 1
+
+        return assignee
 
 
 class CandidateSidebar(LabeledBox):
