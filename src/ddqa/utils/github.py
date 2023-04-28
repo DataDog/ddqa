@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from functools import cached_property
 from typing import TYPE_CHECKING, Any
@@ -65,7 +66,9 @@ class GitHubRepository:
     @cached_property
     def repo_id(self) -> str:
         # https://github.com/foo/bar.git -> foo/bar
-        return self.repo.get_remote_url().split('github.com/', 1)[1].removesuffix('.git')
+        # or username@github.com:foo/bar.git -> foo/bar
+        repo = re.split('github.com[:\\/]', self.repo.get_remote_url())[1]
+        return repo.removesuffix('.git')
 
     @cached_property
     def org(self) -> str:
