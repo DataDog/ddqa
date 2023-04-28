@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+***Fixed:***
+
+- Changed the priority of member assignment to be based on the number of currently assigned issues followed by whether or not the member was a reviewer
+
 ## 0.1.0 - 2023-04-15
 
 This is the initial public release.
