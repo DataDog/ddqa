@@ -761,6 +761,11 @@ class TestCreation:
             assert str(sidebar.label.render()) == f' {num_candidates} / {num_candidates} '
             assert str(sidebar.button.label) == 'Exit'
 
+            # We use the following equality assertions as a way to match the progression of member assignment counts and
+            # remain agnostic to the random assignment
+            foo_team_value = helpers.MutatingEqualityValue(initial='jira-foo6')
+            bar_team_value = helpers.MutatingEqualityValue()
+
             assert response_mock.call_args_list == [
                 mocker.call(
                     'POST',
@@ -768,7 +773,7 @@ class TestCreation:
                     auth=('foo@bar.baz', 'bar'),
                     json={
                         'fields': {
-                            'assignee': {'id': 'jira-foo6'},
+                            'assignee': {'id': foo_team_value},
                             'description': helpers.dedent(
                                 """
                                 Pull request: [#2|https://github.com/org/repo/pull/2]
@@ -792,7 +797,7 @@ class TestCreation:
                     auth=('foo@bar.baz', 'bar'),
                     json={
                         'fields': {
-                            'assignee': {'id': mocker.ANY},
+                            'assignee': {'id': bar_team_value},
                             'description': helpers.dedent(
                                 """
                                 Commit: [hash3|https://github.com/org/repo/commit/hash3]
@@ -813,7 +818,7 @@ class TestCreation:
                     auth=('foo@bar.baz', 'bar'),
                     json={
                         'fields': {
-                            'assignee': {'id': 'jira-foo6'},
+                            'assignee': {'id': foo_team_value.inverse()},
                             'description': helpers.dedent(
                                 """
                                 Pull request: [#1|https://github.com/org/repo/pull/1]
@@ -837,7 +842,7 @@ class TestCreation:
                     auth=('foo@bar.baz', 'bar'),
                     json={
                         'fields': {
-                            'assignee': {'id': 'jira-bar6'},
+                            'assignee': {'id': bar_team_value.inverse()},
                             'description': helpers.dedent(
                                 """
                                 Pull request: [#1|https://github.com/org/repo/pull/1]
