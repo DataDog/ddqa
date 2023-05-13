@@ -17,153 +17,156 @@ defaults:
     shell: bash
 
 env:
-  PYTHONUNBUFFERED: "1"
-  PYTHON_VERSION: "3.10"
+  APP_NAME: ddqa
+  PYTHON_VERSION: "3.11"
+  PYOXIDIZER_VERSION: "0.24.0"
 
 jobs:
-  linux:
-    name: Build distribution for Linux
-    runs-on: ubuntu-22.04
+  binaries:
+    name: ${{ matrix.job.target }} (${{ matrix.job.os }})
+    runs-on: ${{ matrix.job.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+        # Linux
+        - target: aarch64-unknown-linux-gnu
+          os: ubuntu-22.04
+          cross: true
+        - target: x86_64-unknown-linux-gnu
+          os: ubuntu-22.04
+          cross: true
+        - target: x86_64-unknown-linux-musl
+          os: ubuntu-22.04
+          cross: true
+        - target: i686-unknown-linux-gnu
+          os: ubuntu-22.04
+          cross: true
+        # Windows
+        - target: x86_64-pc-windows-msvc
+          os: windows-2022
+        - target: i686-pc-windows-msvc
+          os: windows-2022
+        # macOS
+        - target: aarch64-apple-darwin
+          os: macos-12
+        - target: x86_64-apple-darwin
+          os: macos-12
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
 
     env:
-      TARGET_TRIPLE: "x86_64-unknown-linux-gnu"
+      CARGO: cargo
+      CARGO_BUILD_TARGET: ${{ matrix.job.target }}
+      PYAPP_REPO: pyapp
+      PYAPP_VERSION: v0.5.0
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Clone PyApp
+      run: git clone --depth 1 --branch $PYAPP_VERSION https://github.com/ofek/pyapp $PYAPP_REPO
 
     - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: Install Rust target
-      run: rustup target add ${{ env.TARGET_TRIPLE }}
-
     - name: Install Hatch
-      run: pip install --upgrade hatch
+      run: pip install -U hatch
 
-    - name: Build distribution
-      run: hatch run build:release --target-triple ${{ env.TARGET_TRIPLE }} --var version $(hatch version)
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.job.target }}
 
-    - name: Setup distribution artifact directory
-      run: |
-        mv app/build/${{ env.TARGET_TRIPLE }}/release targets
-        mv targets/install targets/${{ env.TARGET_TRIPLE }}
+    - name: Set up cross compiling
+      if: matrix.job.cross
+      uses: taiki-e/install-action@v2
+      with:
+        tool: cross
 
-    - name: Strip binary and set executable bit
-      run: |
-        strip targets/${{ env.TARGET_TRIPLE }}/ddqa
-        chmod +x targets/${{ env.TARGET_TRIPLE }}/ddqa
+    - name: Configure cross compiling
+      if: matrix.job.cross
+      run: echo "CARGO=cross" >> $GITHUB_ENV
+
+    - name: Set version
+      id: version
+      run: |-
+        hatch version
+        echo "version=$(hatch version)" >> $GITHUB_OUTPUT
+
+    - name: Build
+      run: hatch build --target app
+
+    - name: Set executable bit
+      if: runner.os != 'Windows'
+      run: chmod +x dist/app/*
 
     - uses: actions/upload-artifact@v3
       with:
-        name: artifacts
-        path: targets
+        name: binaries-${{ runner.os }}
+        path: dist/app/*
         if-no-files-found: error
 
-  windows:
-    name: Build distribution for Windows
+  windows-installers:
+    name: Build Windows installers
+    needs: binaries
     runs-on: windows-2022
 
     env:
-      TARGET_TRIPLE: "x86_64-pc-windows-msvc"
+      VERSION: ${{ needs.binaries.outputs.version }}
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
     - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: Install Hatch
-      run: pip install --upgrade hatch
+    - name: Install PyOxidizer ${{ env.PYOXIDIZER_VERSION }}
+      run: pip install pyoxidizer==${{ env.PYOXIDIZER_VERSION }}
 
-    - name: Build MSI
-      run: hatch run build:msi --target-triple ${{ env.TARGET_TRIPLE }} --var version $(hatch version)
-
-    - uses: actions/upload-artifact@v3
+    - uses: actions/download-artifact@v3
       with:
-        name: artifacts
-        path: app/build/${{ env.TARGET_TRIPLE }}/release/msi/*.msi
-        if-no-files-found: error
+        name: binaries-${{ runner.os }}
+        path: bin
 
-  macos-intel:
-    name: Build distribution for macOS Intel
-    runs-on: macos-11
+    # bin/<APP_NAME>-<VERSION>-<TARGET>.exe -> targets/<TARGET>/<APP_NAME>.exe
+    - name: Set up directory structure
+      run: |-
+        mkdir targets
+        for f in bin/*; do
+          if [[ "$f" =~ ${{ env.VERSION }}-(.+).exe$ ]]; then
+            target="${BASH_REMATCH[1]}"
+            mkdir targets/$target
+            mv $f targets/$target/${{ env.APP_NAME }}.exe
+          fi
+        done
 
-    env:
-      TARGET_TRIPLE: "x86_64-apple-darwin"
+    - name: Build installers
+      run: >-
+        pyoxidizer build windows_installers
+        --release
+        --var version ${{ env.VERSION }}
 
-    steps:
-    - uses: actions/checkout@v3
+    - name: Set up artifacts
+      run: |-
+        mkdir installers
+        mv build/*/release/*/*.{exe,msi} installers
 
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v4
+        for f in installers/*; do
+          if [[ "$f" =~ Datadog[[:blank:]]QA(.+)$ ]]; then
+            mv "$f" "installers/${{ env.APP_NAME }}${BASH_REMATCH[1]}"
+          fi
+        done
+
+    - name: Upload installers
+      uses: actions/upload-artifact@v3
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
-
-    - name: Install Rust target
-      run: rustup target add ${{ env.TARGET_TRIPLE }}
-
-    - name: Install Hatch
-      run: pip install --upgrade hatch
-
-    - name: Build distribution
-      run: hatch run build:release --target-triple ${{ env.TARGET_TRIPLE }} --var version $(hatch version)
-
-    - name: Setup distribution artifact directory
-      run: |
-        mv app/build/${{ env.TARGET_TRIPLE }}/release targets
-        mv targets/install targets/${{ env.TARGET_TRIPLE }}
-
-    - name: Strip binary and set executable bit
-      run: |
-        strip targets/${{ env.TARGET_TRIPLE }}/ddqa
-        chmod +x targets/${{ env.TARGET_TRIPLE }}/ddqa
-
-    - uses: actions/upload-artifact@v3
-      with:
-        name: artifacts
-        path: targets
-        if-no-files-found: error
-
-  macos-arm:
-    name: Build distribution for macOS ARM
-    runs-on: macos-12
-
-    env:
-      TARGET_TRIPLE: "aarch64-apple-darwin"
-
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-
-    - name: Install Rust target
-      run: rustup target add ${{ env.TARGET_TRIPLE }}
-
-    - name: Install Hatch
-      run: pip install --upgrade hatch
-
-    - name: Build distribution
-      run: hatch run build:release --target-triple ${{ env.TARGET_TRIPLE }} --var version $(hatch version)
-
-    - name: Setup distribution artifact directory
-      run: |
-        mv app/build/${{ env.TARGET_TRIPLE }}/release targets
-        mv targets/install targets/${{ env.TARGET_TRIPLE }}
-
-    - name: Strip binary and set executable bit
-      run: |
-        strip targets/${{ env.TARGET_TRIPLE }}/ddqa
-        chmod +x targets/${{ env.TARGET_TRIPLE }}/ddqa
-
-    - uses: actions/upload-artifact@v3
-      with:
-        name: artifacts
-        path: targets
-        if-no-files-found: error
+        name: installers-${{ runner.os }}
+        path: installers/*

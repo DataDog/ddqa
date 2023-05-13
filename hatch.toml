@@ -78,27 +78,3 @@ build-check = [
   "build --no-directory-urls",
   "validate",
 ]
-
-[envs.build]
-detached = true
-dependencies = [
-  "pyoxidizer>=0.24.0",
-]
-
-[envs.build.env-vars]
-PIP_FIND_LINKS = "dist"
-
-[envs.build.scripts]
-_template = "pyoxidizer build --path app {args}"
-debug = [
-  "hatch build -t wheel",
-  "_template install",
-]
-release = [
-  "hatch build -t wheel",
-  "_template install --release",
-]
-msi = [
-  "hatch build -t wheel",
-  "_template msi --release",
-]
