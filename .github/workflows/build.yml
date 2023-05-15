@@ -366,16 +366,6 @@ jobs:
         --staple
         "${{ steps.stage.outputs.dmg-file }}"
 
-    - name: Package app bundle
-      run: tar -czf "${{ steps.stage.outputs.app-name }}.tar.gz" signed
-
-    - name: Upload app bundle
-      uses: actions/upload-artifact@v3
-      with:
-        name: ${{ runner.os }}-app-bundle
-        path: "${{ steps.stage.outputs.app-name }}.tar.gz"
-        if-no-files-found: error
-
     - name: Upload binaries
       uses: actions/upload-artifact@v3
       with:
