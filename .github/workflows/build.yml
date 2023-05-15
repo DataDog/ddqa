@@ -267,10 +267,27 @@ jobs:
     - name: Sign binaries
       run: |-
         for f in bin/*; do
-          rcodesign sign -vvv \
+          rcodesign sign -vv \
           --pem-source /tmp/certificate.pem \
           --pem-source /tmp/private-key.pem \
           --code-signature-flags runtime \
+          "$f"
+        done
+
+    # https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution
+    - name: Notarize binaries
+      run: |-
+        mkdir notarize-bin
+
+        cd bin
+        for f in *; do
+          zip "../notarize-bin/$f.zip" "$f"
+        done
+
+        cd ../notarize-bin
+        for f in *; do
+          rcodesign notary-submit -vv \
+          --api-key-path /tmp/app-store-connect.json \
           "$f"
         done
 
@@ -316,7 +333,7 @@ jobs:
 
     - name: Sign app bundle
       run: >-
-        rcodesign sign -vvv
+        rcodesign sign -vv
         --pem-source /tmp/certificate.pem
         --pem-source /tmp/private-key.pem
         "staged/${{ steps.stage.outputs.app-bundle }}"
@@ -327,24 +344,37 @@ jobs:
         create-dmg
         --volname "${{ steps.stage.outputs.app-name }}"
         --hide-extension "${{ steps.stage.outputs.app-bundle }}"
+        --window-pos 200 120
+        --window-size 800 400
+        --icon-size 100
+        --app-drop-link 600 185
         "${{ steps.stage.outputs.dmg-file }}"
         signed
 
     - name: Sign DMG
       run: >-
-        rcodesign sign -vvv
+        rcodesign sign -vv
         --pem-source /tmp/certificate.pem
         --pem-source /tmp/private-key.pem
         "${{ steps.stage.outputs.dmg-file }}"
         "${{ steps.stage.outputs.dmg-file }}"
 
-    # https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution
     - name: Notarize DMG
       run: >-
         rcodesign notary-submit
         --api-key-path /tmp/app-store-connect.json
         --staple
         "${{ steps.stage.outputs.dmg-file }}"
+
+    - name: Package app bundle
+      run: tar -czf "${{ steps.stage.outputs.app-name }}.tar.gz" signed
+
+    - name: Upload app bundle
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ runner.os }}-app-bundle
+        path: "${{ steps.stage.outputs.app-name }}.tar.gz"
+        if-no-files-found: error
 
     - name: Upload binaries
       uses: actions/upload-artifact@v3
