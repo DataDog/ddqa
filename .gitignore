@@ -13,6 +13,7 @@ __pycache__/
 /.idea/
 /.mypy_cache/
 /.pytest_cache/
+/.ruff_cache/
 /.vscode/
 /build/
 /dist/
