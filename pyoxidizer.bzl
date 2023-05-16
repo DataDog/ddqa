@@ -1,8 +1,10 @@
 # SPDX-FileCopyrightText: 2023-present Datadog, Inc. <dev@datadoghq.com>
 #
 # SPDX-License-Identifier: MIT
-AUTHOR = "Datadog, Inc."
 VERSION = VARS["version"]
+APP_NAME = "ddqa"
+DISPLAY_NAME = "Datadog QA"
+AUTHOR = "Datadog, Inc."
 
 
 def make_msi(target):
@@ -15,13 +17,13 @@ def make_msi(target):
 
     # https://gregoryszorc.com/docs/pyoxidizer/main/tugger_starlark_type_wix_msi_builder.html
     msi = WiXMSIBuilder(
-        id_prefix="ddqa",
-        product_name="Datadog QA",
+        id_prefix=APP_NAME,
+        product_name=DISPLAY_NAME,
         product_version=VERSION,
         product_manufacturer=AUTHOR,
         arch=arch,
     )
-    msi.msi_filename = "ddqa-" + VERSION + "-" + arch + ".msi"
+    msi.msi_filename = DISPLAY_NAME + "-" + VERSION + "-" + arch + ".msi"
     msi.help_url = "https://datadoghq.dev/ddqa/"
     msi.license_path = CWD + "/LICENSE.txt"
 
@@ -30,7 +32,7 @@ def make_msi(target):
 
     exe_prefix = "targets/" + target + "/"
     m.add_path(
-        path=exe_prefix + "ddqa.exe",
+        path=exe_prefix + APP_NAME + ".exe",
         strip_prefix=exe_prefix,
     )
 
@@ -42,8 +44,8 @@ def make_msi(target):
 def make_exe_installer():
     # https://gregoryszorc.com/docs/pyoxidizer/main/tugger_starlark_type_wix_bundle_builder.html
     bundle = WiXBundleBuilder(
-        id_prefix="ddqa",
-        name="Datadog QA",
+        id_prefix=APP_NAME,
+        name=DISPLAY_NAME,
         version=VERSION,
         manufacturer=AUTHOR,
     )
@@ -67,20 +69,20 @@ def make_exe_installer():
 
 def make_macos_app_bundle():
     # https://gregoryszorc.com/docs/pyoxidizer/main/tugger_starlark_type_macos_application_bundle_builder.html
-    bundle = MacOsApplicationBundleBuilder("Datadog QA")
+    bundle = MacOsApplicationBundleBuilder(DISPLAY_NAME)
     bundle.set_info_plist_required_keys(
-        display_name="Datadog QA",
-        identifier="com.datadoghq.ddqa",
+        display_name=DISPLAY_NAME,
+        identifier="com.datadoghq." + APP_NAME,
         version=VERSION,
-        signature="ddqa",
-        executable="ddqa",
+        signature=APP_NAME,
+        executable=APP_NAME,
     )
 
     # https://gregoryszorc.com/docs/pyoxidizer/main/tugger_starlark_type_apple_universal_binary.html
-    universal = AppleUniversalBinary("ddqa")
+    universal = AppleUniversalBinary(APP_NAME)
 
     for target in ["aarch64-apple-darwin", "x86_64-apple-darwin"]:
-        universal.add_path("targets/" + target + "/ddqa")
+        universal.add_path("targets/" + target + "/" + APP_NAME)
 
     m = FileManifest()
     m.add_file(universal.to_file_content())
