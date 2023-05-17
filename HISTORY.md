@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## 0.2.0 - 2023-05-17
+
 ***Changed:***
 
 - Remove vendored `pyperclip` dependency and the `--copy` flag of the `config find` command

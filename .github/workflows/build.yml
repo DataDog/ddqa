@@ -136,30 +136,33 @@ jobs:
         mv "$wheel" "../$PYAPP_REPO"
         echo "PYAPP_PROJECT_PATH=$wheel" >> $GITHUB_ENV
 
+    - name: Build binary
+      run: hatch build --target app
+
     # Windows installers don't accept non-integer versions so we ubiquitously
     # perform the following transformation: X.Y.Z.devN -> X.Y.Z.N
     - name: Set project version
       id: version
       run: |-
         old_version="$(hatch version)"
-        echo "old-version=$old_version" >> $GITHUB_OUTPUT
-
         version="${old_version/dev/}"
+
+        if [[ "$version" != "$old_version" ]]; then
+          cd dist/app
+          old_binary="$(ls)"
+          binary="${old_binary/$old_version/$version}"
+          mv "$old_binary" "$binary"
+        fi
+
         echo "version=$version" >> $GITHUB_OUTPUT
-
         echo "$version"
-
-    - name: Build binary
-      run: hatch build --target app
 
     - name: Archive binary
       run: |-
         mkdir packaging
         cd dist/app
 
-        old_binary="$(ls)"
-        binary="${old_binary/${{ steps.version.outputs.old-version }}/${{ steps.version.outputs.version }}}"
-        mv "$old_binary" "$binary"
+        binary="$(ls)"
 
         if [[ "$binary" =~ -pc-windows- ]]; then
           7z a "../../packaging/${binary:0:-4}.zip" "$binary"
@@ -186,6 +189,7 @@ jobs:
 
   windows-packaging:
     name: Build Windows installers
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
     needs: binaries
     runs-on: windows-2022
 
@@ -254,7 +258,8 @@ jobs:
         path: installers/*
 
   macos-packaging:
-    name: Build macOS installer
+    name: Build macOS installer and sign/notarize artifacts
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
     needs: binaries
     runs-on: macos-12
 
