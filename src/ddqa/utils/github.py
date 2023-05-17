@@ -65,7 +65,9 @@ class GitHubRepository:
     @cached_property
     def repo_id(self) -> str:
         # https://github.com/foo/bar.git -> foo/bar
-        return self.repo.get_remote_url().split('github.com/', 1)[1].removesuffix('.git')
+        # or username@github.com:foo/bar.git -> foo/bar
+        repo = self.repo.get_remote_url().split('github.com', 1)[1]
+        return repo[1:].removesuffix('.git')
 
     @cached_property
     def org(self) -> str:
