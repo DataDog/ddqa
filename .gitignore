@@ -21,7 +21,6 @@ __pycache__/
 
 # Root files
 /.coverage*
-/requirements.txt
 
 # Auto-generated during builds
 /src/ddqa/_version.py

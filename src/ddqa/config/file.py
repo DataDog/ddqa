@@ -3,12 +3,12 @@
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
 
+import tomllib
 from typing import cast
 
 from ddqa.config.core import Config
 from ddqa.config.utils import scrub_config
 from ddqa.utils.fs import Path
-from ddqa.utils.toml import load_toml_data
 
 
 class ConfigFile:
@@ -26,7 +26,7 @@ class ConfigFile:
         self.path.write_atomic(content, 'w', encoding='utf-8')
 
     def load(self):
-        self.model = Config(load_toml_data(self.read()))
+        self.model = Config(tomllib.loads(self.read()))
 
     def read(self) -> str:
         return self.path.read_text()
@@ -34,7 +34,7 @@ class ConfigFile:
     def read_scrubbed(self) -> str:
         import tomli_w
 
-        config = Config(load_toml_data(self.read()))
+        config = Config(tomllib.loads(self.read()))
         scrub_config(config.data)
 
         return tomli_w.dumps(config.data)

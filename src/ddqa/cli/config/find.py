@@ -12,16 +12,7 @@ if TYPE_CHECKING:
 
 
 @click.command(short_help='Show the location of the config file')
-@click.option('--copy', '-c', is_flag=True, help='Copy the path to the config file to the clipboard')
 @click.pass_obj
-def find(app: Application, copy):
+def find(app: Application):
     """Show the location of the config file."""
-    config_path = str(app.config_file.path)
-    if copy:
-        from ddqa.utils import clipboard
-
-        clipboard.copy(config_path)
-    elif ' ' in config_path:
-        app.print(f'"{config_path}"')
-    else:
-        app.print(config_path)
+    app.print(str(app.config_file.path))

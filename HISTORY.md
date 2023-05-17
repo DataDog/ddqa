@@ -8,9 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+***Changed:***
+
+- Remove vendored `pyperclip` dependency and the `--copy` flag of the `config find` command
+
 ***Fixed:***
 
 - Changed the priority of member assignment to be based on the number of currently assigned issues followed by whether or not the member was a reviewer
+- Properly handle Git SSH remote URLs
 
 ## 0.1.0 - 2023-04-15
 
