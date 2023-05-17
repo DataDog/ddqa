@@ -19,6 +19,20 @@ def mock_remote_url():
         yield
 
 
+@pytest.mark.parametrize(
+    'url, repo_id', [('https://github.com/foo/bar.git', 'foo/bar'), ('username@github.com:foo/bar.git', 'foo/bar')]
+)
+def test_repo_id(app, git_repository, url, repo_id):
+    app.configure(
+        git_repository,
+        caching=True,
+        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+    )
+
+    with mock.patch('ddqa.utils.git.GitRepository.get_remote_url', return_value=url):
+        assert app.github.repo_id == repo_id
+
+
 class TestCandidates:
     async def test_pr(self, app, git_repository, mocker):
         app.configure(
