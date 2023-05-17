@@ -49,6 +49,8 @@ jobs:
 
   binaries:
     name: ${{ matrix.job.target }} (${{ matrix.job.os }})
+    needs:
+    - python-artifacts
     runs-on: ${{ matrix.job.os }}
     strategy:
       fail-fast: false
@@ -85,7 +87,7 @@ jobs:
       CARGO: cargo
       CARGO_BUILD_TARGET: ${{ matrix.job.target }}
       PYAPP_REPO: pyapp
-      PYAPP_VERSION: v0.5.0
+      PYAPP_VERSION: v0.6.0
 
     steps:
     - name: Checkout code
@@ -118,6 +120,21 @@ jobs:
     - name: Configure cross compiling
       if: matrix.job.cross
       run: echo "CARGO=cross" >> $GITHUB_ENV
+
+    - name: Download Python artifacts
+      if: ${{ !startsWith(github.event.ref, 'refs/tags') }}
+      uses: actions/download-artifact@v3
+      with:
+        name: python-artifacts
+        path: dist
+
+    - name: Configure embedded project
+      if: ${{ !startsWith(github.event.ref, 'refs/tags') }}
+      run: |-
+        cd dist
+        wheel="$(echo *.whl)"
+        mv "$wheel" "../$PYAPP_REPO"
+        echo "PYAPP_PROJECT_PATH=$wheel" >> $GITHUB_ENV
 
     # Windows installers don't accept non-integer versions so we ubiquitously
     # perform the following transformation: X.Y.Z.devN -> X.Y.Z.N
