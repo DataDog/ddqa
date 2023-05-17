@@ -7,7 +7,7 @@ name = "ddqa"
 dynamic = ["version"]
 description = "Datadog's QA manager for releases of GitHub repositories"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = "MIT"
 keywords = [
   "datadog",
@@ -22,7 +22,6 @@ classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
   "Intended Audience :: System Administrators",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: Implementation :: CPython",
 ]
@@ -35,7 +34,6 @@ dependencies = [
   "rich",
   "textual~=0.19.0",
   "textual-autocomplete>=2.1.0b0",
-  "tomli; python_version < '3.11'",
   "tomli-w",
 ]
 
@@ -53,12 +51,9 @@ raw-options = { version_scheme = "python-simplified-semver", local_scheme = "no-
 version-file = "src/ddqa/_version.py"
 
 [tool.black]
-target-version = ["py310"]
+target-version = ["py311"]
 line-length = 120
 skip-string-normalization = true
-extend-exclude = """
-src/ddqa/utils/clipboard.py
-"""
 
 [tool.mypy]
 disallow_untyped_defs = false
@@ -73,13 +68,6 @@ warn_unused_ignores = true
 plugins = [
   "pydantic.mypy",
 ]
-exclude = [
-  "src/ddqa/utils/clipboard.py",
-]
-
-[[tool.mypy.overrides]]
-module = "ddqa.utils.clipboard"
-follow_imports = "skip"
 
 [tool.pydantic-mypy]
 init_forbid_extra = true
@@ -88,7 +76,7 @@ warn_required_dynamic_aliases = true
 warn_untyped_fields = true
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 line-length = 120
 select = [
   "A",
@@ -130,9 +118,6 @@ ignore = [
 unfixable = [
   # Don't touch unused imports
   "F401",
-]
-extend-exclude = [
-  "src/ddqa/utils/clipboard.py",
 ]
 
 [tool.ruff.isort]

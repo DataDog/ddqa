@@ -1,5 +1,4 @@
 [envs.default]
-python = "3.10"
 dependencies = [
   "coverage[toml]>=6.5",
   "pytest",
@@ -21,12 +20,8 @@ cov = [
   "cov-report",
 ]
 
-[[envs.all.matrix]]
-python = ["3.10"]
-
 [envs.lint]
 detached = true
-python = "3.11"
 dependencies = [
   "black>=23.1.0",
   "mypy>=1.0.0",

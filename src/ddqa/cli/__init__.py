@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: MIT
 import os
-import sys
 
 import click
 
@@ -97,10 +96,6 @@ def main():  # no cov
     except Exception:
         from rich.console import Console
 
-        suppressed_modules = []
-        if not getattr(sys, 'frozen', False):
-            suppressed_modules.append(click)
-
         console = Console()
-        console.print_exception(suppress=suppressed_modules)
+        console.print_exception(suppress=[click])
         return 1

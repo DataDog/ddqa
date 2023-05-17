@@ -4,11 +4,11 @@
 from __future__ import annotations
 
 import os
+import tomllib
 from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
 from ddqa.utils.fs import Path
-from ddqa.utils.toml import load_toml_data
 
 if TYPE_CHECKING:
     from ddqa.models.config.app import AppConfig
@@ -57,7 +57,7 @@ class Config:
                 else default_repo_config_file
             )
             if repo_config_file.is_file():
-                for key, value in load_toml_data(repo_config_file.read_text()).items():
+                for key, value in tomllib.loads(repo_config_file.read_text()).items():
                     repo_data.setdefault(key, value)
 
             if (

@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2023-present Datadog, Inc. <dev@datadoghq.com>
 #
 # SPDX-License-Identifier: MIT
+import tomllib
+
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container
@@ -9,7 +11,6 @@ from textual.widget import Widget
 from textual.widgets import Button, Header, Label, TextLog
 
 from ddqa.utils.network import ResponsiveNetworkClient
-from ddqa.utils.toml import load_toml_data
 from ddqa.widgets.static import Placeholder
 
 
@@ -62,7 +63,7 @@ class InteractiveSidebar(Widget):
                 return
 
             try:
-                global_config = load_toml_data(response.text)
+                global_config = tomllib.loads(response.text)
             except Exception:
                 status.update('Unable to parse TOML source')
                 return
