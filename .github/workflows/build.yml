@@ -87,7 +87,7 @@ jobs:
       CARGO: cargo
       CARGO_BUILD_TARGET: ${{ matrix.job.target }}
       PYAPP_REPO: pyapp
-      PYAPP_VERSION: v0.6.0
+      PYAPP_VERSION: "0.7.0"
 
     steps:
     - name: Checkout code
@@ -95,8 +95,12 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Clone PyApp
-      run: git clone --depth 1 --branch $PYAPP_VERSION https://github.com/ofek/pyapp $PYAPP_REPO
+    - name: Fetch PyApp
+      run: >-
+        mkdir $PYAPP_REPO && curl -L
+        https://github.com/ofek/pyapp/releases/download/v$PYAPP_VERSION/source.tar.gz
+        |
+        tar --strip-components=1 -xzf - -C $PYAPP_REPO
 
     - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v4

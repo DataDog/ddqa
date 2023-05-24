@@ -89,6 +89,10 @@ ddqa.add_command(create)
 ddqa.add_command(status)
 ddqa.add_command(sync)
 
+__management_command = os.environ.get('PYAPP_COMMAND_NAME', '')
+if __management_command:
+    ddqa.add_command(click.Command(name=__management_command, help='Manage this application'))
+
 
 def main():  # no cov
     try:
