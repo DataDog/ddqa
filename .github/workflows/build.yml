@@ -193,7 +193,10 @@ jobs:
 
   windows-packaging:
     name: Build Windows installers
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    if: >-
+      github.event_name == 'push'
+      &&
+      (github.ref == 'refs/heads/master' || startsWith(github.event.ref, 'refs/tags'))
     needs: binaries
     runs-on: windows-2022
 
@@ -263,7 +266,10 @@ jobs:
 
   macos-packaging:
     name: Build macOS installer and sign/notarize artifacts
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    if: >-
+      github.event_name == 'push'
+      &&
+      (github.ref == 'refs/heads/master' || startsWith(github.event.ref, 'refs/tags'))
     needs: binaries
     runs-on: macos-12
 
