@@ -151,7 +151,7 @@ class CandidateListing(DataTable):
         self.app.print(f'Candidates ready for creation: {total}')
         self.sidebar.status.update('Creating...')
         async with ResponsiveNetworkClient(self.sidebar.status) as client:
-            for index, candidate in self.candidates.items():
+            for index, candidate in list(self.candidates.items()):
                 self.app.print(f'Creating issue for {candidate.data.long_display()}')
 
                 assignments: dict[str, str] = {}
