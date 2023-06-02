@@ -4,9 +4,21 @@
 
 DDQA will always ensure valid config by loading the configuration screen if there are errors or missing required fields.
 
+<figure markdown>
+  ![Input screen](../assets/images/screen-config.png){ loading=lazy role="img" }
+</figure>
+
+!!! tip
+    To locate your personal config file you may run: `ddqa config find`
+
 ## GitHub auth
 
-You'll need to create a [personal access token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#personal-access-tokens-classic) with `public_repo` and `read:org` permissions and, if required by the organization, [enable SAML single sign-on](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/authorizing-a-personal-access-token-for-use-with-saml-single-sign-on).
+You'll need to create a [personal access token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#personal-access-tokens-classic) with `repo` and `read:org` permissions and, if required by the organization, [enable SAML single sign-on](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/authorizing-a-personal-access-token-for-use-with-saml-single-sign-on).
+
+<figure markdown>
+  ![GitHub token 1](../assets/images/github-token1.png){ loading=lazy role="img" }
+  ![GitHub token 2](../assets/images/github-token2.png){ loading=lazy role="img" }
+</figure>
 
 The following APIs are used:
 
