@@ -41,6 +41,9 @@ nav:
   - Configuration:
     - User: config/user.md
     - Repository: config/repo.md
+  - Actions:
+    - Create items: actions/create.md
+    - View dashboard: actions/status.md
 
 plugins:
   # Built-in
@@ -58,6 +61,7 @@ markdown_extensions:
   - markdown.extensions.admonition:
   - markdown.extensions.attr_list:
   - markdown.extensions.footnotes:
+  - markdown.extensions.md_in_html:
   - markdown.extensions.meta:
   - markdown.extensions.tables:
   - markdown.extensions.toc:

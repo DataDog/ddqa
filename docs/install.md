@@ -2,6 +2,14 @@
 
 -----
 
+!!! warning "Important"
+    In addition to installing the tool itself, you will also need to use a modern terminal emulator such as:
+
+    - [Windows Terminal](https://github.com/microsoft/terminal)
+    - [iTerm2](https://gitlab.com/gnachman/iterm2)
+    - [WezTerm](https://github.com/wez/wezterm)
+    - [Alacritty](https://github.com/alacritty/alacritty)
+
 ## GitHub releases
 
 Each [release](https://github.com/DataDog/ddqa/releases) provides the following:
