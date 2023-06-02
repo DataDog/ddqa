@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## 0.3.1 - 2023-06-02
+
+***Fixed:***
+
+- Fix race condition when prematurely creating issues
+
 ## 0.3.0 - 2023-05-24
 
 ***Added:***
