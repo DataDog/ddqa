@@ -69,6 +69,9 @@ jobs:
         - target: i686-unknown-linux-gnu
           os: ubuntu-22.04
           cross: true
+        - target: powerpc64le-unknown-linux-gnu
+          os: ubuntu-22.04
+          cross: true
         # Windows
         - target: x86_64-pc-windows-msvc
           os: windows-2022
@@ -87,7 +90,7 @@ jobs:
       CARGO: cargo
       CARGO_BUILD_TARGET: ${{ matrix.job.target }}
       PYAPP_REPO: pyapp
-      PYAPP_VERSION: "0.7.0"
+      PYAPP_VERSION: "0.8.0"
 
     steps:
     - name: Checkout code
@@ -124,6 +127,13 @@ jobs:
     - name: Configure cross compiling
       if: matrix.job.cross
       run: echo "CARGO=cross" >> $GITHUB_ENV
+
+    - name: Configure target
+      run: |-
+        config_file="$PYAPP_REPO/.cargo/config_${{ matrix.job.target }}.toml"
+        if [[ -f "$config_file" ]]; then
+          mv "$config_file" "$PYAPP_REPO/.cargo/config.toml"
+        fi
 
     - name: Download Python artifacts
       if: ${{ !startsWith(github.event.ref, 'refs/tags') }}
