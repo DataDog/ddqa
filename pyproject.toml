@@ -1,12 +1,11 @@
 [build-system]
-requires = ["hatchling>=1.17.0", "hatch-vcs"]
+requires = ["hatchling>=1.17.0", "hatch-vcs", "hatch-fancy-pypi-readme"]
 build-backend = "hatchling.build"
 
 [project]
 name = "ddqa"
-dynamic = ["version"]
+dynamic = ["version", "readme"]
 description = "Datadog's QA manager for releases of GitHub repositories"
-readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 keywords = [
@@ -49,6 +48,16 @@ raw-options = { version_scheme = "python-simplified-semver", local_scheme = "no-
 
 [tool.hatch.build.hooks.vcs]
 version-file = "src/ddqa/_version.py"
+
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/markdown"
+fragments = [
+  { path = "README.md" },
+]
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+pattern = '(docs/assets/images/.*?)'
+replacement = 'https://raw.githubusercontent.com/DataDog/ddqa/master/\1'
 
 [tool.black]
 target-version = ["py311"]

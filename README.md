@@ -1,5 +1,7 @@
 # Datadog QA
 
+![example screenshot](docs/assets/images/creation-screen-full.png)
+
 | | |
 | --- | --- |
 | CI/CD | [![CI - Test](https://github.com/DataDog/ddqa/actions/workflows/test.yml/badge.svg)](https://github.com/DataDog/ddqa/actions/workflows/test.yml) [![CD - Build](https://github.com/DataDog/ddqa/actions/workflows/build.yml/badge.svg)](https://github.com/DataDog/ddqa/actions/workflows/build.yml) |
