@@ -1,0 +1,10 @@
+Component,Origin,License,Copyright
+click,PyPI,BSD-3-Clause,Copyright 2014 Pallets
+httpx,PyPI,BSD-3-Clause,"Copyright © 2019, Encode OSS Ltd. All rights reserved."
+pillow,PyPI,HPND,"Copyright © 2010-2023 by Jeffrey A. Clark (Alex) and contributors.|Copyright © 1995-2011 by Fredrik Lundh|Copyright © 1997-2011 by Secret Labs AB"
+platformdirs,PyPI,MIT,Copyright (c) 2010-202x The platformdirs developers
+pydantic,PyPI,MIT,"Copyright (c) 2017 to present Pydantic Services Inc. and individual contributors."
+rich,PyPI,MIT,Copyright (c) 2020 Will McGugan
+textual,PyPI,MIT,Copyright (c) 2021 Will McGugan
+textual-autocomplete,PyPI,unlicensed,darrenburns
+tomli-w,PyPI,MIT,Copyright (c) 2021 Taneli Hukkinen
