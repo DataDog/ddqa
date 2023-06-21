@@ -44,6 +44,7 @@ nav:
   - Configuration:
     - User: config/user.md
     - Repository: config/repo.md
+    - Synchronization: config/sync.md
   - Actions:
     - Create items: actions/create.md
     - View dashboard: actions/status.md
