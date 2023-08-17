@@ -263,6 +263,10 @@ class OptionsSidebar(LabeledBox):
         height: 1fr;
     }
 
+    #status-changer {
+        height: 1fr;
+    }
+
     .issue-filter {
         height: 5;
     }
@@ -431,7 +435,7 @@ class StatusScreen(Screen):
         await self.sidebar.options.mount(
             HorizontalScroll(LabeledBox(' Member ', FilterAutoComplete(self.member_filter)), classes='issue-filter')
         )
-        await self.sidebar.options.mount(HorizontalScroll(self.status_changer))
+        await self.sidebar.options.mount(HorizontalScroll(self.status_changer, id='status-changer'))
 
         self.__update_completion_status()
         self.__refocus()
