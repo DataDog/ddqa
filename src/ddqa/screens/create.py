@@ -306,6 +306,7 @@ class CandidateRendering(LabeledBox):
 
     #candidate-body {
         height: 9fr;
+        overflow-y: auto;
     }
 
     #candidate-assignments {
