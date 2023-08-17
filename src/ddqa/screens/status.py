@@ -161,9 +161,8 @@ class StatusTable(DataTable):
         self.add_column('Assignee')
         self.add_column('Last update', key='update-time')
 
-    def on_click(self, event: events.Click) -> None:
-        super().on_click(event)
-
+    def on_click(self, _event: events.Click) -> None:
+        # This makes it so that only a single table looks active at a time, giving it a "focus" effect
         for data_table in self.app.query(StatusTable).results():
             data_table.show_cursor = data_table is self
 
