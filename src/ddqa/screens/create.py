@@ -232,6 +232,7 @@ class CandidateSidebar(LabeledBox):
     #sidebar-status {
         height: auto;
         border-bottom: dashed #632CA6;
+        overflow: auto;
     }
 
     #sidebar-listing {
