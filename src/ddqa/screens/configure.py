@@ -39,8 +39,6 @@ class RepoNameInput(ValidatedInput):
         self.__added = ''
 
     def on_mount(self) -> None:
-        super().on_mount()
-
         self.value = DefaultValue(self.app.config.data.get('repo', ''))
 
     def validate_user_input(self, value: object):
@@ -71,8 +69,6 @@ class RepoNameInput(ValidatedInput):
 
 class RepoPathInput(ValidatedInput):
     def on_mount(self) -> None:
-        super().on_mount()
-
         self.value = DefaultValue(
             self.app.config.data.get('repos', {}).get(self.app.config.data.get('repo', ''), {}).get('path', '')
         )
@@ -87,8 +83,6 @@ class RepoPathInput(ValidatedInput):
 
 class GitHubUserInput(ValidatedInput):
     def on_mount(self) -> None:
-        super().on_mount()
-
         self.value = DefaultValue(self.app.config.data.get('github', {}).get('user', ''))
 
     def validate_user_input(self, value: object):
@@ -107,8 +101,6 @@ class GitHubTokenInput(ValidatedInput):
         super().__init__(*args, **kwargs)
 
     def on_mount(self) -> None:
-        super().on_mount()
-
         self.value = DefaultValue(self.app.config.data.get('github', {}).get('token', ''))
 
     def validate_user_input(self, value: object):
@@ -123,8 +115,6 @@ class GitHubTokenInput(ValidatedInput):
 
 class JiraEmailInput(ValidatedInput):
     def on_mount(self) -> None:
-        super().on_mount()
-
         self.value = DefaultValue(self.app.config.data.get('jira', {}).get('email', ''))
 
     def validate_user_input(self, value: object):
@@ -143,8 +133,6 @@ class JiraTokenInput(ValidatedInput):
         super().__init__(*args, **kwargs)
 
     def on_mount(self) -> None:
-        super().on_mount()
-
         self.value = DefaultValue(self.app.config.data.get('jira', {}).get('token', ''))
 
     def validate_user_input(self, value: object):
