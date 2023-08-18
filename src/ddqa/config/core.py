@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 class Config:
     def __init__(self, data: dict[str, Any]):
-        self.__data = data
+        self.__data = TypeResilientDict(data)
 
     @property
     def data(self) -> dict[str, Any]:
@@ -75,3 +75,18 @@ class Config:
 
         data['repos'] = repos
         return ReposConfig(**data).repos
+
+
+class TypeResilientDict(dict):
+    """A `dict` whose `get` method also returns the default value when the key is not
+    hashable, intended to make it configs with invalid types easier to navigate.
+    """
+
+    def get(self, key: Any, default: Any = None) -> Any:
+        try:
+            value = super().get(key, default)
+            if isinstance(value, dict):
+                return TypeResilientDict(value)
+            return value
+        except TypeError:
+            return default

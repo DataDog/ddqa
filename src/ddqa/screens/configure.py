@@ -8,7 +8,7 @@ from textual.binding import Binding
 from textual.containers import Container
 from textual.screen import Screen
 from textual.widget import Widget
-from textual.widgets import Button, Header, Input, Label, TextLog
+from textual.widgets import Button, Header, Input, Label, RichLog
 
 from ddqa.utils.errors import error_tree
 from ddqa.widgets.input import LabeledInput
@@ -165,7 +165,7 @@ class ConfigurationInput(Widget):
         height: auto;
     }
 
-    ConfigurationInput > TextLog {
+    ConfigurationInput > RichLog {
         height: 100%;
         scrollbar-gutter: stable;
     }
@@ -181,7 +181,7 @@ class ConfigurationInput(Widget):
             LabeledInput(Label('Jira token:'), JiraTokenInput()),
             id='input-box',
         )
-        yield TextLog()
+        yield RichLog()
         yield Button('Save', variant='primary', disabled=True)
 
     async def on_button_pressed(self, _event: Button.Pressed) -> None:
@@ -203,7 +203,7 @@ class ConfigurationInput(Widget):
             await self.app.switch_screen(list(self.app._installed_screens)[0])
 
     def on_mount(self) -> None:
-        text_log = self.query_one(TextLog)
+        text_log = self.query_one(RichLog)
         errors = self.app.config_errors()
         if errors:
             text_log.write(error_tree(errors), shrink=False)
@@ -241,7 +241,7 @@ class ConfigureScreen(Screen):
         )
 
     def on_input_changed(self, _event: Input.Changed) -> None:
-        text_log = self.query_one(TextLog)
+        text_log = self.query_one(RichLog)
         button = self.query_one(Button)
 
         text_log.clear()
