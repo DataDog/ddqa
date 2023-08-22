@@ -31,8 +31,7 @@ dependencies = [
   "platformdirs",
   "pydantic<2",
   "rich",
-  "textual~=0.21.0",
-  "textual-autocomplete>=2.1.0b0",
+  "textual~=0.24.0",
   "tomli-w",
 ]
 

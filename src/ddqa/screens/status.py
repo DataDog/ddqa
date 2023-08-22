@@ -16,8 +16,7 @@ from textual.binding import Binding
 from textual.containers import Container, HorizontalScroll, VerticalScroll
 from textual.coordinate import Coordinate
 from textual.screen import Screen
-from textual.widgets import Button, DataTable, Header, Input, Label, RadioButton, RadioSet
-from textual_autocomplete import AutoComplete, Dropdown, DropdownItem
+from textual.widgets import Button, DataTable, Header, Label, RadioButton, RadioSet, Select
 
 from ddqa.utils.network import ResponsiveNetworkClient
 from ddqa.utils.time import format_elapsed_time
@@ -36,10 +35,6 @@ class IssueFilter(ABC):
     @property
     def issues(self) -> dict[str, dict[str, JiraIssue]]:
         return self.__issues
-
-    @cached_property
-    def dropdown_items(self) -> dict[str, DropdownItem]:
-        return {filter_key: DropdownItem(filter_key) for filter_key in sorted(self.issues, key=str.casefold)}
 
     def add(self, filter_key: str, issue: JiraIssue):
         self.issues.setdefault(filter_key, {})[issue.key] = issue
@@ -63,11 +58,11 @@ class MemberIssueFilter(IssueFilter):
                 issues[old_issue.key] = new_issue
 
 
-class FilterAutoComplete(AutoComplete):
+class FilterSelect(Select):
     def __init__(self, issue_filter: IssueFilter):
         self.__issue_filter = issue_filter
 
-        super().__init__(Input(), Dropdown(items=list(self.__issue_filter.dropdown_items.values())))
+        super().__init__((issue, issue) for issue in (self.__issue_filter.issues))
 
     @property
     def issue_filter(self) -> IssueFilter:
@@ -429,43 +424,34 @@ class StatusScreen(Screen):
             status.sort_issues()
 
         await self.sidebar.options.mount(
-            HorizontalScroll(LabeledBox(' Team ', FilterAutoComplete(self.team_filter)), classes='issue-filter')
+            HorizontalScroll(LabeledBox(' Team ', FilterSelect(self.team_filter)), classes='issue-filter')
         )
         await self.sidebar.options.mount(
-            HorizontalScroll(LabeledBox(' Member ', FilterAutoComplete(self.member_filter)), classes='issue-filter')
+            HorizontalScroll(LabeledBox(' Member ', FilterSelect(self.member_filter)), classes='issue-filter')
         )
         await self.sidebar.options.mount(HorizontalScroll(self.status_changer, id='status-changer'))
 
         self.__update_completion_status()
         self.__refocus()
 
-    async def on_auto_complete_selected(self, event: AutoComplete.Selected) -> None:
-        choice = str(event.item.main)
-        for widget in self.query(Input).results():
-            if widget is not event._sender.input:
-                widget.value = ''
+    async def on_select_changed(self, event: Select.Changed) -> None:
+        choice = event.value
+        # This clears widgets other than the one that has changed, given that filters can't be combined
+        for widget in self.query(Select).results():
+            if widget is not event.select:
+                widget.value = None
 
         for status in self.statuses.values():
             status.clear_issues()
 
-        for issue in event._sender.issue_filter.issues[choice].values():
-            self.statuses[self.get_qa_status(issue)].add_issue(issue)
+        if choice is None:
+            # Display all issues when no filter is selected
+            for keyed_issues in self.team_filter.issues.values():
+                for issue in keyed_issues.values():
+                    self.statuses[self.get_qa_status(issue)].add_issue(issue)
 
-        for status in self.statuses.values():
-            status.sort_issues()
-
-        self.__update_completion_status()
-        self.__refocus()
-
-    async def on_input_submitted(self, event: Input.Submitted) -> None:
-        if event.value:
-            return
-
-        for status in self.statuses.values():
-            status.clear_issues()
-
-        for keyed_issues in self.team_filter.issues.values():
-            for issue in keyed_issues.values():
+        else:
+            for issue in event._sender.issue_filter.issues[choice].values():
                 self.statuses[self.get_qa_status(issue)].add_issue(issue)
 
         for status in self.statuses.values():
