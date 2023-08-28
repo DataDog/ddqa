@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2023-present Datadog, Inc. <dev@datadoghq.com>
 #
 # SPDX-License-Identifier: MIT
-from textual.widgets import Button, Input, TextLog
+from textual.widgets import Button, Input, RichLog
 
 from ddqa.screens.configure import (
     GitHubTokenInput,
@@ -31,7 +31,7 @@ async def test_default_state(app, helpers):
         save_button = app.query_one(Button)
         assert save_button.disabled is True
 
-        text_log = app.query_one(TextLog)
+        text_log = app.query_one(RichLog)
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
             """
             Configuration errors
@@ -63,7 +63,7 @@ class TestRepoNameInput:
         async with app.run_test():
             input_box = app.query_one(RepoNameInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert not app.config.data['repo']
             assert not input_box.value
@@ -89,7 +89,7 @@ class TestRepoNameInput:
         async with app.run_test():
             input_box = app.query_one(RepoNameInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['repo'] == ['foo']
             assert not input_box.value
@@ -115,7 +115,7 @@ class TestRepoNameInput:
         async with app.run_test():
             input_box = app.query_one(RepoNameInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['repo'] == 'foo'
             assert input_box.value == 'foo'
@@ -141,7 +141,7 @@ class TestRepoNameInput:
         async with app.run_test() as pilot:
             input_box = app.query_one(RepoNameInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert not app.config.data['repo']
             assert not input_box.value
@@ -178,7 +178,7 @@ class TestRepoPathInput:
         async with app.run_test():
             input_box = app.query_one(RepoPathInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['repos'] == {'agent': {}}
             assert not input_box.value
@@ -205,7 +205,7 @@ class TestRepoPathInput:
         async with app.run_test():
             input_box = app.query_one(RepoPathInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['repos'] == {'agent': {'path': ['foo']}}
             assert not input_box.value
@@ -233,7 +233,7 @@ class TestRepoPathInput:
         async with app.run_test():
             input_box = app.query_one(RepoPathInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['repos'] == {'agent': {'path': path}}
             assert input_box.value == path
@@ -261,7 +261,7 @@ class TestRepoPathInput:
         async with app.run_test() as pilot:
             input_box = app.query_one(RepoPathInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['repos'] == {'agent': {}}
             assert not input_box.value
@@ -299,7 +299,7 @@ class TestGitHubUserInput:
         async with app.run_test():
             input_box = app.query_one(GitHubUserInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['github'] == {'token': 'bar'}
             assert not input_box.value
@@ -326,7 +326,7 @@ class TestGitHubUserInput:
         async with app.run_test():
             input_box = app.query_one(GitHubUserInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['github'] == {'user': ['foo'], 'token': 'bar'}
             assert not input_box.value
@@ -353,7 +353,7 @@ class TestGitHubUserInput:
         async with app.run_test() as pilot:
             input_box = app.query_one(GitHubUserInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['github'] == {'token': 'bar'}
             assert not input_box.value
@@ -390,7 +390,7 @@ class TestGitHubTokenInput:
         async with app.run_test():
             input_box = app.query_one(GitHubTokenInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['github'] == {'user': 'foo'}
             assert input_box.password is True
@@ -418,7 +418,7 @@ class TestGitHubTokenInput:
         async with app.run_test():
             input_box = app.query_one(GitHubTokenInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['github'] == {'user': 'foo', 'token': ['bar']}
             assert input_box.password is True
@@ -446,7 +446,7 @@ class TestGitHubTokenInput:
         async with app.run_test() as pilot:
             input_box = app.query_one(GitHubTokenInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['github'] == {'user': 'foo'}
             assert input_box.password is True
@@ -485,7 +485,7 @@ class TestJiraEmailInput:
         async with app.run_test():
             input_box = app.query_one(JiraEmailInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['jira'] == {'token': 'bar'}
             assert not input_box.value
@@ -512,7 +512,7 @@ class TestJiraEmailInput:
         async with app.run_test():
             input_box = app.query_one(JiraEmailInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['jira'] == {'email': ['foo'], 'token': 'bar'}
             assert not input_box.value
@@ -539,7 +539,7 @@ class TestJiraEmailInput:
         async with app.run_test() as pilot:
             input_box = app.query_one(JiraEmailInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['jira'] == {'token': 'bar'}
             assert not input_box.value
@@ -576,7 +576,7 @@ class TestJiraTokenInput:
         async with app.run_test():
             input_box = app.query_one(JiraTokenInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['jira'] == {'email': 'foo'}
             assert input_box.password is True
@@ -604,7 +604,7 @@ class TestJiraTokenInput:
         async with app.run_test():
             input_box = app.query_one(JiraTokenInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['jira'] == {'email': 'foo', 'token': ['bar']}
             assert input_box.password is True
@@ -632,7 +632,7 @@ class TestJiraTokenInput:
         async with app.run_test() as pilot:
             input_box = app.query_one(JiraTokenInput)
             save_button = app.query_one(Button)
-            text_log = app.query_one(TextLog)
+            text_log = app.query_one(RichLog)
 
             assert app.config.data['jira'] == {'email': 'foo'}
             assert input_box.password is True

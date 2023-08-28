@@ -8,7 +8,7 @@ from textual.binding import Binding
 from textual.containers import Container
 from textual.screen import Screen
 from textual.widget import Widget
-from textual.widgets import Button, Header, Label, TextLog
+from textual.widgets import Button, Header, Label, RichLog
 
 from ddqa.utils.network import ResponsiveNetworkClient
 from ddqa.widgets.static import Placeholder
@@ -21,7 +21,7 @@ class InteractiveSidebar(Widget):
         height: 1fr;
     }
 
-    InteractiveSidebar > TextLog {
+    InteractiveSidebar > RichLog {
         height: 8fr;
     }
 
@@ -39,7 +39,7 @@ class InteractiveSidebar(Widget):
 
     def compose(self) -> ComposeResult:
         yield Label()
-        yield TextLog()
+        yield RichLog()
         yield Button('Exit' if self.__manual_execution else 'Continue', variant='primary', disabled=True)
 
     def on_mount(self) -> None:
@@ -47,7 +47,7 @@ class InteractiveSidebar(Widget):
 
     async def __on_mount(self) -> None:
         status = self.query_one(Label)
-        text_log = self.query_one(TextLog)
+        text_log = self.query_one(RichLog)
         button = self.query_one(Button)
 
         async with ResponsiveNetworkClient(status) as client:

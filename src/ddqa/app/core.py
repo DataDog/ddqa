@@ -71,7 +71,7 @@ class Application(App):
         from ddqa.models.jira import JiraConfig
         from ddqa.utils.jira import JiraClient
 
-        jira_config = JiraConfig(**self.github.load_global_config(self.repo.global_config_source))
+        jira_config = JiraConfig(**self.github.load_global_config(str(self.repo.global_config_source)))
         return JiraClient(jira_config, self.config.auth.jira, self.repo, self.cache_dir)
 
     @cached_property
@@ -137,7 +137,7 @@ class Application(App):
         self.__console.print(*args, **kwargs)
 
     def needs_syncing(self) -> bool:
-        return not self.github.load_global_config(self.repo.global_config_source) or not any(
+        return not self.github.load_global_config(str(self.repo.global_config_source)) or not any(
             self.github.cache_dir_team_members.iterdir()
         )
 

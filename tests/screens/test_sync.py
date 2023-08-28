@@ -6,7 +6,7 @@ from unittest import mock
 
 import pytest
 from httpx import Request, Response
-from textual.widgets import Button, Label, TextLog
+from textual.widgets import Button, Label, RichLog
 
 from ddqa.screens.sync import InteractiveSidebar, SyncScreen
 
@@ -37,7 +37,7 @@ async def test_response_error(app, git_repository, helpers, mocker):
         status = sidebar.query_one(Label)
         assert '500' in str(status.render())
 
-        text_log = sidebar.query_one(TextLog)
+        text_log = sidebar.query_one(RichLog)
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
             f"""
             Fetching global config from: {app.repo.global_config_source}
@@ -62,7 +62,7 @@ async def test_parsing_error(app, git_repository, helpers, mocker):
         status = sidebar.query_one(Label)
         assert str(status.render()) == 'Unable to parse TOML source'
 
-        text_log = sidebar.query_one(TextLog)
+        text_log = sidebar.query_one(RichLog)
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
             f"""
             Fetching global config from: {app.repo.global_config_source}
@@ -87,7 +87,7 @@ async def test_no_members(app, git_repository, helpers, mocker):
         status = sidebar.query_one(Label)
         assert str(status.render()) == 'No members found in TOML source'
 
-        text_log = sidebar.query_one(TextLog)
+        text_log = sidebar.query_one(RichLog)
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
             f"""
             Fetching global config from: {app.repo.global_config_source}
@@ -145,7 +145,7 @@ async def test_save_members(app, git_repository, helpers, mocker):
         status = sidebar.query_one(Label)
         assert '500' in str(status.render())
 
-        text_log = sidebar.query_one(TextLog)
+        text_log = sidebar.query_one(RichLog)
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
             f"""
             Fetching global config from: {app.repo.global_config_source}
@@ -228,7 +228,7 @@ async def test_save_teams(app, git_repository, helpers, mocker):
         status = sidebar.query_one(Label)
         assert not str(status.render())
 
-        text_log = sidebar.query_one(TextLog)
+        text_log = sidebar.query_one(RichLog)
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
             f"""
             Fetching global config from: {app.repo.global_config_source}

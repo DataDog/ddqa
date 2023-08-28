@@ -8,7 +8,7 @@ from textual.binding import Binding
 from textual.containers import Container
 from textual.screen import Screen
 from textual.widget import Widget
-from textual.widgets import Button, Header, Input, Label, TextLog
+from textual.widgets import Button, Header, Input, Label, RichLog
 
 from ddqa.utils.errors import error_tree
 from ddqa.widgets.input import LabeledInput
@@ -39,8 +39,6 @@ class RepoNameInput(ValidatedInput):
         self.__added = ''
 
     def on_mount(self) -> None:
-        super().on_mount()
-
         self.value = DefaultValue(self.app.config.data.get('repo', ''))
 
     def validate_user_input(self, value: object):
@@ -71,8 +69,6 @@ class RepoNameInput(ValidatedInput):
 
 class RepoPathInput(ValidatedInput):
     def on_mount(self) -> None:
-        super().on_mount()
-
         self.value = DefaultValue(
             self.app.config.data.get('repos', {}).get(self.app.config.data.get('repo', ''), {}).get('path', '')
         )
@@ -87,8 +83,6 @@ class RepoPathInput(ValidatedInput):
 
 class GitHubUserInput(ValidatedInput):
     def on_mount(self) -> None:
-        super().on_mount()
-
         self.value = DefaultValue(self.app.config.data.get('github', {}).get('user', ''))
 
     def validate_user_input(self, value: object):
@@ -107,8 +101,6 @@ class GitHubTokenInput(ValidatedInput):
         super().__init__(*args, **kwargs)
 
     def on_mount(self) -> None:
-        super().on_mount()
-
         self.value = DefaultValue(self.app.config.data.get('github', {}).get('token', ''))
 
     def validate_user_input(self, value: object):
@@ -123,8 +115,6 @@ class GitHubTokenInput(ValidatedInput):
 
 class JiraEmailInput(ValidatedInput):
     def on_mount(self) -> None:
-        super().on_mount()
-
         self.value = DefaultValue(self.app.config.data.get('jira', {}).get('email', ''))
 
     def validate_user_input(self, value: object):
@@ -143,8 +133,6 @@ class JiraTokenInput(ValidatedInput):
         super().__init__(*args, **kwargs)
 
     def on_mount(self) -> None:
-        super().on_mount()
-
         self.value = DefaultValue(self.app.config.data.get('jira', {}).get('token', ''))
 
     def validate_user_input(self, value: object):
@@ -177,7 +165,7 @@ class ConfigurationInput(Widget):
         height: auto;
     }
 
-    ConfigurationInput > TextLog {
+    ConfigurationInput > RichLog {
         height: 100%;
         scrollbar-gutter: stable;
     }
@@ -193,7 +181,7 @@ class ConfigurationInput(Widget):
             LabeledInput(Label('Jira token:'), JiraTokenInput()),
             id='input-box',
         )
-        yield TextLog()
+        yield RichLog()
         yield Button('Save', variant='primary', disabled=True)
 
     async def on_button_pressed(self, _event: Button.Pressed) -> None:
@@ -215,7 +203,7 @@ class ConfigurationInput(Widget):
             await self.app.switch_screen(list(self.app._installed_screens)[0])
 
     def on_mount(self) -> None:
-        text_log = self.query_one(TextLog)
+        text_log = self.query_one(RichLog)
         errors = self.app.config_errors()
         if errors:
             text_log.write(error_tree(errors), shrink=False)
@@ -253,7 +241,7 @@ class ConfigureScreen(Screen):
         )
 
     def on_input_changed(self, _event: Input.Changed) -> None:
-        text_log = self.query_one(TextLog)
+        text_log = self.query_one(RichLog)
         button = self.query_one(Button)
 
         text_log.clear()
