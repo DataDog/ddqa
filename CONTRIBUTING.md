@@ -13,7 +13,7 @@ about what you'd like to see. At a minimum, please provide:
 * A description of how it might be used or behave
 * Links to any important resources (e.g. GitHub repos, websites, screenshots, specifications, diagrams)
 
-The following addtions are more than welcome:
+The following additions are more than welcome:
 
 * A description of how it could be accomplished
 * Code snippets that might demonstrate its use or implementation
