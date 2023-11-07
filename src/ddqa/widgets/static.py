@@ -19,7 +19,7 @@ class Placeholder(Static):
 
     def on_mount(self):
         import shutil
-        from importlib.resources import read_binary
+        from importlib.resources import files
         from io import BytesIO
 
         from PIL import Image
@@ -28,7 +28,7 @@ class Placeholder(Static):
         ascii_chars = '@S#%?*+;:, '
         buckets = 256 // (len(ascii_chars) - 1)
 
-        with BytesIO(read_binary('ddqa.data', 'logo.png')) as buffer, Image.open(buffer) as raw_image:
+        with BytesIO(files('ddqa.data').joinpath('logo.png').read_bytes()) as buffer, Image.open(buffer) as raw_image:
             old_width, old_height = raw_image.size
             new_width = int(shutil.get_terminal_size()[0] // self.__width_factor)
             new_height = int(old_height // (old_width / (new_width * self.__height_scale)))
