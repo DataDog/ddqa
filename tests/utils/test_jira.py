@@ -10,7 +10,7 @@ import pytest
 from httpx import Request, Response
 from textual.widgets import Static
 
-from ddqa.models.github import TestCandidate
+from ddqa.models.github import TestCandidate as Candidate
 from ddqa.utils.network import ResponsiveNetworkClient
 
 
@@ -156,7 +156,7 @@ async def test_create_issues(app, git_repository, helpers, mocker):
 
     created_issues = await app.jira.create_issues(
         ResponsiveNetworkClient(Static()),
-        TestCandidate(
+        Candidate(
             **{
                 'id': '123',
                 'title': 'title123',
@@ -675,7 +675,7 @@ async def test_rate_limit_handling(app, git_repository, mocker):
     start = time.time()
     created_issues = await app.jira.create_issues(
         ResponsiveNetworkClient(Static()),
-        TestCandidate(
+        Candidate(
             **{
                 'id': '123',
                 'title': 'title123',
