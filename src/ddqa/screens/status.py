@@ -10,6 +10,7 @@ from decimal import Decimal
 from functools import cache, cached_property
 from typing import TYPE_CHECKING
 
+from sortedcontainers import SortedDict
 from textual import events
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -30,7 +31,7 @@ COMPLETION_PRECISION = Decimal('0.00')
 
 class IssueFilter(ABC):
     def __init__(self) -> None:
-        self.__issues: dict[str, dict[str, JiraIssue]] = {}
+        self.__issues: dict[str, dict[str, JiraIssue]] = SortedDict()
 
     @property
     def issues(self) -> dict[str, dict[str, JiraIssue]]:
