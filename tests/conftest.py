@@ -159,6 +159,7 @@ def git_repository(isolation, temp_dir):
 
     try:
         subprocess.run(['git', 'init'], **options)
+        subprocess.run(['git', 'config', '--local', 'commit.gpgsign', 'false'], **options)
         subprocess.run(['git', 'config', '--local', 'user.name', 'foo'], **options)
         subprocess.run(['git', 'config', '--local', 'user.email', 'foo@bar.baz'], **options)
         subprocess.run(['git', 'commit', '-m', 'init', '--allow-empty'], **options)
