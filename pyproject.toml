@@ -31,7 +31,6 @@ dependencies = [
   "platformdirs",
   "pydantic<2",
   "rich",
-  "sortedcontainers",
   "textual>=0.32.0",
   "tomli-w",
 ]
