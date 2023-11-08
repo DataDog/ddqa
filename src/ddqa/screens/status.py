@@ -34,10 +34,10 @@ class IssueFilter(ABC):
 
     @property
     def issues(self) -> dict[str, dict[str, JiraIssue]]:
-        return dict(sorted(self.__issues.items()))
+        return self.__issues
 
     def add(self, filter_key: str, issue: JiraIssue):
-        self.__issues.setdefault(filter_key, {})[issue.key] = issue
+        self.issues.setdefault(filter_key, {})[issue.key] = issue
 
     @abstractmethod
     def update(self, old_issue: JiraIssue, new_issue: JiraIssue):
@@ -62,7 +62,7 @@ class FilterSelect(Select):
     def __init__(self, issue_filter: IssueFilter):
         self.__issue_filter = issue_filter
 
-        super().__init__((issue, issue) for issue in (self.__issue_filter.issues))
+        super().__init__((issue, issue) for issue in sorted(self.__issue_filter.issues))
 
     @property
     def issue_filter(self) -> IssueFilter:

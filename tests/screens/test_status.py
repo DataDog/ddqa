@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 from ddqa.models.jira import JiraIssue
-from ddqa.screens.status import IssueFilter
+from ddqa.screens.status import FilterSelect, IssueFilter
 
 
 class DummyIssueFilter(IssueFilter):
@@ -10,11 +10,13 @@ class DummyIssueFilter(IssueFilter):
         pass
 
 
-class TestIssueFilter:
+class TestFilterSelect:
     def test_sorted_by_filter_key(self):
         dummy_filter = DummyIssueFilter()
         for issue_id in ('c', 'b', 'z', 'a'):
             issue = JiraIssue.construct(key=f'key-{issue_id}')
             dummy_filter.add(issue_id, issue)
 
-        assert list(dummy_filter.issues.keys()) == sorted(dummy_filter.issues.keys())
+        select = FilterSelect(dummy_filter)
+
+        assert select._initial_options == [('a', 'a'), ('b', 'b'), ('c', 'c'), ('z', 'z')]
