@@ -473,6 +473,11 @@ class StatusScreen(Screen):
         current_status = self.get_qa_status(issue)
         self.status_changer.radio_buttons[current_status].value = True
 
+        disabled_radio_button = issue.assignee is None or issue.assignee.id != self.current_user_id
+
+        for radio_button in self.status_changer.radio_buttons.values():
+            radio_button.disabled = disabled_radio_button
+
     async def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
         current_issue = self.cached_issues[str(self.issues.label.render()).strip()]
         current_status = self.get_qa_status(current_issue)

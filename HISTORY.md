@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ***Fixed:***
 
 - Fix Github API search query
+- Disable the radio button in the status screen if the user is not assigned to the card
 
 ## 0.4.0 - 2023-06-21
 
