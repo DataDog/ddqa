@@ -62,7 +62,7 @@ class FilterSelect(Select):
     def __init__(self, issue_filter: IssueFilter):
         self.__issue_filter = issue_filter
 
-        super().__init__((issue, issue) for issue in (self.__issue_filter.issues))
+        super().__init__((issue, issue) for issue in sorted(self.__issue_filter.issues))
 
     @property
     def issue_filter(self) -> IssueFilter:
