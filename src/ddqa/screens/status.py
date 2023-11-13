@@ -62,7 +62,7 @@ class FilterSelect(Select):
     def __init__(self, issue_filter: IssueFilter):
         self.__issue_filter = issue_filter
 
-        super().__init__((issue, issue) for issue in (self.__issue_filter.issues))
+        super().__init__((issue, issue) for issue in sorted(self.__issue_filter.issues))
 
     @property
     def issue_filter(self) -> IssueFilter:
@@ -472,6 +472,11 @@ class StatusScreen(Screen):
 
         current_status = self.get_qa_status(issue)
         self.status_changer.radio_buttons[current_status].value = True
+
+        disabled_radio_button = issue.assignee is None or issue.assignee.id != self.current_user_id
+
+        for radio_button in self.status_changer.radio_buttons.values():
+            radio_button.disabled = disabled_radio_button
 
     async def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
         current_issue = self.cached_issues[str(self.issues.label.render()).strip()]

@@ -123,7 +123,7 @@ class GitHubRepository:
             client,
             self.ISSUE_SEARCH_API,
             # https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests
-            params={'q': f'sha:{commit.hash}+repo:{self.repo_id}'},
+            params={'q': f'sha:{commit.hash} repo:{self.repo_id}'},
         )
         pr_data = response.json()
 
