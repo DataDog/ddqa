@@ -532,14 +532,6 @@ class StatusScreen(Screen):
         self.status_changer.button.disabled = True
         self.__update_completion_status()
 
-    def __get_status_label(self, labels: list[str]) -> str:
-        for label in labels:
-            if label in self.statuses:
-                return label
-
-        message = f'Unknown status: {labels}'
-        raise ValueError(message)
-
     def __refocus(self) -> None:
         # Focus on the first available row of the first table with entries
         focused = False
@@ -554,10 +546,7 @@ class StatusScreen(Screen):
                 status.table.show_cursor = False
 
     def __update_completion_status(self) -> None:
-        counts = []
-        for status in self.statuses.values():
-            counts.append(len(status.table.rows))
-
+        counts = [len(status.table.rows) for status in self.statuses.values()]
         total = sum(counts)
         done = counts[-1]
 

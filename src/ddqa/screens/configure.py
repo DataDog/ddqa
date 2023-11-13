@@ -204,8 +204,7 @@ class ConfigurationInput(Widget):
 
     def on_mount(self) -> None:
         text_log = self.query_one(RichLog)
-        errors = self.app.config_errors()
-        if errors:
+        if errors := self.app.config_errors():
             text_log.write(error_tree(errors), shrink=False)
 
 

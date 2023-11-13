@@ -41,7 +41,8 @@ class ResponsiveNetworkClient(httpx.AsyncClient):
 
         self.status.update(original_status)
 
-    def check_status(self, response: httpx.Response, **kwargs) -> None:
+    @staticmethod
+    def check_status(response: httpx.Response, **kwargs) -> None:
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
