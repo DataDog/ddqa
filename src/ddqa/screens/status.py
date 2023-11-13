@@ -147,9 +147,10 @@ class StatusChanger(LabeledBox):
 
 
 class StatusTable(DataTable):
-    def __init__(self):
+    def __init__(self, qa_statuses: list[str]):
         super().__init__()
 
+        self._qa_statuses = qa_statuses
         self.cursor_type = 'row'
         self.show_cursor = False
         self.add_column('Issue')
@@ -160,6 +161,32 @@ class StatusTable(DataTable):
         # This makes it so that only a single table looks active at a time, giving it a "focus" effect
         for data_table in self.app.query(StatusTable).results():
             data_table.show_cursor = data_table is self
+
+    def add_issue(self, issue: JiraIssue):
+        super().add_row(
+            issue.key,
+            issue.assignee.name if issue.assignee is not None else '',
+            get_timedelta(issue.updated),
+            key=issue.key,
+        )
+
+    def sort_issues(self):
+        super().sort('update-time', reverse=True)
+
+
+class DoneStatusTable(StatusTable):
+    def __init__(self, qa_statuses: list[str]):
+        super().__init__(qa_statuses)
+        self.add_column('Info')
+
+    def add_issue(self, issue: JiraIssue):
+        super().add_row(
+            issue.key,
+            issue.assignee.name if issue.assignee is not None else '',
+            get_timedelta(issue.updated),
+            issue.status.name if issue.status.name not in self._qa_statuses else '',
+            key=issue.key,
+        )
 
 
 class Status(LabeledBox):
@@ -180,9 +207,15 @@ class Status(LabeledBox):
     }
     """
 
-    def __init__(self, name: str):
+    @staticmethod
+    def get_statuses_from_qa_statuses(qa_statuses: list[str]) -> dict[str, Status]:
+        statuses = {status: Status(status, qa_statuses) for status in qa_statuses[:-1]}
+        statuses[qa_statuses[-1]] = Status(qa_statuses[-1], qa_statuses, DoneStatusTable)
+        return statuses
+
+    def __init__(self, name: str, qa_statuses: list[str], status_table_class: type[StatusTable] = StatusTable):
         self.__name = name
-        self.__table = StatusTable()
+        self.__table = status_table_class(qa_statuses)
 
         super().__init__(f' {self.__name} ', self.__table)
 
@@ -195,15 +228,10 @@ class Status(LabeledBox):
         return self.__table
 
     def add_issue(self, issue: JiraIssue) -> None:
-        self.table.add_row(
-            issue.key,
-            issue.assignee.name if issue.assignee is not None else '',
-            get_timedelta(issue.updated),
-            key=issue.key,
-        )
+        self.table.add_issue(issue)
 
     def sort_issues(self) -> None:
-        self.table.sort('update-time', reverse=True)
+        self.table.sort_issues()
 
     def clear_issues(self) -> None:
         self.table.clear()
@@ -337,13 +365,17 @@ class StatusScreen(Screen):
     def initial_status(self) -> str:
         return self.app.repo.qa_statuses[0]
 
+    @property
+    def final_status(self) -> str:
+        return self.app.repo.qa_statuses[-1]
+
     @cached_property
     def cached_issues(self) -> dict[str, JiraIssue]:
         return {}
 
     @cached_property
     def statuses(self) -> dict[str, Status]:
-        return {status: Status(status) for status in self.app.repo.qa_statuses}
+        return Status.get_statuses_from_qa_statuses(self.app.repo.qa_statuses)
 
     @cached_property
     def sidebar(self) -> OptionsSidebar:
@@ -360,12 +392,9 @@ class StatusScreen(Screen):
     @cached_property
     def team_statuses(self) -> dict[str, dict[str, str]]:
         team_statuses: dict[str, dict[str, str]] = {}
-        for team, status_map in self.app.qa_statuses.items():
-            statuses = {}
-            for qa_status, team_status in status_map.items():
-                statuses[team_status] = qa_status
 
-            team_statuses[team] = statuses
+        for team, status_map in self.app.qa_statuses.items():
+            team_statuses[team] = {team_status: qa_status for qa_status, team_status in status_map.items()}
 
         return team_statuses
 
@@ -384,7 +413,7 @@ class StatusScreen(Screen):
         return ''
 
     def get_qa_status(self, issue: JiraIssue) -> str:
-        return self.team_statuses[self.get_team(issue)].get(issue.status.name, self.initial_status)
+        return self.team_statuses[self.get_team(issue)].get(issue.status.name, self.final_status)
 
     def compose(self) -> ComposeResult:
         yield Header()
