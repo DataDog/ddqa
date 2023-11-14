@@ -115,7 +115,7 @@ class CandidateListing(DataTable):
 
                 shown_index = str(index + 1)
                 self.sidebar.label.update(f' {shown_index} / {total - ignored} ')
-                self.add_row(candidate.status_indicator, escape(model.title), key=str(index))
+                self.add_row(candidate.status_indicator, escape(model.title.strip()), key=str(index))
                 num_candidates += 1
 
         if not num_candidates:
