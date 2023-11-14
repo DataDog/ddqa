@@ -92,7 +92,9 @@ class TestCandidates:
         )
         assert response_mock.call_args_list == [
             mocker.call(
-                'https://api.github.com/search/issues', params={'q': 'sha:hash9000 repo:org/repo'}, auth=('foo', 'bar')
+                'https://api.github.com/search/issues',
+                params={'q': 'sha:hash9000 repo:org/repo is:merged'},
+                auth=('foo', 'bar'),
             ),
             mocker.call('https://api.github.com/repos/org/repo/pulls/123/reviews', auth=('foo', 'bar')),
         ]
@@ -131,7 +133,9 @@ class TestCandidates:
         )
         assert response_mock.call_args_list == [
             mocker.call(
-                'https://api.github.com/search/issues', params={'q': 'sha:hash9000 repo:org/repo'}, auth=('foo', 'bar')
+                'https://api.github.com/search/issues',
+                params={'q': 'sha:hash9000 repo:org/repo is:merged'},
+                auth=('foo', 'bar'),
             ),
         ]
 
@@ -168,7 +172,9 @@ class TestCandidates:
         )
         assert response_mock.call_args_list == [
             mocker.call(
-                'https://api.github.com/search/issues', params={'q': 'sha:hash1 repo:org/repo'}, auth=('foo', 'bar')
+                'https://api.github.com/search/issues',
+                params={'q': 'sha:hash1 repo:org/repo is:merged'},
+                auth=('foo', 'bar'),
             ),
         ]
         assert candidate.dict() == {
@@ -232,7 +238,9 @@ class TestCandidates:
         )
         assert response_mock.call_args_list == [
             mocker.call(
-                'https://api.github.com/search/issues', params={'q': 'sha:hash2 repo:org/repo'}, auth=('foo', 'bar')
+                'https://api.github.com/search/issues',
+                params={'q': 'sha:hash2 repo:org/repo is:merged'},
+                auth=('foo', 'bar'),
             ),
             mocker.call('https://api.github.com/repos/org/repo/pulls/123/reviews', auth=('foo', 'bar')),
         ]
@@ -264,7 +272,9 @@ class TestCandidates:
         )
         assert response_mock.call_args_list == [
             mocker.call(
-                'https://api.github.com/search/issues', params={'q': 'sha:hash3 repo:org/repo'}, auth=('foo', 'bar')
+                'https://api.github.com/search/issues',
+                params={'q': 'sha:hash3 repo:org/repo is:merged'},
+                auth=('foo', 'bar'),
             ),
         ]
         assert candidate.dict() == {
@@ -572,7 +582,9 @@ async def test_rate_limit_handling(app, git_repository, mocker):
 
     assert response_mock.call_args_list == [
         mocker.call(
-            'https://api.github.com/search/issues', params={'q': 'sha:hash9000 repo:org/repo'}, auth=('foo', 'bar')
+            'https://api.github.com/search/issues',
+            params={'q': 'sha:hash9000 repo:org/repo is:merged'},
+            auth=('foo', 'bar'),
         ),
         mocker.call('https://api.github.com/repos/org/repo/pulls/123/reviews', auth=('foo', 'bar')),
         mocker.call('https://api.github.com/repos/org/repo/pulls/123/reviews', auth=('foo', 'bar')),

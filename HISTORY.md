@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Alphabetically sort the teams and members in the status screen
 - Consider unknown Jira statuses as Done and add an extra column in the Done box to specify the current status of this card
 - Strip the PR title in the `create` screen
+- Only retrieve merged PRs when fetching them from GitHub
 
 ## 0.4.0 - 2023-06-21
 
