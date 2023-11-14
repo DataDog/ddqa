@@ -558,7 +558,7 @@ class TestAssignment:
                 'number': '1',
                 'title': 'title1',
                 'user': {'login': 'username1'},
-                'labels': [{'name': 'bar-label', 'color': '632ca6'}, {'name': 'baz-label', 'color': '632ca6'}],
+                'labels': [{'name': 'bar-label', 'color': '632ca6'}, {'name': 'bar-label', 'color': '632ca6'}],
                 'body': 'foo1\r\nbar1',
             },
         )
@@ -569,21 +569,19 @@ class TestAssignment:
             sidebar = app.query_one(CandidateSidebar)
             table = sidebar.listing
             num_candidates = len(table.rows)
-            assert num_candidates == 3
-            assert table.get_row_at(0) == ['', 'title2']
-            assert table.get_row_at(1) == ['', 'subject3']
-            assert table.get_row_at(2) == ['', 'title1']
+            assert num_candidates == 2
+            assert table.get_row_at(0) == ['', 'subject3']
+            assert table.get_row_at(1) == ['✓', 'title1']
             assert [c.assigned for c in table.candidates.values()] == [
                 False,
-                False,
-                False,
+                True,
             ]
 
             assert table.cursor_coordinate == Coordinate(0, 0)
 
-            assert str(sidebar.label.render()) == f' 0 / {num_candidates} '
-            assert str(sidebar.status.render()) == 'No candidates assigned'
-            assert sidebar.button.disabled
+            assert str(sidebar.label.render()) == ' 1 / 2 '
+            assert str(sidebar.status.render()) == 'Ready for creation'
+            assert not sidebar.button.disabled
 
             rendering = app.query_one(CandidateRendering)
             assignments = list(rendering.candidate_assignments.query(LabeledSwitch).results())
@@ -606,7 +604,6 @@ class TestCreation:
             },
         )
         repo_config = dict(app.repo.dict())
-        repo_config['ignored_labels'] = ['baz-label']
         repo_config['teams'] = {
             'Foo Baz': {
                 'jira_project': 'FOO',
@@ -762,7 +759,7 @@ class TestCreation:
             await pilot.pause(helpers.ASYNC_WAIT)
 
             assert str(sidebar.status.render()) == 'Finished'
-            assert str(sidebar.label.render()) == f' {num_candidates} / {num_candidates} '
+            assert str(sidebar.label.render()) == ' 3 / 3 '
             assert str(sidebar.button.label) == 'Exit'
 
             # We use the following equality assertions as a way to match the progression of member assignment counts and

@@ -112,6 +112,168 @@ class TestCandidates:
             ],
         }
 
+    async def test_get_candidates(self, app, git_repository, mocker):
+        app.configure(
+            git_repository,
+            caching=True,
+            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        )
+
+        response_mock = mocker.patch(
+            'httpx.AsyncClient.get',
+            side_effect=[
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps(
+                        {
+                            'items': [
+                                {
+                                    'number': '123',
+                                    'title': 'title123',
+                                    'user': {'login': 'username123'},
+                                    'labels': [
+                                        {'name': 'label1', 'color': '632ca6'},
+                                        {'name': 'label2', 'color': '632ca6'},
+                                    ],
+                                    'body': 'foo\r\nbar',
+                                },
+                            ],
+                        },
+                    ),
+                ),
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps(
+                        [
+                            {
+                                'user': {'login': 'username1'},
+                                'author_association': 'MEMBER',
+                            },
+                            {
+                                'user': {'login': 'username2'},
+                                'author_association': 'COLLABORATOR',
+                            },
+                            {
+                                'user': {'login': 'username1'},
+                                'author_association': 'MEMBER',
+                            },
+                        ],
+                    ),
+                ),
+            ],
+        )
+
+        candidates = []
+
+        async for model, index, ignore in app.github.get_candidates(
+            ResponsiveNetworkClient(Static()), [GitCommit(hash='hash9000', subject='subject9000')]
+        ):
+            candidates.append((model, index, ignore))
+
+        assert response_mock.call_args_list == [
+            mocker.call(
+                'https://api.github.com/search/issues',
+                params={'q': 'sha:hash9000 repo:org/repo is:merged'},
+                auth=('foo', 'bar'),
+            ),
+            mocker.call('https://api.github.com/repos/org/repo/pulls/123/reviews', auth=('foo', 'bar')),
+        ]
+
+        assert len(candidates) == 1
+        assert candidates == [
+            (
+                {
+                    'id': '123',
+                    'title': 'title123',
+                    'url': 'https://github.com/org/repo/pull/123',
+                    'user': 'username123',
+                    'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
+                    'body': 'foo\nbar',
+                    'reviewers': [
+                        {'name': 'username1', 'association': 'member'},
+                        {'name': 'username2', 'association': 'collaborator'},
+                    ],
+                },
+                0,
+                0,
+            )
+        ]
+
+    async def test_get_candidates_pr_ignored(self, app, git_repository, mocker):
+        app.configure(
+            git_repository,
+            caching=True,
+            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        )
+
+        response_mock = mocker.patch(
+            'httpx.AsyncClient.get',
+            side_effect=[
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps(
+                        {
+                            'items': [
+                                {
+                                    'number': '123',
+                                    'title': 'title123',
+                                    'user': {'login': 'username123'},
+                                    'labels': [
+                                        {'name': 'label1', 'color': '632ca6'},
+                                        {'name': 'label2', 'color': '632ca6'},
+                                    ],
+                                    'body': 'foo\r\nbar',
+                                },
+                            ],
+                        },
+                    ),
+                ),
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps(
+                        [
+                            {
+                                'user': {'login': 'username1'},
+                                'author_association': 'MEMBER',
+                            },
+                            {
+                                'user': {'login': 'username2'},
+                                'author_association': 'COLLABORATOR',
+                            },
+                            {
+                                'user': {'login': 'username1'},
+                                'author_association': 'MEMBER',
+                            },
+                        ],
+                    ),
+                ),
+            ],
+        )
+
+        candidates = []
+
+        async for model, index, ignore in app.github.get_candidates(
+            ResponsiveNetworkClient(Static()),
+            [GitCommit(hash='hash9000', subject='subject9000')],
+            ['label1'],
+        ):
+            candidates.append((model, index, ignore))
+
+        assert response_mock.call_args_list == [
+            mocker.call(
+                'https://api.github.com/search/issues',
+                params={'q': 'sha:hash9000 repo:org/repo is:merged'},
+                auth=('foo', 'bar'),
+            ),
+            mocker.call('https://api.github.com/repos/org/repo/pulls/123/reviews', auth=('foo', 'bar')),
+        ]
+
+        assert candidates == [(None, 0, 1)]
+
     async def test_no_pr(self, app, git_repository, mocker):
         app.configure(
             git_repository,
@@ -148,6 +310,54 @@ class TestCandidates:
             'body': '',
             'reviewers': [],
         }
+
+    async def test_get_candidates_no_pr(self, app, git_repository, mocker):
+        app.configure(
+            git_repository,
+            caching=True,
+            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        )
+
+        response_mock = mocker.patch(
+            'httpx.AsyncClient.get',
+            return_value=Response(
+                200,
+                request=Request('GET', ''),
+                content=json.dumps({'items': []}),
+            ),
+        )
+
+        candidates = []
+
+        async for model, index, ignore in app.github.get_candidates(
+            ResponsiveNetworkClient(Static()), [GitCommit(hash='hash9000', subject='subject9000')]
+        ):
+            candidates.append((model, index, ignore))
+
+        assert response_mock.call_args_list == [
+            mocker.call(
+                'https://api.github.com/search/issues',
+                params={'q': 'sha:hash9000 repo:org/repo is:merged'},
+                auth=('foo', 'bar'),
+            ),
+        ]
+
+        assert len(candidates) == 1
+        assert candidates == [
+            (
+                {
+                    'id': 'hash9000',
+                    'title': 'subject9000',
+                    'url': 'https://github.com/org/repo/commit/hash9000',
+                    'user': '',
+                    'labels': [],
+                    'body': '',
+                    'reviewers': [],
+                },
+                0,
+                0,
+            )
+        ]
 
     async def test_caching(self, app, git_repository, mocker):
         app.configure(

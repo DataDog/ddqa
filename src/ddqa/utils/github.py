@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import AsyncIterator, Iterable
 from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
@@ -137,6 +138,32 @@ class GitHubRepository:
 
         self.cache.cache_candidate_data(commit.hash, candidate_data)
         return TestCandidate(**candidate_data)
+
+    async def get_candidates(
+        self,
+        client: ResponsiveNetworkClient,
+        commits: Iterable[GitCommit],
+        ignored_labels: Iterable[str] | None = None,
+    ) -> AsyncIterator[tuple[TestCandidate | None, int, int]]:
+        processed_pr_numbers = set()
+        ignored = 0
+        for index, commit in enumerate(commits):
+            model = await self.get_candidate(client, commit)
+
+            if model.id.isdigit():
+                if model.id in processed_pr_numbers:
+                    ignored += 1
+                    continue
+
+                processed_pr_numbers.add(model.id)
+
+                labels = {label.name for label in model.labels}
+                if ignored_labels and any(label in labels for label in ignored_labels):
+                    ignored += 1
+                    yield None, index, ignored
+                    continue
+
+            yield model, index, ignored
 
     async def __api_get(self, client: ResponsiveNetworkClient, *args, **kwargs):
         retry_wait = 2
