@@ -22,7 +22,7 @@ from ddqa.config.constants import AppEnvVars, ConfigEnvVars
 @click.option(
     '--cache-dir',
     envvar=ConfigEnvVars.CACHE,
-    help='The path to a custom directory used to cache data [env var: `DDQA_CACHE_DIR`]',
+    help='The path to a custom directory used to cache data [env var: `DDQA_CACHE`]',
 )
 @click.option(
     '--config',
