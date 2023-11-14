@@ -81,8 +81,7 @@ class Application(App):
         for team, config in self.repo.teams.items():
             statuses = {}
             if isinstance(config.jira_statuses, dict):
-                missing_statuses = set(self.repo.qa_statuses).difference(config.jira_statuses)
-                if missing_statuses:
+                if missing_statuses := set(self.repo.qa_statuses).difference(config.jira_statuses):
                     ordered_statuses = [status for status in self.repo.qa_statuses if status in missing_statuses]
                     message = f'repos -> {team} -> jira_statuses\n  missing statuses: {", ".join(ordered_statuses)}'
                     raise ValueError(message)

@@ -85,8 +85,6 @@ class TypeResilientDict(dict):
     def get(self, key: Any, default: Any = None) -> Any:
         try:
             value = super().get(key, default)
-            if isinstance(value, dict):
-                return TypeResilientDict(value)
-            return value
+            return TypeResilientDict(value) if isinstance(value, dict) else value
         except TypeError:
             return default
