@@ -72,7 +72,7 @@ class InteractiveSidebar(Widget):
                 status.update('No members found in TOML source')
                 return
 
-            self.app.github.save_global_config(self.app.repo.global_config_source, global_config)
+            self.app.github.cache.save_global_config(self.app.repo.global_config_source, global_config)
 
             teams = sorted(team.github_team for team in self.app.repo.teams.values())
             for team in teams:

@@ -137,7 +137,7 @@ class Application(App):
 
     def needs_syncing(self) -> bool:
         return not self.github.load_global_config(str(self.repo.global_config_source)) or not any(
-            self.github.cache_dir_team_members.iterdir()
+            self.github.cache.cache_dir_team_members.iterdir()
         )
 
     def config_errors(self) -> list[str]:

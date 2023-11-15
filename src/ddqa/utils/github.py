@@ -8,6 +8,7 @@ import time
 from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
+from ddqa.cache.github import GitHubCache
 from ddqa.utils.fs import Path
 
 if TYPE_CHECKING:
@@ -30,7 +31,7 @@ class GitHubRepository:
     def __init__(self, repo: GitRepository, auth: GitHubAuth, cache_dir: Path):
         self.__repo = repo
         self.__auth = auth
-        self.__cache_dir = cache_dir
+        self.__cache = GitHubCache(cache_dir, self)
 
     @property
     def repo(self) -> GitRepository:
@@ -40,27 +41,9 @@ class GitHubRepository:
     def auth(self) -> GitHubAuth:
         return self.__auth
 
-    @cached_property
-    def cache_dir(self) -> Path:
-        return self.__cache_dir / 'github'
-
-    @cached_property
-    def cache_dir_commits(self) -> Path:
-        directory = self.cache_dir / self.org / self.repo_name / 'commits'
-        directory.ensure_dir_exists()
-        return directory
-
-    @cached_property
-    def cache_dir_pull_requests(self) -> Path:
-        directory = self.cache_dir / self.org / self.repo_name / 'pull_requests'
-        directory.ensure_dir_exists()
-        return directory
-
-    @cached_property
-    def cache_dir_team_members(self) -> Path:
-        directory = self.cache_dir / self.org / self.repo_name / 'team_members'
-        directory.ensure_dir_exists()
-        return directory
+    @property
+    def cache(self) -> GitHubCache:
+        return self.__cache
 
     @cached_property
     def repo_id(self) -> str:
@@ -77,28 +60,14 @@ class GitHubRepository:
     def repo_name(self) -> str:
         return self.repo_id.partition('/')[2]
 
-    @cached_property
-    def global_config_file(self) -> Path:
-        path = self.cache_dir / self.org / 'config.json'
-        path.parent.ensure_dir_exists()
-        return path
-
     def load_global_config(self, source: str) -> dict[str, Any]:
-        if not self.global_config_file.is_file():
+        if not self.cache.global_config_file.is_file():
             return {}
 
-        return json.loads(self.global_config_file.read_text()).get(source, {})
-
-    def save_global_config(self, source: str, global_config: dict[str, Any]) -> None:
-        data = {}
-        if self.global_config_file.is_file():
-            data.update(json.loads(self.global_config_file.read_text()))
-
-        data[source] = global_config
-        self.global_config_file.write_atomic(json.dumps(data), 'w', encoding='utf-8')
+        return json.loads(self.cache.global_config_file.read_text()).get(source, {})
 
     async def get_team_members(self, client: ResponsiveNetworkClient, team: str, *, refresh: bool = False) -> set[str]:
-        members_file = self.cache_dir_team_members / f'{team}.txt'
+        members_file = self.cache.get_team_members_file(team)
         if refresh or not members_file.is_file():
             response = await self.__api_get(client, self.TEAM_MEMBERS_API.format(org=self.org, team=team))
             members_file.write_text(
@@ -115,7 +84,7 @@ class GitHubRepository:
     async def get_candidate(self, client: ResponsiveNetworkClient, commit: GitCommit) -> TestCandidate:
         from ddqa.models.github import TestCandidate
 
-        if cached_candidate_data := self.__get_cached_candidate_data_from_commit(commit.hash):
+        if cached_candidate_data := self.cache.get_cached_candidate_data_from_commit(commit.hash):
             return TestCandidate(**cached_candidate_data)
 
         candidate_data: dict[str, Any] = {}
@@ -132,15 +101,15 @@ class GitHubRepository:
             candidate_data['title'] = commit.subject
             candidate_data['url'] = f'https://github.com/{self.repo_id}/commit/{commit.hash}'
 
-            self.__cache_candidate_data(commit.hash, candidate_data)
+            self.cache.cache_candidate_data(commit.hash, candidate_data)
             return TestCandidate(**candidate_data)
 
         pr_data = pr_data['items'][0]
         candidate_data['id'] = str(pr_data['number'])
 
         # This would only happen on the first encounter of a duplicate per commit hash
-        if cached_candidate_data := self.__get_cached_candidate_data_from_pr_number(candidate_data['id']):
-            self.__duplicate_cached_candidate_data_from_pr_number(commit.hash, candidate_data['id'])
+        if cached_candidate_data := self.cache.get_cached_candidate_data_from_pr_number(candidate_data['id']):
+            self.cache.duplicate_cached_candidate_data_from_pr_number(commit.hash, candidate_data['id'])
             return TestCandidate(**cached_candidate_data)
 
         candidate_data['title'] = pr_data['title']
@@ -166,42 +135,8 @@ class GitHubRepository:
             }.items()
         ]
 
-        self.__cache_candidate_data(commit.hash, candidate_data)
+        self.cache.cache_candidate_data(commit.hash, candidate_data)
         return TestCandidate(**candidate_data)
-
-    def __cache_candidate_data(self, commit_hash: str, candidate_data: dict):
-        directory = self.cache_dir_commits / commit_hash
-        directory.ensure_dir_exists()
-
-        if candidate_data['id'].isdigit():
-            (self.cache_dir_pull_requests / f'{candidate_data["id"]}.json').write_text(json.dumps(candidate_data))
-            (directory / candidate_data['id']).touch()
-        else:
-            (directory / 'no_pr.json').write_text(json.dumps(candidate_data))
-
-    def __get_cached_candidate_data_from_commit(self, commit_hash: str):
-        directory = self.cache_dir_commits / commit_hash
-        if not directory.is_dir():
-            return
-
-        entries = list(directory.iterdir())
-        if not entries:
-            return
-
-        data = entries[0]
-        if data.stem == 'no_pr':
-            return json.loads(data.read_text())
-        elif (cached_candidate_data := self.cache_dir_pull_requests / f'{data.name}.json').is_file():
-            return json.loads(cached_candidate_data.read_text())
-
-    def __get_cached_candidate_data_from_pr_number(self, number: str):
-        if (cached_candidate_data := self.cache_dir_pull_requests / f'{number}.json').is_file():
-            return json.loads(cached_candidate_data.read_text())
-
-    def __duplicate_cached_candidate_data_from_pr_number(self, commit_hash: str, number: str):
-        directory = self.cache_dir_commits / commit_hash
-        directory.ensure_dir_exists()
-        (directory / number).touch()
 
     async def __api_get(self, client: ResponsiveNetworkClient, *args, **kwargs):
         retry_wait = 2
