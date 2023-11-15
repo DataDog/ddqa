@@ -4,9 +4,9 @@
 import click
 
 
-@click.command(short_help='Remove the cache folder')
+@click.command(short_help='Purge the cache folder')
 @click.pass_obj
-def remove(app):
+def purge(app):
     """Remove the cache location."""
     if app.cache_dir.exists():
         app.print(f'Removing {app.cache_dir}...')

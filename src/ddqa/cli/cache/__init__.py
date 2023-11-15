@@ -5,7 +5,7 @@ import click
 
 from ddqa.cli.cache.explore import explore
 from ddqa.cli.cache.find import find
-from ddqa.cli.cache.remove import remove
+from ddqa.cli.cache.purge import purge
 
 
 @click.group(short_help='Manage the cache')
@@ -15,4 +15,4 @@ def cache():
 
 cache.add_command(explore)
 cache.add_command(find)
-cache.add_command(remove)
+cache.add_command(purge)

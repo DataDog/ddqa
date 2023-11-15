@@ -5,7 +5,7 @@ import shutil
 
 
 def test(ddqa, helpers, temp_dir):
-    result = ddqa('--cache-dir', temp_dir, 'cache', 'remove')
+    result = ddqa('--cache-dir', temp_dir, 'cache', 'purge')
 
     assert not temp_dir.exists()
     assert result.exit_code == 0, result.output
@@ -21,7 +21,7 @@ def test_not_exist(ddqa, helpers, temp_dir):
     shutil.rmtree(str(temp_dir))
     assert not temp_dir.exists()
 
-    result = ddqa('--cache-dir', temp_dir, 'cache', 'remove')
+    result = ddqa('--cache-dir', temp_dir, 'cache', 'purge')
 
     assert not temp_dir.exists()
     assert result.exit_code == 0, result.output
