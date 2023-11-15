@@ -44,7 +44,7 @@ class TestApplication(Application):
 
         if github_teams is not None:
             for team, members in github_teams.items():
-                (self.github.cache_dir_team_members / f'{team}.txt').write_text('\n'.join(members))
+                (self.github.cache.cache_dir_team_members / f'{team}.txt').write_text('\n'.join(members))
 
     def save_repo_config(self, repo_config: dict[str, Any]) -> None:
         Path(self.repo.path, '.ddqa', 'config.toml').write_text(tomli_w.dumps(repo_config))
