@@ -378,7 +378,12 @@ class CandidateRendering(LabeledBox):
 
     async def render_candidate(self, candidate: Candidate):
         data = candidate.data
-        self.label.update(f' [link={data.url}]{data.short_display()}[/link] ')
+        label = f' [link={data.url}]{data.short_display()}[/link] '
+
+        if data.user:
+            label += f'by [link=https://github.com/{data.user}]{data.user}[/link] '
+
+        self.label.update(label)
         self.title.update(RichMarkdown(data.title))
         self.labels.update(' '.join(f'[black on #{label.color}]{label.name}[/]' for label in data.labels))
 

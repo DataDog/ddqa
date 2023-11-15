@@ -265,12 +265,16 @@ async def test_rendering(app, git_repository, helpers, mock_pull_requests):
         rendering = app.query_one(CandidateRendering)
         rendered_label = rendering.label.render()
         rendered_label_text = str(rendered_label)
-        assert rendered_label_text == ' #2 '
-        assert len(rendered_label.spans) == 1
+        assert rendered_label_text == ' #2 by username2 '
+        assert len(rendered_label.spans) == 2
         rendered_label_span = rendered_label.spans[0]
         assert rendered_label_span.start == 1
-        assert rendered_label_span.end == len(rendered_label_text) - 1
+        assert rendered_label_span.end == 3
         assert rendered_label_span.style == 'link https://github.com/org/repo/pull/2'
+        rendered_label_span = rendered_label.spans[1]
+        assert rendered_label_span.start == 7
+        assert rendered_label_span.end == len(rendered_label_text) - 1
+        assert rendered_label_span.style == 'link https://github.com/username2'
 
         rendered_title = rendering.title.render()
         assert isinstance(rendered_title, RichMarkdown)
