@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 from rich.style import Style
+from textual import events
 from textual.containers import HorizontalScroll
 from textual.widgets import Label, Switch
 
@@ -22,16 +23,6 @@ class LabeledInput(HorizontalScroll):
         width: 5fr;
     }
     """
-
-
-class SwitchLabel(Label):
-    def __init__(self, label: str, switch: Switch) -> None:
-        super().__init__(label)
-        self.styles.text_style = Style(underline=True)
-        self.__switch = switch
-
-    def on_click(self):
-        self.__switch.action_toggle()
 
 
 class LabeledSwitch(HorizontalScroll):
@@ -55,6 +46,10 @@ class LabeledSwitch(HorizontalScroll):
 
     def __init__(self, *args, label: str, **kwargs):
         self.switch = Switch()
-        self.label = SwitchLabel(label, self.switch)
+        self.label = Label(label)
+        self.label.styles.text_style = Style(underline=True)
 
         super().__init__(self.switch, self.label, *args, **kwargs)
+
+    def _on_click(self, _event: events.Click) -> None:
+        self.switch.toggle()
