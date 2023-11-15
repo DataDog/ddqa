@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Strip the PR title in the `create` screen
 - Only retrieve merged PRs when fetching them from GitHub
 - Add a set of commands to interact with the cache
+- Show the author of a PR on the create screen
 
 ## 0.4.0 - 2023-06-21
 
