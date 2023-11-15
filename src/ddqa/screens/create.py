@@ -92,31 +92,24 @@ class CandidateListing(DataTable):
 
         total = len(commits)
         num_candidates = 0
-        ignored = 0
-        processed_pr_numbers = set()
 
         self.app.print(f'Beginning to load candidates for commits for {self.previous_ref}..{self.current_ref}')
-        self.sidebar.status.update('Loading...')
+        self.sidebar.status.loading()
+
         async with ResponsiveNetworkClient(self.sidebar.status) as client:
-            for i, commit in enumerate(commits):
-                model = await self.app.github.get_candidate(client, commit)
-                if model.id.isdigit():
-                    if model.id in processed_pr_numbers:
-                        ignored += 1
-                        continue
-
-                    processed_pr_numbers.add(model.id)
-
-                self.app.print(f'Processing {model.long_display()}')
-
-                index = i - ignored
-                candidate = Candidate(model, self.app.repo)
-                self.candidates[index] = candidate
-
+            async for model, index, ignored in self.app.github.get_candidates(
+                client, commits, self.app.repo.ignored_labels
+            ):
                 shown_index = str(index + 1)
-                self.sidebar.label.update(f' {shown_index} / {total - ignored} ')
-                self.add_row(candidate.status_indicator, escape(model.title.strip()), key=str(index))
-                num_candidates += 1
+                self.sidebar.label.update(f' {shown_index} / {total} ({ignored} ignored)')
+
+                if model is not None:
+                    self.app.print(f'Processing {model.long_display()}')
+
+                    candidate = Candidate(model, self.app.repo)
+                    self.candidates[num_candidates] = candidate
+                    self.add_row(candidate.status_indicator, escape(model.title.strip()), key=str(num_candidates))
+                    num_candidates += 1
 
         if not num_candidates:
             self.app.print('No candidates found')
@@ -227,6 +220,15 @@ class CandidateListing(DataTable):
         return assignee
 
 
+class StatusLabel(Label):
+    def loading(self) -> None:
+        self.update('Loading...')
+
+    def is_loading(self) -> bool:
+        text = str(self.render())
+        return text == 'Loading...' or text.startswith('Retrying in')
+
+
 class CandidateSidebar(LabeledBox):
     DEFAULT_CSS = """
     #sidebar-status {
@@ -250,7 +252,7 @@ class CandidateSidebar(LabeledBox):
     """
 
     def __init__(self, previous_ref: str, current_ref: str, labels: tuple[str, ...]):
-        self.__status = Label()
+        self.__status = StatusLabel()
         self.__listing = CandidateListing(self, previous_ref, current_ref, labels)
         self.__button = Button('Create', variant='primary', disabled=True, id='sidebar-button')
 
@@ -262,7 +264,7 @@ class CandidateSidebar(LabeledBox):
         )
 
     @property
-    def status(self) -> Label:
+    def status(self) -> StatusLabel:
         return self.__status
 
     @property
@@ -273,15 +275,20 @@ class CandidateSidebar(LabeledBox):
     def button(self) -> Button:
         return self.__button
 
-    def update_assignment_status(self) -> None:
+    def update_assignment_status(self, *, override_is_loading_flag: bool = True) -> None:
         assigned = 0
+
         for candidate in self.listing.candidates.values():
             if candidate.assigned:
                 assigned += 1
 
+        self.button.disabled = not assigned
+
+        if not override_is_loading_flag and self.status.is_loading():
+            return
+
         self.label.update(f' {assigned} / {len(self.listing.candidates)} ')
         self.status.update('Ready for creation' if assigned else 'No candidates assigned')
-        self.button.disabled = not assigned
 
     async def on_button_pressed(self, _event: Button.Pressed) -> None:
         if str(self.button.label) == 'Create':
@@ -472,5 +479,5 @@ class CreateScreen(Screen):
         candidate = listing.candidates[listing.cursor_row]
         candidate.assignments[str(event.switch.parent.label.render())] = event.value
 
-        sidebar.update_assignment_status()
+        sidebar.update_assignment_status(override_is_loading_flag=False)
         listing.update_cell(str(listing.cursor_row), 'status', candidate.status_indicator)
