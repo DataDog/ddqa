@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2023-present Datadog, Inc. <dev@datadoghq.com>
 #
 # SPDX-License-Identifier: MIT
+from rich.style import Style
 from textual.containers import HorizontalScroll
 from textual.widgets import Label, Switch
 
@@ -23,6 +24,16 @@ class LabeledInput(HorizontalScroll):
     """
 
 
+class SwitchLabel(Label):
+    def __init__(self, label: str, switch: Switch) -> None:
+        super().__init__(label)
+        self.styles.text_style = Style(underline=True)
+        self.__switch = switch
+
+    def on_click(self):
+        self.__switch.action_toggle()
+
+
 class LabeledSwitch(HorizontalScroll):
     DEFAULT_CSS = """
     LabeledSwitch {
@@ -43,7 +54,7 @@ class LabeledSwitch(HorizontalScroll):
     """
 
     def __init__(self, *args, label: str, **kwargs):
-        self.label = Label(label)
         self.switch = Switch()
+        self.label = SwitchLabel(label, self.switch)
 
         super().__init__(self.switch, self.label, *args, **kwargs)
