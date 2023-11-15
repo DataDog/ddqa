@@ -6,6 +6,7 @@ import os
 import click
 
 from ddqa._version import __version__
+from ddqa.cli.cache import cache
 from ddqa.cli.config import config
 from ddqa.cli.create import create
 from ddqa.cli.status import status
@@ -84,13 +85,13 @@ def ddqa(ctx: click.Context, color, cache_dir, config_file_path):
         ctx.exit(1)
 
 
+ddqa.add_command(cache)
 ddqa.add_command(config)
 ddqa.add_command(create)
 ddqa.add_command(status)
 ddqa.add_command(sync)
 
-__management_command = os.environ.get('PYAPP_COMMAND_NAME', '')
-if __management_command:
+if __management_command := os.environ.get('PYAPP_COMMAND_NAME', ''):
     ddqa.add_command(click.Command(name=__management_command, help='Manage this application'))
 
 
