@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Show the author of a PR on the create screen
 - Make the team labels clickable in the create screen
 - Save and restore the assigned teams to PRs in the create screen
+- Allow users to configure their GitHub and Jira credentials with environment variables
 - Add a refresh button to the status screen
 
 ## 0.4.0 - 2023-06-21
