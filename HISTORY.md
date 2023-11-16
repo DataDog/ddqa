@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Make the team labels clickable in the create screen
 - Do not show PRs that have a ignored label in the create screen
 - Save and restore the assigned teams to PRs in the create screen
+- Allow users to configure their GitHub and Jira credentials with environment variables
 
 ## 0.4.0 - 2023-06-21
 
