@@ -293,6 +293,14 @@ class OptionsSidebar(LabeledBox):
     .issue-filter {
         height: 5;
     }
+
+    #refresh-button-box {
+        height: 5;
+    }
+
+    #refresh-submission {
+        width: 100%;
+    }
     """
 
     def __init__(self):
@@ -344,6 +352,7 @@ class StatusScreen(Screen):
         self.__current_user_id = ''
         self.__team_filter = TeamIssueFilter()
         self.__member_filter = MemberIssueFilter()
+        self.__refresh_button = Button('Refresh', variant='primary', id='refresh-submission')
 
     @property
     def labels(self) -> tuple[str, ...]:
@@ -360,6 +369,10 @@ class StatusScreen(Screen):
     @property
     def member_filter(self) -> MemberIssueFilter:
         return self.__member_filter
+
+    @property
+    def refresh_button(self) -> Button:
+        return self.__refresh_button
 
     @property
     def initial_status(self) -> str:
@@ -454,6 +467,9 @@ class StatusScreen(Screen):
             status.sort_issues()
 
         await self.sidebar.options.mount(
+            HorizontalScroll(LabeledBox(' Refresh screen ', self.refresh_button), id='refresh-button-box')
+        )
+        await self.sidebar.options.mount(
             HorizontalScroll(LabeledBox(' Team ', FilterSelect(self.team_filter)), classes='issue-filter')
         )
         await self.sidebar.options.mount(
@@ -516,7 +532,11 @@ class StatusScreen(Screen):
             or str(event.pressed.label) == current_status
         )
 
-    async def on_button_pressed(self, _event: Button.Pressed) -> None:
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button == self.refresh_button:
+            self.__reload_screen()
+            return
+
         old_issue = self.cached_issues[str(self.issues.label.render()).strip()]
         selected_status = str(self.status_changer.radio_set.pressed_button.label)
 
@@ -584,3 +604,9 @@ class StatusScreen(Screen):
             percent = percent.quantize(COMPLETION_PRECISION)
 
         self.sidebar.status.update(f'{done} / {total} ({percent}%)')
+
+    def __reload_screen(self):
+        self.app.pop_screen()
+        self.app.uninstall_screen('status')
+        self.app.install_screen(StatusScreen(self.labels), 'status')
+        self.app.push_screen('status')

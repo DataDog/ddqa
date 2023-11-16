@@ -11,17 +11,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ***Fixed:***
 
 - Fix GitHub API search query
-- Disable the radio button in the status screen if the user is not assigned to the card
 - Alphabetically sort the teams and members in the status screen
 - Consider unknown Jira statuses as Done and add an extra column in the Done box to specify the current status of this card
-- Strip the PR title in the `create` screen
 - Only retrieve merged PRs when fetching them from GitHub
+- Do not show PRs that have a ignored label in the create screen
+- Strip the PR title in the `create` screen
+
+***Added:***
+
+- Disable the radio button in the status screen if the user is not assigned to the card
 - Add a set of commands to interact with the cache
 - Show the author of a PR on the create screen
 - Make the team labels clickable in the create screen
-- Do not show PRs that have a ignored label in the create screen
 - Save and restore the assigned teams to PRs in the create screen
 - Allow users to configure their GitHub and Jira credentials with environment variables
+- Add a refresh button to the status screen
 
 ## 0.4.0 - 2023-06-21
 
