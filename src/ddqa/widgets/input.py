@@ -1,8 +1,9 @@
 # SPDX-FileCopyrightText: 2023-present Datadog, Inc. <dev@datadoghq.com>
 #
 # SPDX-License-Identifier: MIT
+from collections.abc import Callable
+
 from rich.style import Style
-from textual import events
 from textual.containers import HorizontalScroll
 from textual.widgets import Label, Switch
 
@@ -23,6 +24,16 @@ class LabeledInput(HorizontalScroll):
         width: 5fr;
     }
     """
+
+
+class ClickableLabel(Label):
+    def __init__(self, label: str, callback: Callable[[], None]) -> None:
+        super().__init__(label)
+        self.styles.text_style = Style(underline=True)
+        self.__callback = callback
+
+    def on_click(self):
+        self.__callback()
 
 
 class LabeledSwitch(HorizontalScroll):
@@ -46,10 +57,6 @@ class LabeledSwitch(HorizontalScroll):
 
     def __init__(self, *args, label: str, **kwargs):
         self.switch = Switch()
-        self.label = Label(label)
-        self.label.styles.text_style = Style(underline=True)
+        self.label = ClickableLabel(label, self.switch.action_toggle)
 
         super().__init__(self.switch, self.label, *args, **kwargs)
-
-    def _on_click(self, _event: events.Click) -> None:
-        self.switch.toggle()
