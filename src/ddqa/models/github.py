@@ -24,6 +24,7 @@ class TestCandidate(BaseModel):
     body: str = ''
     labels: list[PullRequestLabel] = []
     reviewers: list[PullRequestReviewer] = []
+    assigned_teams: set[str] = set()
 
     def short_display(self) -> str:
         return f'#{self.id}' if self.id.isdigit() else self.id[:7]

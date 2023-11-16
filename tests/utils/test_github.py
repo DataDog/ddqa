@@ -9,6 +9,7 @@ import pytest
 from httpx import Request, Response
 from textual.widgets import Static
 
+from ddqa.models.github import TestCandidate as Candidate
 from ddqa.utils.git import GitCommit
 from ddqa.utils.network import ResponsiveNetworkClient
 
@@ -110,6 +111,7 @@ class TestCandidates:
                 {'name': 'username1', 'association': 'member'},
                 {'name': 'username2', 'association': 'collaborator'},
             ],
+            'assigned_teams': set(),
         }
 
     async def test_get_candidates(self, app, git_repository, mocker):
@@ -184,18 +186,20 @@ class TestCandidates:
         assert len(candidates) == 1
         assert candidates == [
             (
-                {
-                    'id': '123',
-                    'title': 'title123',
-                    'url': 'https://github.com/org/repo/pull/123',
-                    'user': 'username123',
-                    'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
-                    'body': 'foo\nbar',
-                    'reviewers': [
-                        {'name': 'username1', 'association': 'member'},
-                        {'name': 'username2', 'association': 'collaborator'},
-                    ],
-                },
+                Candidate(
+                    **{
+                        'id': '123',
+                        'title': 'title123',
+                        'url': 'https://github.com/org/repo/pull/123',
+                        'user': 'username123',
+                        'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
+                        'body': 'foo\nbar',
+                        'reviewers': [
+                            {'name': 'username1', 'association': 'member'},
+                            {'name': 'username2', 'association': 'collaborator'},
+                        ],
+                    }
+                ),
                 0,
                 0,
             )
@@ -309,6 +313,7 @@ class TestCandidates:
             'labels': [],
             'body': '',
             'reviewers': [],
+            'assigned_teams': set(),
         }
 
     async def test_get_candidates_no_pr(self, app, git_repository, mocker):
@@ -353,6 +358,7 @@ class TestCandidates:
                     'labels': [],
                     'body': '',
                     'reviewers': [],
+                    'assigned_teams': set(),
                 },
                 0,
                 0,
@@ -395,6 +401,7 @@ class TestCandidates:
             'labels': [],
             'body': '',
             'reviewers': [],
+            'assigned_teams': set(),
         }
 
         # First encounter of a candidate with a PR
@@ -465,6 +472,7 @@ class TestCandidates:
                 {'name': 'username1', 'association': 'member'},
                 {'name': 'username2', 'association': 'collaborator'},
             ],
+            'assigned_teams': set(),
         }
 
         # First encounter of a candidate with a PR that has already been seen
@@ -498,6 +506,7 @@ class TestCandidates:
                 {'name': 'username1', 'association': 'member'},
                 {'name': 'username2', 'association': 'collaborator'},
             ],
+            'assigned_teams': set(),
         }
 
         assert repo_cache_dir.is_dir()
@@ -554,6 +563,7 @@ class TestCandidates:
             'labels': [],
             'body': '',
             'reviewers': [],
+            'assigned_teams': set(),
         }
         candidate = await app.github.get_candidate(
             ResponsiveNetworkClient(Static()), GitCommit(hash='hash2', subject='subject2')
@@ -570,6 +580,7 @@ class TestCandidates:
                 {'name': 'username1', 'association': 'member'},
                 {'name': 'username2', 'association': 'collaborator'},
             ],
+            'assigned_teams': set(),
         }
         candidate = await app.github.get_candidate(
             ResponsiveNetworkClient(Static()), GitCommit(hash='hash3', subject='subject3')
@@ -586,6 +597,7 @@ class TestCandidates:
                 {'name': 'username1', 'association': 'member'},
                 {'name': 'username2', 'association': 'collaborator'},
             ],
+            'assigned_teams': set(),
         }
 
 
@@ -810,4 +822,5 @@ async def test_rate_limit_handling(app, git_repository, mocker):
             {'name': 'username1', 'association': 'member'},
             {'name': 'username2', 'association': 'collaborator'},
         ],
+        'assigned_teams': set(),
     }

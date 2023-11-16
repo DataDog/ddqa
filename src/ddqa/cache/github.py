@@ -13,6 +13,11 @@ if TYPE_CHECKING:
     from ddqa.utils.github import GitHubRepository
 
 
+class SetEncoder(json.JSONEncoder):
+    def default(self, obj):
+        return list(obj)
+
+
 class GitHubCache:
     def __init__(self, cache_dir: Path, github_repo: GitHubRepository) -> None:
         super().__init__()
@@ -87,7 +92,9 @@ class GitHubCache:
         directory.ensure_dir_exists()
 
         if candidate_data['id'].isdigit():
-            (self.cache_dir_pull_requests / f'{candidate_data["id"]}.json').write_text(json.dumps(candidate_data))
+            (self.cache_dir_pull_requests / f'{candidate_data["id"]}.json').write_text(
+                json.dumps(candidate_data, cls=SetEncoder)
+            )
             (directory / candidate_data['id']).touch()
         else:
-            (directory / 'no_pr.json').write_text(json.dumps(candidate_data))
+            (directory / 'no_pr.json').write_text(json.dumps(candidate_data, cls=SetEncoder))

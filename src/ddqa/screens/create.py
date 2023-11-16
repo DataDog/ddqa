@@ -14,6 +14,7 @@ from textual.containers import Container, HorizontalScroll, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, DataTable, Header, Label, Markdown, Switch
 
+from ddqa.cache.github import GitHubCache
 from ddqa.utils.network import ResponsiveNetworkClient
 from ddqa.utils.widgets import switch_to_widget
 from ddqa.widgets.input import LabeledSwitch
@@ -27,15 +28,23 @@ if typing.TYPE_CHECKING:
 
 
 class Candidate:
-    def __init__(self, candidate: TestCandidate, repo_config: RepoConfig):
+    def __init__(self, candidate: TestCandidate, repo_config: RepoConfig, github_cache: GitHubCache | None = None):
         self.data = candidate
+        self.__cache = github_cache
 
         labels = {label.name for label in candidate.labels}
         ignored = labels.intersection(repo_config.ignored_labels)
-        self.assignments: dict[str, bool] = {
-            team_name: False if ignored else len(labels.intersection(team_data.github_labels)) > 0
-            for team_name, team_data in repo_config.teams.items()
-        }
+        self.assignments: dict[str, bool] = {}
+
+        for team_name, team_data in repo_config.teams.items():
+            if candidate.assigned_teams and team_name in candidate.assigned_teams:
+                assigned = True
+            elif ignored:
+                assigned = False
+            else:
+                assigned = len(labels.intersection(team_data.github_labels)) > 0
+
+            self.assign_team(team_name, assigned=assigned)
 
     @property
     def assigned(self) -> bool:
@@ -44,6 +53,17 @@ class Candidate:
     @property
     def status_indicator(self) -> str:
         return '✓' if self.assigned else ''
+
+    def assign_team(self, team_name: str, *, assigned: bool):
+        self.assignments[team_name] = assigned
+
+        if self.__cache:
+            if assigned:
+                self.data.assigned_teams.add(team_name)
+            else:
+                self.data.assigned_teams.discard(team_name)
+
+            self.__cache.cache_candidate_data(self.data.id, self.data.dict())
 
 
 class CandidateListing(DataTable):
@@ -106,7 +126,7 @@ class CandidateListing(DataTable):
                 if model is not None:
                     self.app.print(f'Processing {model.long_display()}')
 
-                    candidate = Candidate(model, self.app.repo)
+                    candidate = Candidate(model, self.app.repo, self.app.github.cache)
                     self.candidates[num_candidates] = candidate
                     self.add_row(candidate.status_indicator, escape(model.title.strip()), key=str(num_candidates))
                     num_candidates += 1
@@ -477,7 +497,7 @@ class CreateScreen(Screen):
         sidebar = self.query_one(CandidateSidebar)
 
         candidate = listing.candidates[listing.cursor_row]
-        candidate.assignments[str(event.switch.parent.label.render())] = event.value
+        candidate.assign_team(str(event.switch.parent.label.render()), assigned=event.value)
 
         sidebar.update_assignment_status(override_is_loading_flag=False)
         listing.update_cell(str(listing.cursor_row), 'status', candidate.status_indicator)

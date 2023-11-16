@@ -387,7 +387,78 @@ class TestAssignment:
             assignments = list(rendering.candidate_assignments.query(LabeledSwitch).results())
             assert len(assignments) == 2
             assert str(assignments[0].label.render()) == 'foo'
+            assert assignments[0].switch.value
             assert str(assignments[1].label.render()) == 'bar'
+            assert not assignments[1].switch.value
+
+    async def test_default_with_cached_assignment(self, app, git_repository, helpers, mock_pull_requests):
+        app.configure(
+            git_repository,
+            caching=True,
+            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            github_teams={'foo-team': ['github-foo1']},
+        )
+        repo_config = dict(app.repo.dict())
+        repo_config['teams'] = {
+            'foo-team': {
+                'jira_project': 'FOO',
+                'jira_issue_type': 'Foo-Task',
+                'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
+                'github_team': 'foo-team',
+            },
+            'bar-team': {
+                'jira_project': 'BAR',
+                'jira_issue_type': 'Bar-Task',
+                'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
+                'github_team': 'bar-team',
+            },
+        }
+        app.save_repo_config(repo_config)
+
+        # assigned_teams can only be retrieved from the cache, never from GitHub
+        app.github.cache.cache_candidate_data(
+            'hash1',
+            {
+                'id': '',
+                'title': 'title1',
+                'user': 'username1',
+                'url': '',
+                'assigned_teams': {'bar-team'},
+            },
+        )
+
+        mock_pull_requests(
+            {
+                'number': '1',
+                'title': 'title1',
+                'user': {'login': 'username1'},
+                'labels': [{'name': 'bar-label', 'color': '632ca6'}, {'name': 'baz-label', 'color': '632ca6'}],
+                'body': 'foo1\r\nbar1',
+            },
+        )
+
+        async with app.run_test() as pilot:
+            await pilot.pause(helpers.ASYNC_WAIT)
+
+            sidebar = app.query_one(CandidateSidebar)
+            table = sidebar.listing
+            num_candidates = len(table.rows)
+            assert num_candidates == 1
+            assert table.get_row_at(0) == ['✓', 'title1']
+            assert [c.assigned for c in table.candidates.values()] == [True]
+
+            assert table.cursor_coordinate == Coordinate(0, 0)
+            assert str(sidebar.label.render()) == f' 1 / {num_candidates} '
+            assert str(sidebar.status.render()) == 'Ready for creation'
+            assert not sidebar.button.disabled
+
+            rendering = app.query_one(CandidateRendering)
+            assignments = list(rendering.candidate_assignments.query(LabeledSwitch).results())
+            assert len(assignments) == 2
+            assert str(assignments[0].label.render()) == 'foo-team'
+            assert not assignments[0].switch.value
+            assert str(assignments[1].label.render()) == 'bar-team'
+            assert assignments[1].switch.value
 
     async def test_choice(self, app, git_repository, helpers, mock_pull_requests):
         app.configure(
