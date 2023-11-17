@@ -371,7 +371,7 @@ class CandidateRendering(LabeledBox):
 
         super().__init__(
             '',
-            Container(self.__title, self.__labels, id='candidate-info'),
+            Container(self.__title, HorizontalScroll(self.__labels), id='candidate-info'),
             self.__body,
             self.__candidate_assignments,
         )
@@ -412,7 +412,11 @@ class CandidateRendering(LabeledBox):
 
         self.label.update(label)
         self.title.update(RichMarkdown(data.title))
-        self.labels.update(' '.join(f'[black on #{label.color}]{label.name}[/]' for label in data.labels))
+        self.title.tooltip = data.title
+
+        labels = ' '.join(f'[black on #{label.color}]{label.name}[/]' for label in data.labels)
+        self.labels.update(labels)
+        self.labels.tooltip = labels or None
 
         if data.id in self.__body_renderings:
             body_rendering = self.__body_renderings[data.id]
