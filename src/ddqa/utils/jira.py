@@ -3,11 +3,10 @@
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
 
-import json
 from collections.abc import AsyncIterator, Iterable
-from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
+from ddqa.cache.jira import JiraCache
 from ddqa.utils.fs import Path
 
 if TYPE_CHECKING:
@@ -37,8 +36,7 @@ class JiraClient:
         self.__config = config
         self.__auth = auth
         self.__repo_config = repo_config
-        self.__cache_dir = cache_dir
-        self.__cached_current_user_id = ''
+        self.__cache = JiraCache(cache_dir)
 
         # project key -> issue type -> status name -> transition ID
         self.__transitions: dict[str, dict[str, dict[str, str]]] = {}
@@ -48,6 +46,10 @@ class JiraClient:
         return self.__config
 
     @property
+    def cache(self) -> JiraCache:
+        return self.__cache
+
+    @property
     def auth(self) -> JiraAuth:
         return self.__auth
 
@@ -55,46 +57,15 @@ class JiraClient:
     def repo_config(self) -> RepoConfig:
         return self.__repo_config
 
-    @cached_property
-    def cache_dir(self) -> Path:
-        return self.__cache_dir / 'jira'
-
-    @cached_property
-    def cached_user_id_file(self) -> Path:
-        path = self.cache_dir / 'user_ids.json'
-        path.parent.ensure_dir_exists()
-        return path
-
-    @cached_property
-    def cache_dir_projects(self) -> Path:
-        path = self.cache_dir / 'projects'
-        path.ensure_dir_exists()
-        return path
-
     async def get_current_user_id(self, client: ResponsiveNetworkClient) -> str:
-        if self.__cached_current_user_id:
-            return self.__cached_current_user_id
-
-        import json
-        from base64 import urlsafe_b64encode
-        from hashlib import sha256
-
-        user_ids = {}
-        if self.cached_user_id_file.is_file():
-            user_ids.update(json.loads(self.cached_user_id_file.read_text()))
-
-        key = urlsafe_b64encode(sha256(f'{self.auth.email}{self.auth.token}'.encode()).digest()).decode('ascii')
-        if key in user_ids:
-            self.__cached_current_user_id = user_ids[key]
-            return self.__cached_current_user_id
+        if cached_user_id := self.cache.get_user_id(self.auth.email, self.auth.token):
+            return cached_user_id
 
         response = await self.__api_get(client, f'{self.config.jira_server}{self.SELF_INSPECTION_API}')
-        current_user_id = response.json()['accountId']
-        user_ids[key] = current_user_id
-        self.cached_user_id_file.write_atomic(json.dumps(user_ids), 'w', encoding='utf-8')
+        user_id: str = response.json()['accountId']
 
-        self.__cached_current_user_id = current_user_id
-        return self.__cached_current_user_id
+        self.cache.save_user_id(self.auth.email, self.auth.token, user_id)
+        return user_id
 
     async def create_issues(
         self,
@@ -199,11 +170,9 @@ class JiraClient:
         if issue.type in issue_types:
             return
 
-        transitions_file = self.cache_dir_projects / issue.project / 'transitions.json'
-        if transitions_file.is_file():
-            issue_types.update(json.loads(transitions_file.read_text()))
-            if issue.type in issue_types:
-                return
+        issue_types.update(self.cache.get_transitions(issue))
+        if issue.type in issue_types:
+            return
 
         response = await self.__api_get(
             client, f'{self.config.jira_server}{self.TRANSITIONS_API.format(issue_key=issue.key)}'
@@ -213,8 +182,7 @@ class JiraClient:
         for data in response.json()['transitions']:
             transitions[data['to']['name']] = data['id']
 
-        transitions_file.parent.ensure_dir_exists()
-        transitions_file.write_atomic(json.dumps(issue_types), 'w', encoding='utf-8')
+        self.cache.save_transitions(issue, issue_types)
 
     async def __api_get(self, client: ResponsiveNetworkClient, *args, **kwargs):
         return await self.__api_request('GET', client, *args, **kwargs)
