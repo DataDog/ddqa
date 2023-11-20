@@ -32,6 +32,9 @@ class JiraClient:
     # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-search/#api-rest-api-2-search-post
     SEARCH_API = '/rest/api/2/search'
 
+    # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-users/#api-rest-api-2-user-bulk-get
+    USER_BULK_API = '/rest/api/2/user/bulk'
+
     def __init__(self, config: JiraConfig, auth: JiraAuth, repo_config: RepoConfig, cache_dir: Path):
         self.__config = config
         self.__auth = auth
@@ -149,6 +152,32 @@ class JiraClient:
 
             if offset >= data['total']:
                 break
+
+    async def get_users(self, client: ResponsiveNetworkClient, account_ids: Iterable[str]) -> AsyncIterator[dict]:
+        offset = 0
+
+        while True:
+            params = {
+                'maxResults': self.PAGINATION_RESULT_SIZE,
+                'accountId': list(account_ids),
+                'startAt': offset,
+            }
+            data = await self.__api_get(client, f'{self.config.jira_server}{self.USER_BULK_API}', params=params)
+
+            data = data.json()
+            for user in data['values']:
+                offset += 1
+                yield user
+
+            if offset >= data['total']:
+                break
+
+    async def get_deactivated_users(
+        self, client: ResponsiveNetworkClient, account_ids: Iterable[str]
+    ) -> AsyncIterator[dict]:
+        async for user in self.get_users(client, account_ids):
+            if not user.get('active'):
+                yield user
 
     async def update_issue_status(self, client: ResponsiveNetworkClient, issue: JiraIssue, status: str) -> JiraIssue:
         from datetime import datetime

@@ -205,6 +205,31 @@ async def test_save_teams(app, git_repository, helpers, mocker):
             ),
         ],
     )
+    mocker.patch(
+        'httpx.AsyncClient.request',
+        side_effect=[
+            Response(
+                200,
+                request=Request('GET', ''),
+                content=json.dumps(
+                    {
+                        'maxResults': 100,
+                        'startAt': 0,
+                        'total': 1,
+                        'values': [
+                            {
+                                'self': 'https://your-domain.atlassian.net/rest/api/2/user?accountId=f',
+                                'accountId': 'j',
+                                'accountType': 'atlassian',
+                                'emailAddress': 'j@example.com',
+                                'active': True,
+                            },
+                        ],
+                    },
+                ),
+            ),
+        ],
+    )
     repo_config = dict(app.repo.dict())
     repo_config['teams'] = {
         'foo': {
@@ -234,6 +259,7 @@ async def test_save_teams(app, git_repository, helpers, mocker):
             Fetching global config from: {app.repo.global_config_source}
             Refreshing members for team: bar-team
             Refreshing members for team: foo-team
+            Validating 1 Jira users...
             """
         )
 
@@ -243,4 +269,111 @@ async def test_save_teams(app, git_repository, helpers, mocker):
         assert app.github.load_global_config(app.repo.global_config_source) == {
             'jira_server': 'https://foo.atlassian.net',
             'members': {'g': 'j'},
+        }
+
+
+async def test_deactivated_jira_user(app, git_repository, helpers, mocker):
+    app.configure(
+        git_repository,
+        caching=True,
+        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+    )
+    mocker.patch(
+        'httpx.AsyncClient.get',
+        side_effect=[
+            Response(
+                200,
+                request=Request('GET', ''),
+                content=helpers.dedent(
+                    """
+                    jira_server = "https://foo.atlassian.net"
+
+                    [members]
+                    g = "j"
+                    """
+                ),
+            ),
+            Response(
+                200,
+                request=Request('GET', ''),
+                content=json.dumps(
+                    [
+                        {'login': 'foo1', 'type': 'User'},
+                        {'login': 'bot', 'type': 'other'},
+                    ],
+                ),
+            ),
+            Response(
+                200,
+                request=Request('GET', ''),
+                content=json.dumps(
+                    [
+                        {'login': 'bar1', 'type': 'User'},
+                        {'login': 'bot', 'type': 'other'},
+                    ],
+                ),
+            ),
+        ],
+    )
+    mocker.patch(
+        'httpx.AsyncClient.request',
+        side_effect=[
+            Response(
+                200,
+                request=Request('GET', ''),
+                content=json.dumps(
+                    {
+                        'maxResults': 100,
+                        'startAt': 0,
+                        'total': 1,
+                        'values': [
+                            {
+                                'self': 'https://your-domain.atlassian.net/rest/api/2/user?accountId=f',
+                                'accountId': 'j',
+                                'accountType': 'atlassian',
+                                'emailAddress': 'j@example.com',
+                                'active': False,
+                            },
+                        ],
+                    },
+                ),
+            ),
+        ],
+    )
+    repo_config = dict(app.repo.dict())
+    repo_config['teams'] = {
+        'foo': {
+            'jira_project': 'FOO',
+            'jira_issue_type': 'Foo-Task',
+            'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
+            'github_team': 'foo-team',
+        },
+        'bar': {
+            'jira_project': 'BAR',
+            'jira_issue_type': 'Bar-Task',
+            'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
+            'github_team': 'bar-team',
+        },
+    }
+    app.save_repo_config(repo_config)
+
+    async with app.run_test():
+        sidebar = app.query_one(InteractiveSidebar)
+        text_log = sidebar.query_one(RichLog)
+        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
+            f"""
+            Fetching global config from: {app.repo.global_config_source}
+            Refreshing members for team: bar-team
+            Refreshing members for team: foo-team
+            Validating 1 Jira users...
+            User g is deactivated on Jira
+            """
+        )
+
+        button = sidebar.query_one(Button)
+        assert not button.disabled
+
+        assert app.github.load_global_config(app.repo.global_config_source) == {
+            'jira_server': 'https://foo.atlassian.net',
+            'members': {},
         }

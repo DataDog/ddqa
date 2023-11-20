@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Allow users to configure their GitHub and Jira credentials with environment variables
 - Add a refresh button to the status screen
 - Add tooltips and a scroll bar in the create screen on the PR title and labels
+- Check the status of the users in Jira in the sync command
 
 ## 0.4.0 - 2023-06-21
 

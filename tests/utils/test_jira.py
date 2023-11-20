@@ -755,3 +755,201 @@ async def test_rate_limit_handling(app, git_repository, mocker):
         'foo': 'https://foobarbaz.atlassian.net/browse/FOO-1',
         'bar': 'https://foobarbaz.atlassian.net/browse/BAR-1',
     }
+
+
+class TestGetUsers:
+    async def test_get_users(self, app, mocker, git_repository):
+        app.configure(
+            git_repository,
+            caching=True,
+            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        )
+
+        response_mock = mocker.patch(
+            'httpx.AsyncClient.request',
+            side_effect=[
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps(
+                        {
+                            'maxResults': 2,
+                            'startAt': 0,
+                            'total': 3,
+                            'values': [
+                                {
+                                    'self': 'https://your-domain.atlassian.net/rest/api/2/user?accountId=id1',
+                                    'accountId': 'id1',
+                                    'accountType': 'atlassian',
+                                    'emailAddress': 'id1@example.com',
+                                    'active': True,
+                                },
+                                {
+                                    'self': 'https://your-domain.atlassian.net/rest/api/2/user?accountId=id2',
+                                    'accountId': 'id2',
+                                    'accountType': 'atlassian',
+                                    'emailAddress': 'id2@example.com',
+                                    'active': False,
+                                },
+                            ],
+                        }
+                    ),
+                ),
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps(
+                        {
+                            'maxResults': 2,
+                            'startAt': 2,
+                            'total': 3,
+                            'values': [
+                                {
+                                    'self': 'https://your-domain.atlassian.net/rest/api/2/user?accountId=id3',
+                                    'accountId': 'id3',
+                                    'accountType': 'atlassian',
+                                    'emailAddress': 'id3@example.com',
+                                    'active': True,
+                                }
+                            ],
+                        }
+                    ),
+                ),
+            ],
+        )
+
+        assert app.jira.PAGINATION_RESULT_SIZE == 100
+        app.jira.PAGINATION_RESULT_SIZE = 2
+
+        users = []
+        async for user in app.jira.get_users(ResponsiveNetworkClient(Static()), ('id1', 'id2', 'id3')):
+            users.append(user)
+
+        assert response_mock.call_args_list == [
+            mocker.call(
+                'GET',
+                'https://foobarbaz.atlassian.net/rest/api/2/user/bulk',
+                auth=('foo@bar.baz', 'bar'),
+                params={'maxResults': 2, 'accountId': ['id1', 'id2', 'id3'], 'startAt': 0},
+            ),
+            mocker.call(
+                'GET',
+                'https://foobarbaz.atlassian.net/rest/api/2/user/bulk',
+                auth=('foo@bar.baz', 'bar'),
+                params={'maxResults': 2, 'accountId': ['id1', 'id2', 'id3'], 'startAt': 2},
+            ),
+        ]
+
+        assert len(users) == 3
+        assert users[0] == {
+            'self': 'https://your-domain.atlassian.net/rest/api/2/user?accountId=id1',
+            'accountId': 'id1',
+            'accountType': 'atlassian',
+            'emailAddress': 'id1@example.com',
+            'active': True,
+        }
+        assert users[1] == {
+            'self': 'https://your-domain.atlassian.net/rest/api/2/user?accountId=id2',
+            'accountId': 'id2',
+            'accountType': 'atlassian',
+            'emailAddress': 'id2@example.com',
+            'active': False,
+        }
+        assert users[2] == {
+            'self': 'https://your-domain.atlassian.net/rest/api/2/user?accountId=id3',
+            'accountId': 'id3',
+            'accountType': 'atlassian',
+            'emailAddress': 'id3@example.com',
+            'active': True,
+        }
+
+    async def test_get_deactivated_users(self, app, mocker, git_repository):
+        app.configure(
+            git_repository,
+            caching=True,
+            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        )
+
+        response_mock = mocker.patch(
+            'httpx.AsyncClient.request',
+            side_effect=[
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps(
+                        {
+                            'maxResults': 2,
+                            'startAt': 0,
+                            'total': 3,
+                            'values': [
+                                {
+                                    'self': 'https://your-domain.atlassian.net/rest/api/2/user?accountId=id1',
+                                    'accountId': 'id1',
+                                    'accountType': 'atlassian',
+                                    'emailAddress': 'id1@example.com',
+                                    'active': True,
+                                },
+                                {
+                                    'self': 'https://your-domain.atlassian.net/rest/api/2/user?accountId=id2',
+                                    'accountId': 'id2',
+                                    'accountType': 'atlassian',
+                                    'emailAddress': 'id2@example.com',
+                                    'active': False,
+                                },
+                            ],
+                        }
+                    ),
+                ),
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps(
+                        {
+                            'maxResults': 2,
+                            'startAt': 2,
+                            'total': 3,
+                            'values': [
+                                {
+                                    'self': 'https://your-domain.atlassian.net/rest/api/2/user?accountId=id3',
+                                    'accountId': 'id3',
+                                    'accountType': 'atlassian',
+                                    'emailAddress': 'id3@example.com',
+                                    'active': True,
+                                }
+                            ],
+                        }
+                    ),
+                ),
+            ],
+        )
+
+        assert app.jira.PAGINATION_RESULT_SIZE == 100
+        app.jira.PAGINATION_RESULT_SIZE = 2
+
+        users = []
+        async for user in app.jira.get_deactivated_users(ResponsiveNetworkClient(Static()), ('id1', 'id2', 'id3')):
+            users.append(user)
+
+        assert response_mock.call_args_list == [
+            mocker.call(
+                'GET',
+                'https://foobarbaz.atlassian.net/rest/api/2/user/bulk',
+                auth=('foo@bar.baz', 'bar'),
+                params={'maxResults': 2, 'accountId': ['id1', 'id2', 'id3'], 'startAt': 0},
+            ),
+            mocker.call(
+                'GET',
+                'https://foobarbaz.atlassian.net/rest/api/2/user/bulk',
+                auth=('foo@bar.baz', 'bar'),
+                params={'maxResults': 2, 'accountId': ['id1', 'id2', 'id3'], 'startAt': 2},
+            ),
+        ]
+
+        assert len(users) == 1
+        assert users[0] == {
+            'self': 'https://your-domain.atlassian.net/rest/api/2/user?accountId=id2',
+            'accountId': 'id2',
+            'accountType': 'atlassian',
+            'emailAddress': 'id2@example.com',
+            'active': False,
+        }
