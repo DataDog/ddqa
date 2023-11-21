@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Add a refresh button to the status screen
 - Add tooltips and a scroll bar in the create screen on the PR title and labels
 - Check the status of the users in Jira in the sync command
+- Add direct links to GitHub and Jira in the sync screen
 
 ## 0.4.0 - 2023-06-21
 

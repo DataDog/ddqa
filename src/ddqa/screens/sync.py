@@ -39,7 +39,7 @@ class InteractiveSidebar(Widget):
 
     def compose(self) -> ComposeResult:
         yield Label()
-        yield RichLog()
+        yield RichLog(markup=True)
         yield Button('Exit' if self.__manual_execution else 'Continue', variant='primary', disabled=True)
 
     def on_mount(self) -> None:
@@ -51,7 +51,11 @@ class InteractiveSidebar(Widget):
         button = self.query_one(Button)
 
         async with ResponsiveNetworkClient(status) as client:
-            text_log.write(f'Fetching global config from: {self.app.repo.global_config_source}', shrink=False)
+            text_log.write(
+                f'Fetching global config from: '
+                f'[link={self.app.repo.global_config_source}]{self.app.repo.global_config_source}[/link]',
+                shrink=False,
+            )
             try:
                 response = await client.get(
                     self.app.repo.global_config_source,
@@ -76,7 +80,10 @@ class InteractiveSidebar(Widget):
 
             teams = sorted(team.github_team for team in self.app.repo.teams.values())
             for team in teams:
-                text_log.write(f'Refreshing members for team: {team}', shrink=False)
+                text_log.write(
+                    f'Refreshing members for team: [link=https://github.com/orgs/{self.app.github.org}/teams/{team}]{team}[/link]',
+                    shrink=False,
+                )
                 try:
                     await self.app.github.get_team_members(client, team, refresh=True)
                 except Exception as e:
@@ -90,8 +97,13 @@ class InteractiveSidebar(Widget):
                 async for jira_user in self.app.jira.get_deactivated_users(
                     client, global_config.get('members', {}).values()
                 ):
-                    text_log.write(f'User {members_rev[jira_user["accountId"]]} is deactivated on Jira', shrink=False)
-                    del global_config['members'][members_rev[jira_user['accountId']]]
+                    github_user_id = members_rev[jira_user['accountId']]
+                    text_log.write(
+                        f'User [link=https://github.com/{github_user_id}]{github_user_id}[/link] is deactivated on '
+                        f'[link={self.app.jira.config.jira_server}/jira/people/{jira_user["accountId"]}]Jira[/link]',
+                        shrink=False,
+                    )
+                    del global_config['members'][github_user_id]
 
                 self.app.github.cache.save_global_config(self.app.repo.global_config_source, global_config)
             except Exception as e:
