@@ -83,6 +83,21 @@ class InteractiveSidebar(Widget):
                     status.update(str(e))
                     return
 
+            text_log.write(f'Validating {len(global_config.get("members", {}))} Jira users...', shrink=False)
+            try:
+                members_rev = {v: k for k, v in global_config.get('members', {}).items()}
+
+                async for jira_user in self.app.jira.get_deactivated_users(
+                    client, global_config.get('members', {}).values()
+                ):
+                    text_log.write(f'User {members_rev[jira_user["accountId"]]} is deactivated on Jira', shrink=False)
+                    del global_config['members'][members_rev[jira_user['accountId']]]
+
+                self.app.github.cache.save_global_config(self.app.repo.global_config_source, global_config)
+            except Exception as e:
+                status.update(str(e))
+                return
+
             button.disabled = False
 
     async def on_button_pressed(self, _event: Button.Pressed) -> None:
