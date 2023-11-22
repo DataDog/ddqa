@@ -19,7 +19,9 @@ from click.testing import CliRunner
 from ddqa.app.core import Application
 from ddqa.config.constants import AppEnvVars, ConfigEnvVars
 from ddqa.config.file import ConfigFile
+from ddqa.models.jira import JiraConfig
 from ddqa.utils.fs import Path
+from ddqa.utils.jira import JiraClient
 
 
 class TestApplication(Application):
@@ -176,3 +178,19 @@ def handle_remove_readonly(func, path, exc):  # no cov
         func(path)
     else:
         raise
+
+
+@pytest.fixture
+def jira_client():
+    return JiraClient(
+        JiraConfig(
+            jira_server='http://www.google.fr',
+            members={
+                'g1': 'j1',
+                'g2': 'j2',
+            },
+        ),
+        None,
+        None,
+        None,
+    )

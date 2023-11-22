@@ -187,9 +187,10 @@ class CandidateListing(DataTable):
                 result = DataTable(classes='assignment-result')
                 result.add_columns('Team', 'Assignee', 'Issue')
                 for assignee, (team, issue_url) in zip(assignments.values(), created_issues.items(), strict=True):
+                    github_user = self.app.jira.get_github_user_id_from_jira_user_id(assignee)
                     result.add_row(
                         team,
-                        f'[link=https://github.com/{assignee}]{assignee}[/link]' if assignee else '',
+                        f'[link=https://github.com/{github_user}]{github_user}[/link]' if github_user else '',
                         f'[link={issue_url}]{issue_url.rpartition("/")[2]}[/link]',
                     )
 
@@ -222,12 +223,15 @@ class CandidateListing(DataTable):
 
         team_members.discard(candidate.user)
         team_members.difference_update(team.exclude_members)
-        if not team_members:
-            return candidate.user
+        jira_team_members = self.app.jira.get_jira_user_ids_from_github_user_ids(team_members)
+        if not jira_team_members:
+            return self.app.jira.get_jira_user_id_from_github_user_id(candidate.user)
 
         counts = assignment_counts[team.github_team]
-        reviewers = {reviewer.name for reviewer in candidate.reviewers}
-        member_keys = {member: (counts[member], member in reviewers) for member in team_members}
+        reviewers = self.app.jira.get_jira_user_ids_from_github_user_ids(
+            {reviewer.name for reviewer in candidate.reviewers}
+        )
+        member_keys = {member: (counts[member], member in reviewers) for member in jira_team_members}
 
         priorities: dict[tuple[int, bool], list[str]] = defaultdict(list)
         for member, key in member_keys.items():

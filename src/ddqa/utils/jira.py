@@ -91,8 +91,10 @@ class JiraClient:
                 'project': {'key': team_config.jira_project},
                 **common_fields,
             }
-            if member in self.config.members:
-                fields['assignee'] = {'id': self.config.members[member]}
+
+            if member:
+                fields['assignee'] = {'id': member}
+
             if team_config.jira_component:
                 fields['components'] = [{'name': team_config.jira_component}]
 
@@ -193,6 +195,25 @@ class JiraClient:
         new_issue.updated = datetime.now(tz=issue.updated.tzinfo)
 
         return new_issue
+
+    def get_github_user_id_from_jira_user_id(self, jira_user_id: str) -> str:
+        for github_id, jira_id in self.config.members.items():
+            if jira_id == jira_user_id:
+                return github_id
+
+        return ''
+
+    def get_jira_user_id_from_github_user_id(self, github_user_id: str) -> str:
+        return self.config.members.get(github_user_id, '')
+
+    def get_jira_user_ids_from_github_user_ids(self, github_user_ids: Iterable[str]) -> set[str]:
+        res = set()
+
+        for github_user_id in github_user_ids:
+            if jira_user_id := self.get_jira_user_id_from_github_user_id(github_user_id):
+                res.add(jira_user_id)
+
+        return res
 
     async def __get_transitions(self, client: ResponsiveNetworkClient, issue: JiraIssue) -> None:
         issue_types = self.__transitions.setdefault(issue.project, {})

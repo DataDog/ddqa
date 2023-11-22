@@ -170,7 +170,7 @@ async def test_create_issues(app, git_repository, helpers, mocker):
             }
         ),
         ['qa-1.2.3', 'label-9000'],
-        {'foo': 'github-foo', 'bar': 'github-bar'},
+        {'foo': 'jira-foo', 'bar': 'jira-bar'},
     )
     assert response_mock.call_args_list == [
         mocker.call(
@@ -684,7 +684,7 @@ async def test_rate_limit_handling(app, git_repository, mocker):
             }
         ),
         ['qa-1.2.3', 'label-9000'],
-        {'foo': 'github-foo', 'bar': 'github-bar'},
+        {'foo': 'jira-foo', 'bar': 'jira-bar'},
     )
     assert time.time() - start >= 2
 
@@ -953,3 +953,43 @@ class TestGetUsers:
             'emailAddress': 'id2@example.com',
             'active': False,
         }
+
+
+class TestJiraGithubMapping:
+    @pytest.mark.parametrize(
+        'github_user_id, expected_jira_user_id',
+        [
+            pytest.param('g1', 'j1', id='g1 found'),
+            pytest.param('g2', 'j2', id='g2 found'),
+            pytest.param('g3', '', id='g3 not found'),
+            pytest.param('', '', id='empty'),
+        ],
+    )
+    def test_get_jira_user_id_from_github_user_id(self, jira_client, github_user_id, expected_jira_user_id):
+        assert expected_jira_user_id == jira_client.get_jira_user_id_from_github_user_id(github_user_id)
+
+    @pytest.mark.parametrize(
+        'github_user_ids, expected_jira_user_ids',
+        [
+            pytest.param({'g1'}, {'j1'}, id='g1 found'),
+            pytest.param({'g2'}, {'j2'}, id='g2 found'),
+            pytest.param({'g1', 'g2'}, {'j1', 'j2'}, id='all found'),
+            pytest.param({}, set(), id='empty set'),
+            pytest.param({'g1', 'g3'}, {'j1'}, id='g1 found and g3 not found'),
+            pytest.param({'g3'}, set(), id='g3 not found'),
+        ],
+    )
+    def test_get_jira_user_ids_from_github_user_ids(self, jira_client, github_user_ids, expected_jira_user_ids):
+        assert expected_jira_user_ids == jira_client.get_jira_user_ids_from_github_user_ids(github_user_ids)
+
+    @pytest.mark.parametrize(
+        'jira_user_id, expected_github_user_id',
+        [
+            pytest.param('j1', 'g1', id='j1 found'),
+            pytest.param('j2', 'g2', id='j2 found'),
+            pytest.param('j3', '', id='j3 not found'),
+            pytest.param('', '', id='empty'),
+        ],
+    )
+    def test_get_github_user_id_from_jira_user_id(self, jira_client, jira_user_id, expected_github_user_id):
+        assert expected_github_user_id == jira_client.get_github_user_id_from_jira_user_id(jira_user_id)

@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Only retrieve merged PRs when fetching them from GitHub
 - Do not show PRs that have a ignored label in the create screen
 - Strip the PR title in the `create` screen
+- Stop assigning cards to users that are not declared in the Jira config
 
 ***Added:***
 
