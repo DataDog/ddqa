@@ -68,19 +68,15 @@ class GitHubRepository:
         return json.loads(self.cache.global_config_file.read_text()).get(source, {})
 
     async def get_team_members(self, client: ResponsiveNetworkClient, team: str, *, refresh: bool = False) -> set[str]:
-        members_file = self.cache.get_team_members_file(team)
-        if refresh or not members_file.is_file():
-            response = await self.__api_get(client, self.TEAM_MEMBERS_API.format(org=self.org, team=team))
-            members_file.write_text(
-                '\n'.join(
-                    user['login']
-                    for user in response.json()
-                    # No bots
-                    if user['type'] == 'User'
-                )
-            )
+        members = self.cache.get_team_members(team)
 
-        return set(members_file.read_text().splitlines())
+        if refresh or members is None:
+            response = await self.__api_get(client, self.TEAM_MEMBERS_API.format(org=self.org, team=team))
+            # No bots
+            members = {user['login'] for user in response.json() if user['type'] == 'User'}
+            self.cache.save_team_members(team, members)
+
+        return members
 
     async def get_candidate(self, client: ResponsiveNetworkClient, commit: GitCommit) -> TestCandidate:
         from ddqa.models.github import TestCandidate

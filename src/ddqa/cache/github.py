@@ -98,3 +98,12 @@ class GitHubCache:
             (directory / candidate_data['id']).touch()
         else:
             (directory / 'no_pr.json').write_text(json.dumps(candidate_data, cls=SetEncoder))
+
+    def get_team_members(self, team: str) -> set[str] | None:
+        if (members_file := self.get_team_members_file(team)).is_file():
+            return set(members_file.read_text().splitlines())
+
+        return None
+
+    def save_team_members(self, team: str, members: set[str]) -> None:
+        self.get_team_members_file(team).write_text('\n'.join(members))
