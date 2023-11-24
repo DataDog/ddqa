@@ -389,7 +389,7 @@ async def test_github_user_not_in_jira(app, git_repository, helpers, mocker):
         caching=True,
         data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
     )
-    mocker.patch(
+    mock_get = mocker.patch(
         'httpx.AsyncClient.get',
         side_effect=[
             Response(
@@ -427,7 +427,7 @@ async def test_github_user_not_in_jira(app, git_repository, helpers, mocker):
             ),
         ],
     )
-    mocker.patch(
+    mock_request = mocker.patch(
         'httpx.AsyncClient.request',
         side_effect=[
             Response(
@@ -470,6 +470,23 @@ async def test_github_user_not_in_jira(app, git_repository, helpers, mocker):
     app.save_repo_config(repo_config)
 
     async with app.run_test():
+        assert mock_request.call_count == 1
+        assert mock_request.call_args_list == [
+            mocker.call(
+                'GET',
+                'https://foo.atlassian.net/rest/api/2/user/bulk',
+                auth=('foo@bar.baz', 'bar'),
+                params={'maxResults': 100, 'accountId': ['j', 'jira-foo1'], 'startAt': 0},
+            )
+        ]
+
+        assert mock_get.call_count == 3
+        assert mock_get.call_args_list == [
+            mocker.call('https://www.google.com', auth=('foo', 'bar')),
+            mocker.call('https://api.github.com/orgs/org/teams/bar-team/members', auth=('foo', 'bar')),
+            mocker.call('https://api.github.com/orgs/org/teams/foo-team/members', auth=('foo', 'bar')),
+        ]
+
         sidebar = app.query_one(InteractiveSidebar)
         text_log = sidebar.query_one(RichLog)
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
