@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: 2023-present Datadog, Inc. <dev@datadoghq.com>
 #
 # SPDX-License-Identifier: MIT
-import json
 from unittest import mock
+from unittest.mock import MagicMock
 
 import pytest
 from httpx import Request, Response
@@ -185,53 +185,15 @@ async def test_save_teams(app, git_repository, helpers, mocker):
                     """
                 ),
             ),
-            Response(
-                200,
-                request=Request('GET', ''),
-                content=json.dumps(
-                    [
-                        {'login': 'foo1', 'type': 'User'},
-                        {'login': 'bot', 'type': 'other'},
-                    ],
-                ),
-            ),
-            Response(
-                200,
-                request=Request('GET', ''),
-                content=json.dumps(
-                    [
-                        {'login': 'bar1', 'type': 'User'},
-                        {'login': 'bot', 'type': 'other'},
-                    ],
-                ),
-            ),
         ],
     )
-    mocker.patch(
-        'httpx.AsyncClient.request',
-        side_effect=[
-            Response(
-                200,
-                request=Request('GET', ''),
-                content=json.dumps(
-                    {
-                        'maxResults': 100,
-                        'startAt': 0,
-                        'total': 1,
-                        'values': [
-                            {
-                                'self': 'https://your-domain.atlassian.net/rest/api/2/user?accountId=f',
-                                'accountId': 'j',
-                                'accountType': 'atlassian',
-                                'emailAddress': 'j@example.com',
-                                'active': True,
-                            },
-                        ],
-                    },
-                ),
-            ),
-        ],
+    get_team_members_mock = mocker.patch(
+        'ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1'])
     )
+    get_deactivated_users_mock = mocker.patch(
+        'ddqa.utils.jira.JiraClient.get_deactivated_users', return_value=MagicMock(return_value=[])
+    )
+
     repo_config = dict(app.repo.dict())
     repo_config['teams'] = {
         'foo': {
@@ -265,6 +227,15 @@ async def test_save_teams(app, git_repository, helpers, mocker):
             """
         )
 
+        assert get_team_members_mock.call_count == 2
+        assert get_team_members_mock.call_args_list[0][0][1] == 'bar-team'
+        assert get_team_members_mock.call_args_list[0][1]['refresh']
+        assert get_team_members_mock.call_args_list[1][0][1] == 'foo-team'
+        assert get_team_members_mock.call_args_list[1][1]['refresh']
+
+        assert get_deactivated_users_mock.call_count == 1
+        assert list(get_deactivated_users_mock.call_args_list[0][0][1]) == ['j', 'jira-foo1', 'jira-bar1']
+
         button = sidebar.query_one(Button)
         assert not button.disabled
 
@@ -297,53 +268,15 @@ async def test_deactivated_jira_user(app, git_repository, helpers, mocker):
                     """
                 ),
             ),
-            Response(
-                200,
-                request=Request('GET', ''),
-                content=json.dumps(
-                    [
-                        {'login': 'foo1', 'type': 'User'},
-                        {'login': 'bot', 'type': 'other'},
-                    ],
-                ),
-            ),
-            Response(
-                200,
-                request=Request('GET', ''),
-                content=json.dumps(
-                    [
-                        {'login': 'bar1', 'type': 'User'},
-                        {'login': 'bot', 'type': 'other'},
-                    ],
-                ),
-            ),
         ],
     )
-    mocker.patch(
-        'httpx.AsyncClient.request',
-        side_effect=[
-            Response(
-                200,
-                request=Request('GET', ''),
-                content=json.dumps(
-                    {
-                        'maxResults': 100,
-                        'startAt': 0,
-                        'total': 1,
-                        'values': [
-                            {
-                                'self': 'https://your-domain.atlassian.net/rest/api/2/user?accountId=f',
-                                'accountId': 'j',
-                                'accountType': 'atlassian',
-                                'emailAddress': 'j@example.com',
-                                'active': False,
-                            },
-                        ],
-                    },
-                ),
-            ),
-        ],
+
+    get_team_members_mock = mocker.patch(
+        'ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1'])
     )
+    mock = MagicMock()
+    mock.__aiter__.return_value = [{'accountId': 'j'}]
+    get_deactivated_users_mock = mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users', return_value=mock)
     repo_config = dict(app.repo.dict())
     repo_config['teams'] = {
         'foo': {
@@ -364,6 +297,16 @@ async def test_deactivated_jira_user(app, git_repository, helpers, mocker):
     async with app.run_test():
         sidebar = app.query_one(InteractiveSidebar)
         text_log = sidebar.query_one(RichLog)
+
+        assert get_team_members_mock.call_count == 2
+        assert get_team_members_mock.call_args_list[0][0][1] == 'bar-team'
+        assert get_team_members_mock.call_args_list[0][1]['refresh']
+        assert get_team_members_mock.call_args_list[1][0][1] == 'foo-team'
+        assert get_team_members_mock.call_args_list[1][1]['refresh']
+
+        assert get_deactivated_users_mock.call_count == 1
+        assert list(get_deactivated_users_mock.call_args_list[0][0][1]) == ['jira-foo1', 'jira-bar1']
+
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
             f"""
             Fetching global config from: {app.repo.global_config_source}
@@ -389,6 +332,7 @@ async def test_github_user_not_in_jira(app, git_repository, helpers, mocker):
         caching=True,
         data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
     )
+
     mock_get = mocker.patch(
         'httpx.AsyncClient.get',
         side_effect=[
@@ -405,53 +349,14 @@ async def test_github_user_not_in_jira(app, git_repository, helpers, mocker):
                     """
                 ),
             ),
-            Response(
-                200,
-                request=Request('GET', ''),
-                content=json.dumps(
-                    [
-                        {'login': 'foo1', 'type': 'User'},
-                        {'login': 'bot', 'type': 'other'},
-                    ],
-                ),
-            ),
-            Response(
-                200,
-                request=Request('GET', ''),
-                content=json.dumps(
-                    [
-                        {'login': 'bar1', 'type': 'User'},
-                        {'login': 'bot', 'type': 'other'},
-                    ],
-                ),
-            ),
         ],
     )
-    mock_request = mocker.patch(
-        'httpx.AsyncClient.request',
-        side_effect=[
-            Response(
-                200,
-                request=Request('GET', ''),
-                content=json.dumps(
-                    {
-                        'maxResults': 100,
-                        'startAt': 0,
-                        'total': 1,
-                        'values': [
-                            {
-                                'self': 'https://your-domain.atlassian.net/rest/api/2/user?accountId=f',
-                                'accountId': 'j',
-                                'accountType': 'atlassian',
-                                'emailAddress': 'j@example.com',
-                                'active': True,
-                            },
-                        ],
-                    },
-                ),
-            ),
-        ],
+
+    get_team_members_mock = mocker.patch(
+        'ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1'])
     )
+    get_deactivated_users_mock = mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users')
+
     repo_config = dict(app.repo.dict())
     repo_config['teams'] = {
         'foo': {
@@ -470,21 +375,18 @@ async def test_github_user_not_in_jira(app, git_repository, helpers, mocker):
     app.save_repo_config(repo_config)
 
     async with app.run_test():
-        assert mock_request.call_count == 1
-        assert mock_request.call_args_list == [
-            mocker.call(
-                'GET',
-                'https://foo.atlassian.net/rest/api/2/user/bulk',
-                auth=('foo@bar.baz', 'bar'),
-                params={'maxResults': 100, 'accountId': ['j', 'jira-foo1'], 'startAt': 0},
-            )
-        ]
+        assert get_team_members_mock.call_count == 2
+        assert get_team_members_mock.call_args_list[0][0][1] == 'bar-team'
+        assert get_team_members_mock.call_args_list[0][1]['refresh']
+        assert get_team_members_mock.call_args_list[1][0][1] == 'foo-team'
+        assert get_team_members_mock.call_args_list[1][1]['refresh']
 
-        assert mock_get.call_count == 3
+        assert get_deactivated_users_mock.call_count == 1
+        assert list(get_deactivated_users_mock.call_args_list[0][0][1]) == ['j', 'jira-foo1']
+
+        assert mock_get.call_count == 1
         assert mock_get.call_args_list == [
             mocker.call('https://www.google.com', auth=('foo', 'bar')),
-            mocker.call('https://api.github.com/orgs/org/teams/bar-team/members', auth=('foo', 'bar')),
-            mocker.call('https://api.github.com/orgs/org/teams/foo-team/members', auth=('foo', 'bar')),
         ]
 
         sidebar = app.query_one(InteractiveSidebar)
