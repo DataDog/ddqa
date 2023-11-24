@@ -85,7 +85,15 @@ class InteractiveSidebar(Widget):
                     shrink=False,
                 )
                 try:
-                    await self.app.github.get_team_members(client, team, refresh=True)
+                    github_members = await self.app.github.get_team_members(client, team, refresh=True)
+                    for member in github_members:
+                        if member not in global_config['members']:
+                            text_log.write(
+                                f'GitHub user [link=https://github.com/{member}]{member}[/link] is not '
+                                f'declared in the [link={self.app.repo.global_config_source}]Jira '
+                                f'config[/link]',
+                                shrink=False,
+                            )
                 except Exception as e:
                     status.update(str(e))
                     return

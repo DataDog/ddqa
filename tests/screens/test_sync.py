@@ -180,6 +180,8 @@ async def test_save_teams(app, git_repository, helpers, mocker):
 
                     [members]
                     g = "j"
+                    foo1 = "jira-foo1"
+                    bar1 = "jira-bar1"
                     """
                 ),
             ),
@@ -259,7 +261,7 @@ async def test_save_teams(app, git_repository, helpers, mocker):
             Fetching global config from: {app.repo.global_config_source}
             Refreshing members for team: bar-team
             Refreshing members for team: foo-team
-            Validating 1 Jira users...
+            Validating 3 Jira users...
             """
         )
 
@@ -268,7 +270,7 @@ async def test_save_teams(app, git_repository, helpers, mocker):
 
         assert app.github.load_global_config(app.repo.global_config_source) == {
             'jira_server': 'https://foo.atlassian.net',
-            'members': {'g': 'j'},
+            'members': {'g': 'j', 'bar1': 'jira-bar1', 'foo1': 'jira-foo1'},
         }
 
 
@@ -290,6 +292,8 @@ async def test_deactivated_jira_user(app, git_repository, helpers, mocker):
 
                     [members]
                     g = "j"
+                    foo1 = "jira-foo1"
+                    bar1 = "jira-bar1"
                     """
                 ),
             ),
@@ -365,7 +369,7 @@ async def test_deactivated_jira_user(app, git_repository, helpers, mocker):
             Fetching global config from: {app.repo.global_config_source}
             Refreshing members for team: bar-team
             Refreshing members for team: foo-team
-            Validating 1 Jira users...
+            Validating 3 Jira users...
             User g is deactivated on Jira
             """
         )
@@ -375,5 +379,130 @@ async def test_deactivated_jira_user(app, git_repository, helpers, mocker):
 
         assert app.github.load_global_config(app.repo.global_config_source) == {
             'jira_server': 'https://foo.atlassian.net',
-            'members': {},
+            'members': {'bar1': 'jira-bar1', 'foo1': 'jira-foo1'},
+        }
+
+
+async def test_github_user_not_in_jira(app, git_repository, helpers, mocker):
+    app.configure(
+        git_repository,
+        caching=True,
+        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+    )
+    mock_get = mocker.patch(
+        'httpx.AsyncClient.get',
+        side_effect=[
+            Response(
+                200,
+                request=Request('GET', ''),
+                content=helpers.dedent(
+                    """
+                    jira_server = "https://foo.atlassian.net"
+
+                    [members]
+                    g = "j"
+                    foo1 = "jira-foo1"
+                    """
+                ),
+            ),
+            Response(
+                200,
+                request=Request('GET', ''),
+                content=json.dumps(
+                    [
+                        {'login': 'foo1', 'type': 'User'},
+                        {'login': 'bot', 'type': 'other'},
+                    ],
+                ),
+            ),
+            Response(
+                200,
+                request=Request('GET', ''),
+                content=json.dumps(
+                    [
+                        {'login': 'bar1', 'type': 'User'},
+                        {'login': 'bot', 'type': 'other'},
+                    ],
+                ),
+            ),
+        ],
+    )
+    mock_request = mocker.patch(
+        'httpx.AsyncClient.request',
+        side_effect=[
+            Response(
+                200,
+                request=Request('GET', ''),
+                content=json.dumps(
+                    {
+                        'maxResults': 100,
+                        'startAt': 0,
+                        'total': 1,
+                        'values': [
+                            {
+                                'self': 'https://your-domain.atlassian.net/rest/api/2/user?accountId=f',
+                                'accountId': 'j',
+                                'accountType': 'atlassian',
+                                'emailAddress': 'j@example.com',
+                                'active': True,
+                            },
+                        ],
+                    },
+                ),
+            ),
+        ],
+    )
+    repo_config = dict(app.repo.dict())
+    repo_config['teams'] = {
+        'foo': {
+            'jira_project': 'FOO',
+            'jira_issue_type': 'Foo-Task',
+            'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
+            'github_team': 'foo-team',
+        },
+        'bar': {
+            'jira_project': 'BAR',
+            'jira_issue_type': 'Bar-Task',
+            'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
+            'github_team': 'bar-team',
+        },
+    }
+    app.save_repo_config(repo_config)
+
+    async with app.run_test():
+        assert mock_request.call_count == 1
+        assert mock_request.call_args_list == [
+            mocker.call(
+                'GET',
+                'https://foo.atlassian.net/rest/api/2/user/bulk',
+                auth=('foo@bar.baz', 'bar'),
+                params={'maxResults': 100, 'accountId': ['j', 'jira-foo1'], 'startAt': 0},
+            )
+        ]
+
+        assert mock_get.call_count == 3
+        assert mock_get.call_args_list == [
+            mocker.call('https://www.google.com', auth=('foo', 'bar')),
+            mocker.call('https://api.github.com/orgs/org/teams/bar-team/members', auth=('foo', 'bar')),
+            mocker.call('https://api.github.com/orgs/org/teams/foo-team/members', auth=('foo', 'bar')),
+        ]
+
+        sidebar = app.query_one(InteractiveSidebar)
+        text_log = sidebar.query_one(RichLog)
+        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
+            f"""
+            Fetching global config from: {app.repo.global_config_source}
+            Refreshing members for team: bar-team
+            Refreshing members for team: foo-team
+            GitHub user bar1 is not declared in the Jira config
+            Validating 2 Jira users...
+            """
+        )
+
+        button = sidebar.query_one(Button)
+        assert not button.disabled
+
+        assert app.github.load_global_config(app.repo.global_config_source) == {
+            'jira_server': 'https://foo.atlassian.net',
+            'members': {'foo1': 'jira-foo1', 'g': 'j'},
         }
