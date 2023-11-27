@@ -670,7 +670,7 @@ class TestTeamMembers:
 
         members_file = entries[0]
         assert members_file.name == 'a-team.txt'
-        assert members_file.read_text() == 'foo\nbar\nbaz'
+        assert set(members_file.read_text().splitlines()) == team_members
 
         response_mock = mocker.patch('httpx.AsyncClient.get', return_value=Response(500, request=Request('GET', '')))
 
@@ -717,7 +717,7 @@ class TestTeamMembers:
 
         members_file = entries[0]
         assert members_file.name == 'a-team.txt'
-        assert members_file.read_text() == 'foo\nbar\nbaz'
+        assert set(members_file.read_text().splitlines()) == team_members
 
         response_mock = mocker.patch(
             'httpx.AsyncClient.get',
