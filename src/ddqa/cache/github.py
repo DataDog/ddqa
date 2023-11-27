@@ -100,7 +100,9 @@ class GitHubCache:
             (directory / 'no_pr.json').write_text(json.dumps(candidate_data, cls=SetEncoder))
 
     def get_team_members(self, team: str) -> set[str] | None:
-        if (members_file := self.get_team_members_file(team)).is_file():
+        members_file = self.get_team_members_file(team)
+
+        if members_file.is_file():
             return set(members_file.read_text().splitlines())
 
         return None
