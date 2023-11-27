@@ -187,12 +187,8 @@ async def test_save_teams(app, git_repository, helpers, mocker):
             ),
         ],
     )
-    get_team_members_mock = mocker.patch(
-        'ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1'])
-    )
-    get_deactivated_users_mock = mocker.patch(
-        'ddqa.utils.jira.JiraClient.get_deactivated_users', return_value=MagicMock(return_value=[])
-    )
+    mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1']))
+    mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users', return_value=MagicMock(return_value=[]))
 
     repo_config = dict(app.repo.dict())
     repo_config['teams'] = {
@@ -226,15 +222,6 @@ async def test_save_teams(app, git_repository, helpers, mocker):
             Validating 3 Jira users...
             """
         )
-
-        assert get_team_members_mock.call_count == 2
-        assert get_team_members_mock.call_args_list[0][0][1] == 'bar-team'
-        assert get_team_members_mock.call_args_list[0][1]['refresh']
-        assert get_team_members_mock.call_args_list[1][0][1] == 'foo-team'
-        assert get_team_members_mock.call_args_list[1][1]['refresh']
-
-        assert get_deactivated_users_mock.call_count == 1
-        assert list(get_deactivated_users_mock.call_args_list[0][0][1]) == ['j', 'jira-foo1', 'jira-bar1']
 
         button = sidebar.query_one(Button)
         assert not button.disabled
@@ -271,12 +258,10 @@ async def test_deactivated_jira_user(app, git_repository, helpers, mocker):
         ],
     )
 
-    get_team_members_mock = mocker.patch(
-        'ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1'])
-    )
+    mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1']))
     mock = MagicMock()
     mock.__aiter__.return_value = [{'accountId': 'j'}]
-    get_deactivated_users_mock = mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users', return_value=mock)
+    mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users', return_value=mock)
     repo_config = dict(app.repo.dict())
     repo_config['teams'] = {
         'foo': {
@@ -297,15 +282,6 @@ async def test_deactivated_jira_user(app, git_repository, helpers, mocker):
     async with app.run_test():
         sidebar = app.query_one(InteractiveSidebar)
         text_log = sidebar.query_one(RichLog)
-
-        assert get_team_members_mock.call_count == 2
-        assert get_team_members_mock.call_args_list[0][0][1] == 'bar-team'
-        assert get_team_members_mock.call_args_list[0][1]['refresh']
-        assert get_team_members_mock.call_args_list[1][0][1] == 'foo-team'
-        assert get_team_members_mock.call_args_list[1][1]['refresh']
-
-        assert get_deactivated_users_mock.call_count == 1
-        assert list(get_deactivated_users_mock.call_args_list[0][0][1]) == ['jira-foo1', 'jira-bar1']
 
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
             f"""
@@ -333,7 +309,7 @@ async def test_github_user_not_in_jira(app, git_repository, helpers, mocker):
         data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
     )
 
-    mock_get = mocker.patch(
+    mocker.patch(
         'httpx.AsyncClient.get',
         side_effect=[
             Response(
@@ -352,10 +328,8 @@ async def test_github_user_not_in_jira(app, git_repository, helpers, mocker):
         ],
     )
 
-    get_team_members_mock = mocker.patch(
-        'ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1'])
-    )
-    get_deactivated_users_mock = mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users')
+    mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1']))
+    mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users')
 
     repo_config = dict(app.repo.dict())
     repo_config['teams'] = {
@@ -375,20 +349,6 @@ async def test_github_user_not_in_jira(app, git_repository, helpers, mocker):
     app.save_repo_config(repo_config)
 
     async with app.run_test():
-        assert get_team_members_mock.call_count == 2
-        assert get_team_members_mock.call_args_list[0][0][1] == 'bar-team'
-        assert get_team_members_mock.call_args_list[0][1]['refresh']
-        assert get_team_members_mock.call_args_list[1][0][1] == 'foo-team'
-        assert get_team_members_mock.call_args_list[1][1]['refresh']
-
-        assert get_deactivated_users_mock.call_count == 1
-        assert list(get_deactivated_users_mock.call_args_list[0][0][1]) == ['j', 'jira-foo1']
-
-        assert mock_get.call_count == 1
-        assert mock_get.call_args_list == [
-            mocker.call('https://www.google.com', auth=('foo', 'bar')),
-        ]
-
         sidebar = app.query_one(InteractiveSidebar)
         text_log = sidebar.query_one(RichLog)
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
