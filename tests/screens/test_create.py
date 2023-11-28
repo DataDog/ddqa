@@ -943,7 +943,10 @@ class TestGetAssignee:
     async def test_no_team_members_in_github(self, network_client, jira_config, team_config):
         github_repo = AsyncMock()
         github_repo.get_team_members.return_value = set()
-        assignee = await get_assignee(network_client, github_repo, jira_config, None, team_config, {})
+        candidate = Candidate.construct(
+            user='author',
+        )
+        assignee = await get_assignee(network_client, github_repo, jira_config, candidate, team_config, {})
         assert assignee is None
 
     async def test_no_team_members_available(self, network_client, jira_config, team_config):
