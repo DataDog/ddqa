@@ -27,6 +27,9 @@ class MutatingEqualityValue:
         self.value = other
         return original is _initial_value or original == other
 
+    def __repr__(self):
+        return self.value
+
 
 class InverseEqualityValue:
     def __init__(self, value: MutatingEqualityValue):
@@ -34,6 +37,9 @@ class InverseEqualityValue:
 
     def __eq__(self, other):
         return self.value.value != other
+
+    def __repr__(self):
+        return self.value.value
 
 
 def dedent(text, *, terminal=False):

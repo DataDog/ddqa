@@ -184,7 +184,7 @@ class CandidateListing(DataTable):
                     )
 
                     if assignee:
-                        assignment_counts[team][assignee] += 1
+                        assignment_counts[self.app.repo.teams[team].github_team][assignee] += 1
 
                     assignments[team] = assignee
                 try:
@@ -505,12 +505,7 @@ def get_assignee(
 
     counts = assignment_counts[team.github_team]
     if not jira_team_members:
-        jira_user = jira_config.get_jira_user_id_from_github_user_id(candidate.user)
-
-        if jira_user:
-            counts[jira_user] += 1
-
-        return jira_user
+        return jira_config.get_jira_user_id_from_github_user_id(candidate.user)
 
     reviewers = jira_config.get_jira_user_ids_from_github_user_ids({reviewer.name for reviewer in candidate.reviewers})
     member_keys = {member: (counts[member], member in reviewers) for member in jira_team_members}
