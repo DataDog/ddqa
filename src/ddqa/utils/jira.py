@@ -207,13 +207,7 @@ class JiraClient:
         return self.config.members.get(github_user_id, '')
 
     def get_jira_user_ids_from_github_user_ids(self, github_user_ids: Iterable[str]) -> set[str]:
-        res = set()
-
-        for github_user_id in github_user_ids:
-            if jira_user_id := self.get_jira_user_id_from_github_user_id(github_user_id):
-                res.add(jira_user_id)
-
-        return res
+        return {self.get_jira_user_id_from_github_user_id(gh_id) for gh_id in github_user_ids} - {''}
 
     async def __get_transitions(self, client: ResponsiveNetworkClient, issue: JiraIssue) -> None:
         issue_types = self.__transitions.setdefault(issue.project, {})
