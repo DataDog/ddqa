@@ -40,7 +40,7 @@ class JiraIssue(BaseModel):
 
 class JiraConfig(BaseModel):
     jira_server: HttpUrl
-    members: dict[str, str] = Field()
+    members: dict[str, str]
 
     @validator('members')
     def check_members(cls, v):  # noqa: N805

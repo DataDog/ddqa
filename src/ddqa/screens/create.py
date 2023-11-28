@@ -223,7 +223,7 @@ class CandidateListing(DataTable):
 
         team_members.discard(candidate.user)
         team_members.difference_update(team.exclude_members)
-        jira_team_members = self.app.jira.get_jira_user_ids_from_github_user_ids(team_members)
+        jira_team_members = self.app.jira.config.get_jira_user_ids_from_github_user_ids(team_members)
         if not jira_team_members:
             return self.app.jira.config.get_jira_user_id_from_github_user_id(candidate.user) or ''
 
