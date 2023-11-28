@@ -15,6 +15,8 @@ from textual.screen import Screen
 from textual.widgets import Button, DataTable, Header, Label, Markdown, Switch
 
 from ddqa.cache.github import GitHubCache
+from ddqa.models.jira import JiraConfig
+from ddqa.utils.github import GitHubRepository
 from ddqa.utils.network import ResponsiveNetworkClient
 from ddqa.utils.widgets import switch_to_widget
 from ddqa.widgets.input import LabeledSwitch
@@ -172,9 +174,16 @@ class CandidateListing(DataTable):
                     if not assigned:
                         continue
 
-                    assignments[team] = await self.__get_assignee(
-                        client, candidate.data, self.app.repo.teams[team], assignment_counts
+                    assignee = await get_assignee(
+                        client,
+                        self.app.github,
+                        self.app.jira.config,
+                        candidate.data,
+                        self.app.repo.teams[team],
+                        assignment_counts,
                     )
+
+                    assignments[team] = assignee or ''
 
                 try:
                     created_issues = await self.app.jira.create_issues(client, candidate.data, self.labels, assignments)
@@ -187,7 +196,9 @@ class CandidateListing(DataTable):
                 result = DataTable(classes='assignment-result')
                 result.add_columns('Team', 'Assignee', 'Issue')
                 for assignee, (team, issue_url) in zip(assignments.values(), created_issues.items(), strict=True):
-                    github_user = self.app.jira.config.get_github_user_id_from_jira_user_id(assignee)
+                    github_user = (
+                        self.app.jira.config.get_github_user_id_from_jira_user_id(assignee) if assignee else None
+                    )
                     result.add_row(
                         team,
                         f'[link=https://github.com/{github_user}]{github_user}[/link]' if github_user else '',
@@ -207,41 +218,6 @@ class CandidateListing(DataTable):
         self.app.print('Finished creating issues')
         self.sidebar.status.update('Finished')
         self.sidebar.button.disabled = False
-
-    async def __get_assignee(
-        self,
-        client: ResponsiveNetworkClient,
-        candidate: TestCandidate,
-        team: TeamConfig,
-        assignment_counts: dict[str, dict[str, int]],
-    ) -> str:
-        import secrets
-
-        team_members = await self.app.github.get_team_members(client, team.github_team)
-        if not team_members:
-            return ''
-
-        team_members.discard(candidate.user)
-        team_members.difference_update(team.exclude_members)
-        jira_team_members = self.app.jira.config.get_jira_user_ids_from_github_user_ids(team_members)
-        if not jira_team_members:
-            return self.app.jira.config.get_jira_user_id_from_github_user_id(candidate.user) or ''
-
-        counts = assignment_counts[team.github_team]
-        reviewers = self.app.jira.config.get_jira_user_ids_from_github_user_ids(
-            {reviewer.name for reviewer in candidate.reviewers}
-        )
-        member_keys = {member: (counts[member], member in reviewers) for member in jira_team_members}
-
-        priorities: dict[tuple[int, bool], list[str]] = defaultdict(list)
-        for member, key in member_keys.items():
-            priorities[key].append(member)
-
-        potential_assignees = priorities[sorted(priorities)[0]]
-        assignee = secrets.choice(sorted(potential_assignees))
-        counts[assignee] += 1
-
-        return assignee
 
 
 class StatusLabel(Label):
@@ -509,3 +485,44 @@ class CreateScreen(Screen):
 
         sidebar.update_assignment_status(override_is_loading_flag=False)
         listing.update_cell(str(listing.cursor_row), 'status', candidate.status_indicator)
+
+
+async def get_assignee(
+    client: ResponsiveNetworkClient,
+    github_repo: GitHubRepository,
+    jira_config: JiraConfig,
+    candidate: TestCandidate,
+    team: TeamConfig,
+    assignment_counts: dict[str, dict[str, int]],
+) -> str | None:
+    import secrets
+
+    team_members = await github_repo.get_team_members(client, team.github_team)
+    if not team_members:
+        return None
+
+    team_members.discard(candidate.user)
+    team_members.difference_update(team.exclude_members)
+    jira_team_members = jira_config.get_jira_user_ids_from_github_user_ids(team_members)
+
+    counts = assignment_counts[team.github_team]
+    if not jira_team_members:
+        jira_user = jira_config.get_jira_user_id_from_github_user_id(candidate.user)
+
+        if jira_user:
+            counts[jira_user] += 1
+
+        return jira_user
+
+    reviewers = jira_config.get_jira_user_ids_from_github_user_ids({reviewer.name for reviewer in candidate.reviewers})
+    member_keys = {member: (counts[member], member in reviewers) for member in jira_team_members}
+
+    priorities: dict[tuple[int, bool], list[str]] = defaultdict(list)
+    for member, key in member_keys.items():
+        priorities[key].append(member)
+
+    potential_assignees = priorities[sorted(priorities)[0]]
+    assignee = secrets.choice(sorted(potential_assignees))
+    counts[assignee] += 1
+
+    return assignee
