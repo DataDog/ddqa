@@ -6,7 +6,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from datetime import datetime
 
-from pydantic import BaseModel, Field, HttpUrl, validator
+from pydantic import BaseModel, Extra, Field, HttpUrl, validator
 
 
 class Status(BaseModel):
@@ -38,9 +38,10 @@ class JiraIssue(BaseModel):
         return v or ''
 
 
-class JiraConfig(BaseModel):
+class JiraConfig(BaseModel, extra=Extra.allow):
     jira_server: HttpUrl
     members: dict[str, str]
+    __reversed_members: dict[str, str] | None = None
 
     @validator('members')
     def check_members(cls, v):  # noqa: N805
@@ -63,8 +64,8 @@ class JiraConfig(BaseModel):
         return res
 
     def get_github_user_id_from_jira_user_id(self, jira_user_id: str) -> str | None:
-        for github_id, jira_id in self.members.items():
-            if jira_id == jira_user_id:
-                return github_id
+        # This only works because the self.members dict is loaded once and for all at startup
+        if not self.__reversed_members:
+            self.__reversed_members = {jira_id: gh_id for gh_id, jira_id in self.members.items()}
 
-        return None
+        return self.__reversed_members.get(jira_user_id)
