@@ -225,7 +225,7 @@ class CandidateListing(DataTable):
         team_members.difference_update(team.exclude_members)
         jira_team_members = self.app.jira.get_jira_user_ids_from_github_user_ids(team_members)
         if not jira_team_members:
-            return self.app.jira.get_jira_user_id_from_github_user_id(candidate.user)
+            return self.app.jira.get_jira_user_id_from_github_user_id(candidate.user) or ''
 
         counts = assignment_counts[team.github_team]
         reviewers = self.app.jira.get_jira_user_ids_from_github_user_ids(

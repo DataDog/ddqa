@@ -961,8 +961,8 @@ class TestJiraGithubMapping:
         [
             pytest.param('g1', 'j1', id='g1 found'),
             pytest.param('g2', 'j2', id='g2 found'),
-            pytest.param('g3', '', id='g3 not found'),
-            pytest.param('', '', id='empty'),
+            pytest.param('g3', None, id='g3 not found'),
+            pytest.param('', None, id='empty'),
         ],
     )
     def test_get_jira_user_id_from_github_user_id(self, jira_client, github_user_id, expected_jira_user_id):
@@ -987,8 +987,8 @@ class TestJiraGithubMapping:
         [
             pytest.param('j1', 'g1', id='j1 found'),
             pytest.param('j2', 'g2', id='j2 found'),
-            pytest.param('j3', '', id='j3 not found'),
-            pytest.param('', '', id='empty'),
+            pytest.param('j3', None, id='j3 not found'),
+            pytest.param('', None, id='empty'),
         ],
     )
     def test_get_github_user_id_from_jira_user_id(self, jira_client, jira_user_id, expected_github_user_id):
