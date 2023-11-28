@@ -4,7 +4,6 @@
 import json
 from collections import defaultdict
 from unittest import mock
-from unittest.mock import AsyncMock
 
 import pytest
 from httpx import Request, Response
@@ -940,81 +939,54 @@ class TestCreation:
 
 
 class TestGetAssignee:
-    async def test_no_team_members_in_github(self, network_client, jira_config, team_config):
-        github_repo = AsyncMock()
-        github_repo.get_team_members.return_value = set()
+    def test_no_team_members_in_github(self, jira_config, team_config):
         candidate = Candidate.construct(
             user='author',
         )
-        assignee = await get_assignee(network_client, github_repo, jira_config, candidate, team_config, {})
+        assignee = get_assignee(set(), jira_config, candidate, team_config, {})
         assert assignee is None
 
-    async def test_no_team_members_available(self, network_client, jira_config, team_config):
-        github_repo = AsyncMock()
-        github_repo.get_team_members.return_value = {'author'}
+    def test_no_team_members_available(self, jira_config, team_config):
         assignment_counts = defaultdict(lambda: defaultdict(int))
-
         candidate = Candidate.construct(
             user='author',
         )
-        assignee = await get_assignee(
-            network_client, github_repo, jira_config, candidate, team_config, assignment_counts
-        )
+        assignee = get_assignee({'author'}, jira_config, candidate, team_config, assignment_counts)
         assert assignee is None
 
-    async def test_excluded_members(self, network_client, jira_config, team_config):
-        github_repo = AsyncMock()
-        github_repo.get_team_members.return_value = {'author', 'excluded_reviewer'}
+    def test_excluded_members(self, jira_config, team_config):
         team_config.exclude_members = ['excluded_reviewer']
         assignment_counts = defaultdict(lambda: defaultdict(int))
 
         candidate = Candidate.construct(
             user='author',
         )
-        assignee = await get_assignee(
-            network_client, github_repo, jira_config, candidate, team_config, assignment_counts
-        )
+        assignee = get_assignee({'author', 'excluded_reviewer'}, jira_config, candidate, team_config, assignment_counts)
         assert assignee is None
 
-    async def test_only_one_other_member_but_not_declared_in_jira(self, network_client, jira_config, team_config):
-        github_repo = AsyncMock()
-        github_repo.get_team_members.return_value = {'g1', 'g3'}
+    def test_only_one_other_member_but_not_declared_in_jira(self, jira_config, team_config):
         assignment_counts = defaultdict(lambda: defaultdict(int))
         candidate = Candidate.construct(
             user='g1',
         )
-
-        assignee = await get_assignee(
-            network_client, github_repo, jira_config, candidate, team_config, assignment_counts
-        )
+        assignee = get_assignee({'g1', 'g3'}, jira_config, candidate, team_config, assignment_counts)
         assert assignee == 'j1'
-        assert assignment_counts['foo-team']['j1'] == 1
 
-    async def test_no_users_declared_in_jira(self, network_client, jira_config, team_config):
-        github_repo = AsyncMock()
-        github_repo.get_team_members.return_value = {'g1', 'g3'}
+    def test_no_users_declared_in_jira(self, jira_config, team_config):
         assignment_counts = defaultdict(lambda: defaultdict(int))
         jira_config.members.clear()
 
         candidate = Candidate.construct(
             user='g1',
         )
-        assignee = await get_assignee(
-            network_client, github_repo, jira_config, candidate, team_config, assignment_counts
-        )
+        assignee = get_assignee({'g1', 'g3'}, jira_config, candidate, team_config, assignment_counts)
         assert assignee is None
 
-    async def test_assign(self, network_client, jira_config, team_config):
-        github_repo = AsyncMock()
-        github_repo.get_team_members.return_value = {'g1', 'g2'}
+    def test_assign(self, jira_config, team_config):
         candidate = Candidate.construct(
             user='g1',
         )
         assignment_counts = defaultdict(lambda: defaultdict(int))
 
-        assignee = await get_assignee(
-            network_client, github_repo, jira_config, candidate, team_config, assignment_counts
-        )
+        assignee = get_assignee({'g1', 'g2'}, jira_config, candidate, team_config, assignment_counts)
         assert assignee == 'j2'
-
-        assert assignment_counts['foo-team']['j2'] == 1

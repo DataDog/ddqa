@@ -16,7 +16,6 @@ from textual.widgets import Button, DataTable, Header, Label, Markdown, Switch
 
 from ddqa.cache.github import GitHubCache
 from ddqa.models.jira import JiraConfig
-from ddqa.utils.github import GitHubRepository
 from ddqa.utils.network import ResponsiveNetworkClient
 from ddqa.utils.widgets import switch_to_widget
 from ddqa.widgets.input import LabeledSwitch
@@ -174,15 +173,20 @@ class CandidateListing(DataTable):
                     if not assigned:
                         continue
 
-                    assignments[team] = await get_assignee(
-                        client,
-                        self.app.github,
+                    team_members = await self.app.github.get_team_members(client, self.app.repo.teams[team].github_team)
+
+                    assignee = get_assignee(
+                        team_members,
                         self.app.jira.config,
                         candidate.data,
                         self.app.repo.teams[team],
                         assignment_counts,
                     )
 
+                    if assignee:
+                        assignment_counts[team][assignee] += 1
+
+                    assignments[team] = assignee
                 try:
                     created_issues = await self.app.jira.create_issues(client, candidate.data, self.labels, assignments)
                 except Exception as e:
@@ -485,17 +489,13 @@ class CreateScreen(Screen):
         listing.update_cell(str(listing.cursor_row), 'status', candidate.status_indicator)
 
 
-async def get_assignee(
-    client: ResponsiveNetworkClient,
-    github_repo: GitHubRepository,
+def get_assignee(
+    team_members: set[str],
     jira_config: JiraConfig,
     candidate: TestCandidate,
     team: TeamConfig,
     assignment_counts: dict[str, dict[str, int]],
 ) -> str | None:
-    import secrets
-
-    team_members = await github_repo.get_team_members(client, team.github_team)
     if not team_members:
         return None
 
@@ -520,7 +520,7 @@ async def get_assignee(
         priorities[key].append(member)
 
     potential_assignees = priorities[sorted(priorities)[0]]
-    assignee = secrets.choice(sorted(potential_assignees))
-    counts[assignee] += 1
 
-    return assignee
+    import secrets
+
+    return secrets.choice(sorted(potential_assignees))
