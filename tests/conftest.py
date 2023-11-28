@@ -183,15 +183,20 @@ def handle_remove_readonly(func, path, exc):  # no cov
 
 
 @pytest.fixture
-def jira_client():
+def jira_config():
+    return JiraConfig(
+        jira_server='http://www.google.fr',
+        members={
+            'g1': 'j1',
+            'g2': 'j2',
+        },
+    )
+
+
+@pytest.fixture
+def jira_client(jira_config):
     return JiraClient(
-        JiraConfig(
-            jira_server='http://www.google.fr',
-            members={
-                'g1': 'j1',
-                'g2': 'j2',
-            },
-        ),
+        jira_config,
         None,
         None,
         None,
