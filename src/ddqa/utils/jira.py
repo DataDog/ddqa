@@ -75,7 +75,7 @@ class JiraClient:
         client: ResponsiveNetworkClient,
         candidate: TestCandidate,
         labels: tuple[str, ...],
-        assignments: dict[str, str],
+        assignments: dict[str, str | None],
     ) -> dict[str, str]:
         created_issues: dict[str, str] = {}
         common_fields: dict[str, Any] = {

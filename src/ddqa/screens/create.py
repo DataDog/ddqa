@@ -169,12 +169,12 @@ class CandidateListing(DataTable):
             for index, candidate in list(self.candidates.items()):
                 self.app.print(f'Creating issue for {candidate.data.long_display()}')
 
-                assignments: dict[str, str] = {}
+                assignments: dict[str, str | None] = {}
                 for team, assigned in candidate.assignments.items():
                     if not assigned:
                         continue
 
-                    assignee = await get_assignee(
+                    assignments[team] = await get_assignee(
                         client,
                         self.app.github,
                         self.app.jira.config,
@@ -182,8 +182,6 @@ class CandidateListing(DataTable):
                         self.app.repo.teams[team],
                         assignment_counts,
                     )
-
-                    assignments[team] = assignee or ''
 
                 try:
                     created_issues = await self.app.jira.create_issues(client, candidate.data, self.labels, assignments)
