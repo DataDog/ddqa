@@ -6,5 +6,4 @@ platformdirs,PyPI,MIT,Copyright (c) 2010-202x The platformdirs developers
 pydantic,PyPI,MIT,"Copyright (c) 2017 to present Pydantic Services Inc. and individual contributors."
 rich,PyPI,MIT,Copyright (c) 2020 Will McGugan
 textual,PyPI,MIT,Copyright (c) 2021 Will McGugan
-textual-autocomplete,PyPI,MIT,Copyright (c) 2023 Darren Burns
 tomli-w,PyPI,MIT,Copyright (c) 2021 Taneli Hukkinen

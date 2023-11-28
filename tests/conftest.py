@@ -11,12 +11,14 @@ import subprocess
 from collections.abc import Generator
 from tempfile import TemporaryDirectory
 from typing import Any
+from unittest.mock import MagicMock
 
 import pytest
 import tomli_w
 from click.testing import CliRunner
 
 from ddqa.app.core import Application
+from ddqa.cache.github import GitHubCache
 from ddqa.config.constants import AppEnvVars, ConfigEnvVars
 from ddqa.config.file import ConfigFile
 from ddqa.models.jira import JiraConfig
@@ -194,3 +196,11 @@ def jira_client():
         None,
         None,
     )
+
+
+@pytest.fixture
+def github_cache(temp_dir):
+    github_repo = MagicMock()
+    github_repo.org = 'Datadog'
+    github_repo.repo_name = 'test-repo'
+    return GitHubCache(temp_dir, github_repo)

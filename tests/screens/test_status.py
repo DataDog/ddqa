@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2023-present Datadog, Inc. <dev@datadoghq.com>
 #
 # SPDX-License-Identifier: MIT
+from textual.widgets import Select
+
 from ddqa.models.jira import JiraIssue
 from ddqa.screens.status import FilterSelect, IssueFilter
 
@@ -19,4 +21,4 @@ class TestFilterSelect:
 
         select = FilterSelect(dummy_filter)
 
-        assert select._initial_options == [('a', 'a'), ('b', 'b'), ('c', 'c'), ('z', 'z')]
+        assert select._options == [('', Select.BLANK), ('a', 'a'), ('b', 'b'), ('c', 'c'), ('z', 'z')]
