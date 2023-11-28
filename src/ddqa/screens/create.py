@@ -187,7 +187,7 @@ class CandidateListing(DataTable):
                 result = DataTable(classes='assignment-result')
                 result.add_columns('Team', 'Assignee', 'Issue')
                 for assignee, (team, issue_url) in zip(assignments.values(), created_issues.items(), strict=True):
-                    github_user = self.app.jira.get_github_user_id_from_jira_user_id(assignee)
+                    github_user = self.app.jira.config.get_github_user_id_from_jira_user_id(assignee)
                     result.add_row(
                         team,
                         f'[link=https://github.com/{github_user}]{github_user}[/link]' if github_user else '',
