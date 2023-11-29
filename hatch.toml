@@ -5,6 +5,7 @@ dependencies = [
   "pytest-asyncio",
   "pytest-mock",
   "pytest-randomly",
+  "tzdata",
 ]
 # pre-install-commands = [
 #   "python -m pip install --disable-pip-version-check git+https://github.com/Textualize/textual.git",
