@@ -170,7 +170,7 @@ async def test_create_issues(app, git_repository, helpers, mocker):
             }
         ),
         ['qa-1.2.3', 'label-9000'],
-        {'foo': 'github-foo', 'bar': 'github-bar'},
+        {'foo': 'jira-foo', 'bar': 'jira-bar'},
     )
     assert response_mock.call_args_list == [
         mocker.call(
@@ -684,7 +684,7 @@ async def test_rate_limit_handling(app, git_repository, mocker):
             }
         ),
         ['qa-1.2.3', 'label-9000'],
-        {'foo': 'github-foo', 'bar': 'github-bar'},
+        {'foo': 'jira-foo', 'bar': 'jira-bar'},
     )
     assert time.time() - start >= 2
 

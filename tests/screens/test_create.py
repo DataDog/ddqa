@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 import json
+from collections import defaultdict
 from unittest import mock
 
 import pytest
@@ -10,11 +11,13 @@ from rich.markdown import Markdown as RichMarkdown
 from textual.coordinate import Coordinate
 from textual.widgets import Markdown
 
+from ddqa.models.github import TestCandidate as Candidate
 from ddqa.screens.create import (
     CandidateRendering,
     CandidateSidebar,
     CreateScreen,
     LabeledSwitch,
+    get_assignee,
 )
 from ddqa.utils.git import GitCommit
 
@@ -933,3 +936,57 @@ class TestCreation:
                     },
                 ),
             ]
+
+
+class TestGetAssignee:
+    def test_no_team_members_in_github(self, jira_config, team_config):
+        candidate = Candidate.construct(
+            user='author',
+        )
+        assignee = get_assignee(set(), jira_config, candidate, team_config, {})
+        assert assignee is None
+
+    def test_no_team_members_available(self, jira_config, team_config):
+        assignment_counts = defaultdict(lambda: defaultdict(int))
+        candidate = Candidate.construct(
+            user='author',
+        )
+        assignee = get_assignee({'author'}, jira_config, candidate, team_config, assignment_counts)
+        assert assignee is None
+
+    def test_excluded_members(self, jira_config, team_config):
+        team_config.exclude_members = ['excluded_reviewer']
+        assignment_counts = defaultdict(lambda: defaultdict(int))
+
+        candidate = Candidate.construct(
+            user='author',
+        )
+        assignee = get_assignee({'author', 'excluded_reviewer'}, jira_config, candidate, team_config, assignment_counts)
+        assert assignee is None
+
+    def test_only_one_other_member_but_not_declared_in_jira(self, jira_config, team_config):
+        assignment_counts = defaultdict(lambda: defaultdict(int))
+        candidate = Candidate.construct(
+            user='g1',
+        )
+        assignee = get_assignee({'g1', 'g3'}, jira_config, candidate, team_config, assignment_counts)
+        assert assignee == 'j1'
+
+    def test_no_users_declared_in_jira(self, jira_config, team_config):
+        assignment_counts = defaultdict(lambda: defaultdict(int))
+        jira_config.members.clear()
+
+        candidate = Candidate.construct(
+            user='g1',
+        )
+        assignee = get_assignee({'g1', 'g3'}, jira_config, candidate, team_config, assignment_counts)
+        assert assignee is None
+
+    def test_assign(self, jira_config, team_config):
+        candidate = Candidate.construct(
+            user='g1',
+        )
+        assignment_counts = defaultdict(lambda: defaultdict(int))
+
+        assignee = get_assignee({'g1', 'g2'}, jira_config, candidate, team_config, assignment_counts)
+        assert assignee == 'j2'

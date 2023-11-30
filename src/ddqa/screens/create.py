@@ -15,6 +15,7 @@ from textual.screen import Screen
 from textual.widgets import Button, DataTable, Header, Label, Markdown, Switch
 
 from ddqa.cache.github import GitHubCache
+from ddqa.models.jira import JiraConfig
 from ddqa.utils.network import ResponsiveNetworkClient
 from ddqa.utils.widgets import switch_to_widget
 from ddqa.widgets.input import LabeledSwitch
@@ -167,15 +168,25 @@ class CandidateListing(DataTable):
             for index, candidate in list(self.candidates.items()):
                 self.app.print(f'Creating issue for {candidate.data.long_display()}')
 
-                assignments: dict[str, str] = {}
+                assignments: dict[str, str | None] = {}
                 for team, assigned in candidate.assignments.items():
                     if not assigned:
                         continue
 
-                    assignments[team] = await self.__get_assignee(
-                        client, candidate.data, self.app.repo.teams[team], assignment_counts
+                    team_members = await self.app.github.get_team_members(client, self.app.repo.teams[team].github_team)
+
+                    assignee = get_assignee(
+                        team_members,
+                        self.app.jira.config,
+                        candidate.data,
+                        self.app.repo.teams[team],
+                        assignment_counts,
                     )
 
+                    if assignee:
+                        assignment_counts[self.app.repo.teams[team].github_team][assignee] += 1
+
+                    assignments[team] = assignee
                 try:
                     created_issues = await self.app.jira.create_issues(client, candidate.data, self.labels, assignments)
                 except Exception as e:
@@ -187,9 +198,12 @@ class CandidateListing(DataTable):
                 result = DataTable(classes='assignment-result')
                 result.add_columns('Team', 'Assignee', 'Issue')
                 for assignee, (team, issue_url) in zip(assignments.values(), created_issues.items(), strict=True):
+                    github_user = (
+                        self.app.jira.config.get_github_user_id_from_jira_user_id(assignee) if assignee else None
+                    )
                     result.add_row(
                         team,
-                        f'[link=https://github.com/{assignee}]{assignee}[/link]' if assignee else '',
+                        f'[link=https://github.com/{github_user}]{github_user}[/link]' if github_user else '',
                         f'[link={issue_url}]{issue_url.rpartition("/")[2]}[/link]',
                     )
 
@@ -206,38 +220,6 @@ class CandidateListing(DataTable):
         self.app.print('Finished creating issues')
         self.sidebar.status.update('Finished')
         self.sidebar.button.disabled = False
-
-    async def __get_assignee(
-        self,
-        client: ResponsiveNetworkClient,
-        candidate: TestCandidate,
-        team: TeamConfig,
-        assignment_counts: dict[str, dict[str, int]],
-    ) -> str:
-        import secrets
-
-        team_members = await self.app.github.get_team_members(client, team.github_team)
-        if not team_members:
-            return ''
-
-        team_members.discard(candidate.user)
-        team_members.difference_update(team.exclude_members)
-        if not team_members:
-            return candidate.user
-
-        counts = assignment_counts[team.github_team]
-        reviewers = {reviewer.name for reviewer in candidate.reviewers}
-        member_keys = {member: (counts[member], member in reviewers) for member in team_members}
-
-        priorities: dict[tuple[int, bool], list[str]] = defaultdict(list)
-        for member, key in member_keys.items():
-            priorities[key].append(member)
-
-        potential_assignees = priorities[sorted(priorities)[0]]
-        assignee = secrets.choice(sorted(potential_assignees))
-        counts[assignee] += 1
-
-        return assignee
 
 
 class StatusLabel(Label):
@@ -505,3 +487,35 @@ class CreateScreen(Screen):
 
         sidebar.update_assignment_status(override_is_loading_flag=False)
         listing.update_cell(str(listing.cursor_row), 'status', candidate.status_indicator)
+
+
+def get_assignee(
+    team_members: set[str],
+    jira_config: JiraConfig,
+    candidate: TestCandidate,
+    team: TeamConfig,
+    assignment_counts: dict[str, dict[str, int]],
+) -> str | None:
+    if not team_members:
+        return None
+
+    team_members.discard(candidate.user)
+    team_members.difference_update(team.exclude_members)
+    jira_team_members = jira_config.get_jira_user_ids_from_github_user_ids(team_members)
+
+    counts = assignment_counts[team.github_team]
+    if not jira_team_members:
+        return jira_config.get_jira_user_id_from_github_user_id(candidate.user)
+
+    reviewers = jira_config.get_jira_user_ids_from_github_user_ids({reviewer.name for reviewer in candidate.reviewers})
+    member_keys = {member: (counts[member], member in reviewers) for member in jira_team_members}
+
+    priorities: dict[tuple[int, bool], list[str]] = defaultdict(list)
+    for member, key in member_keys.items():
+        priorities[key].append(member)
+
+    potential_assignees = priorities[sorted(priorities)[0]]
+
+    import secrets
+
+    return secrets.choice(sorted(potential_assignees))

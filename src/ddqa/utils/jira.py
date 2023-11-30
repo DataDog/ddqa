@@ -75,7 +75,7 @@ class JiraClient:
         client: ResponsiveNetworkClient,
         candidate: TestCandidate,
         labels: tuple[str, ...],
-        assignments: dict[str, str],
+        assignments: dict[str, str | None],
     ) -> dict[str, str]:
         created_issues: dict[str, str] = {}
         common_fields: dict[str, Any] = {
@@ -91,8 +91,10 @@ class JiraClient:
                 'project': {'key': team_config.jira_project},
                 **common_fields,
             }
-            if member in self.config.members:
-                fields['assignee'] = {'id': self.config.members[member]}
+
+            if member:
+                fields['assignee'] = {'id': member}
+
             if team_config.jira_component:
                 fields['components'] = [{'name': team_config.jira_component}]
 

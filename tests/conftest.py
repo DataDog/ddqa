@@ -16,12 +16,17 @@ from unittest.mock import MagicMock
 import pytest
 import tomli_w
 from click.testing import CliRunner
+from textual.widgets import Static
 
 from ddqa.app.core import Application
 from ddqa.cache.github import GitHubCache
 from ddqa.config.constants import AppEnvVars, ConfigEnvVars
 from ddqa.config.file import ConfigFile
+from ddqa.models.config.team import TeamConfig
+from ddqa.models.jira import JiraConfig
 from ddqa.utils.fs import Path
+from ddqa.utils.jira import JiraClient
+from ddqa.utils.network import ResponsiveNetworkClient
 
 
 class TestApplication(Application):
@@ -181,8 +186,47 @@ def handle_remove_readonly(func, path, exc):  # no cov
 
 
 @pytest.fixture
+def jira_config():
+    return JiraConfig(
+        jira_server='http://www.google.fr',
+        members={
+            'g1': 'j1',
+            'g2': 'j2',
+        },
+    )
+
+
+@pytest.fixture
+def jira_client(jira_config):
+    return JiraClient(
+        jira_config,
+        None,
+        None,
+        None,
+    )
+
+
+@pytest.fixture
 def github_cache(temp_dir):
     github_repo = MagicMock()
     github_repo.org = 'Datadog'
     github_repo.repo_name = 'test-repo'
     return GitHubCache(temp_dir, github_repo)
+
+
+@pytest.fixture
+def network_client():
+    return ResponsiveNetworkClient(Static())
+
+
+@pytest.fixture
+def team_config():
+    return TeamConfig(
+        jira_project='FOO',
+        jira_issue_type='Foo-Task',
+        jira_statuses=['TODO', 'IN PROGRESS', 'DONE'],
+        github_team='foo-team',
+        jira_component='foo-component',
+        github_lanels=['foo-label'],
+        exclude_members=['to-exclude'],
+    )
