@@ -59,10 +59,10 @@ class MemberIssueFilter(IssueFilter):
 
 
 class FilterSelect(Select):
-    def __init__(self, issue_filter: IssueFilter):
+    def __init__(self, issue_filter: IssueFilter, css_id: str | None = None):
         self.__issue_filter = issue_filter
 
-        super().__init__((issue, issue) for issue in sorted(self.__issue_filter.issues))
+        super().__init__(((issue, issue) for issue in sorted(self.__issue_filter.issues)), id=css_id)
 
     @property
     def issue_filter(self) -> IssueFilter:
@@ -470,10 +470,14 @@ class StatusScreen(Screen):
             HorizontalScroll(LabeledBox(' Refresh screen ', self.refresh_button), id='refresh-button-box')
         )
         await self.sidebar.options.mount(
-            HorizontalScroll(LabeledBox(' Team ', FilterSelect(self.team_filter)), classes='issue-filter')
+            HorizontalScroll(
+                LabeledBox(' Team ', FilterSelect(self.team_filter, 'team_select')), classes='issue-filter'
+            )
         )
         await self.sidebar.options.mount(
-            HorizontalScroll(LabeledBox(' Member ', FilterSelect(self.member_filter)), classes='issue-filter')
+            HorizontalScroll(
+                LabeledBox(' Member ', FilterSelect(self.member_filter, 'member_select')), classes='issue-filter'
+            )
         )
         await self.sidebar.options.mount(HorizontalScroll(self.status_changer, id='status-changer'))
 
@@ -485,19 +489,19 @@ class StatusScreen(Screen):
         # This clears widgets other than the one that has changed, given that filters can't be combined
         for widget in self.query(Select).results():
             if widget is not event.select:
-                widget.value = None
+                widget.clear()
 
         for status in self.statuses.values():
             status.clear_issues()
 
-        if choice is None:
+        if choice == Select.BLANK:
             # Display all issues when no filter is selected
             for keyed_issues in self.team_filter.issues.values():
                 for issue in keyed_issues.values():
                     self.statuses[self.get_qa_status(issue)].add_issue(issue)
 
         else:
-            for issue in event._sender.issue_filter.issues[choice].values():
+            for issue in event.select.issue_filter.issues[choice].values():
                 self.statuses[self.get_qa_status(issue)].add_issue(issue)
 
         for status in self.statuses.values():
