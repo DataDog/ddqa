@@ -22,10 +22,27 @@ if TYPE_CHECKING:
     multiple=True,
     help='Labels that will be attached to created issues',
 )
+@click.option(
+    '-i',
+    '--include-labels',
+    'include_labels',
+    required=False,
+    multiple=True,
+    help='Labels that will be attached to created issues',
+)
 @click.pass_obj
-def create(app: Application, previous_ref: str, current_ref: str, labels: tuple[str, ...]):
+def create(
+    app: Application,
+    previous_ref: str,
+    current_ref: str,
+    labels: tuple[str, ...],
+    include_labels: list[str] | None = None,
+):
     """Create QA items."""
     from ddqa.screens.create import CreateScreen
 
-    app.select_screen('create', CreateScreen(previous_ref, current_ref, labels))
+    if not include_labels:
+        include_labels = app.config.app.include_labels
+
+    app.select_screen('create', CreateScreen(previous_ref, current_ref, labels, include_labels))
     app.run()

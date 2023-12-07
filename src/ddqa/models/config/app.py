@@ -9,3 +9,4 @@ from pydantic import BaseModel
 class AppConfig(BaseModel):
     repo: str = ''
     cache_dir: str = ''
+    include_labels: list[str] = []

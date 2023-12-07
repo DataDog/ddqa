@@ -140,6 +140,7 @@ class GitHubRepository:
         client: ResponsiveNetworkClient,
         commits: Iterable[GitCommit],
         ignored_labels: Iterable[str] | None = None,
+        include_labels: Iterable[str] | None = None,
     ) -> AsyncIterator[tuple[TestCandidate | None, int, int]]:
         processed_pr_numbers = set()
         ignored = 0
@@ -154,7 +155,9 @@ class GitHubRepository:
                 processed_pr_numbers.add(model.id)
 
                 labels = {label.name for label in model.labels}
-                if ignored_labels and any(label in labels for label in ignored_labels):
+                if (include_labels and not any(label in labels for label in include_labels)) or (
+                    ignored_labels and any(label in labels for label in ignored_labels)
+                ):
                     ignored += 1
                     yield None, index, ignored
                     continue

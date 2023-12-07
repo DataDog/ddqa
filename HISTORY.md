@@ -31,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Check the status of the users in Jira in the sync command
 - Add direct links to GitHub and Jira in the sync screen
 - Check GitHub users are declared in the Jira config file in the sync screen
+- Add an `include_labels` option to only show PRs which have on of these labels in the create screen
 
 ## 0.4.0 - 2023-06-21
 

@@ -9,6 +9,7 @@ import pytest
 from httpx import Request, Response
 from textual.widgets import Static
 
+from ddqa.models.github import PullRequestLabel
 from ddqa.models.github import TestCandidate as Candidate
 from ddqa.utils.git import GitCommit
 from ddqa.utils.network import ResponsiveNetworkClient
@@ -277,6 +278,46 @@ class TestCandidates:
         ]
 
         assert candidates == [(None, 0, 1)]
+
+    async def test_get_candidates_include_labels(self, app, git_repository, mocker):
+        app.configure(
+            git_repository,
+            caching=True,
+            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        )
+
+        mocker.patch(
+            'ddqa.utils.github.GitHubRepository.get_candidate',
+            side_effect=(
+                Candidate.construct(
+                    id='1',
+                    labels=[PullRequestLabel.construct(name='label1'), PullRequestLabel.construct(name='label2')],
+                ),
+                Candidate.construct(
+                    id='2',
+                    labels=[PullRequestLabel.construct(name='label2'), PullRequestLabel.construct(name='label3')],
+                ),
+            ),
+        )
+
+        candidates = []
+
+        async for model, index, ignore in app.github.get_candidates(
+            ResponsiveNetworkClient(Static()),
+            [GitCommit(hash='hash9000', subject='subject9000'), GitCommit(hash='hash9001', subject='subject9001')],
+            [],
+            ['label1'],
+        ):
+            candidates.append((model, index, ignore))
+
+        assert len(candidates) == 2
+        assert candidates[0][0].id == '1'
+        assert candidates[0][1] == 0
+        assert candidates[0][2] == 0
+
+        assert candidates[1][0] is None
+        assert candidates[1][1] == 1
+        assert candidates[1][2] == 1
 
     async def test_no_pr(self, app, git_repository, mocker):
         app.configure(
