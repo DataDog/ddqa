@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     'include_labels',
     required=False,
     multiple=True,
-    help='Labels that will be attached to created issues',
+    help='Labels that should be present in the PRs',
 )
 @click.pass_obj
 def create(
