@@ -76,7 +76,14 @@ class CandidateListing(DataTable):
     """
 
     def __init__(
-        self, sidebar: CandidateSidebar, previous_ref: str, current_ref: str, labels: tuple[str, ...], *args, **kwargs
+        self,
+        sidebar: CandidateSidebar,
+        previous_ref: str,
+        current_ref: str,
+        labels: tuple[str, ...],
+        pr_labels: list[str] | None = None,
+        *args,
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
 
@@ -84,6 +91,7 @@ class CandidateListing(DataTable):
         self.previous_ref = previous_ref
         self.current_ref = current_ref
         self.labels = labels
+        self.pr_labels = pr_labels
 
         self.candidates: dict[int, Candidate] = {}
 
@@ -119,7 +127,10 @@ class CandidateListing(DataTable):
 
         async with ResponsiveNetworkClient(self.sidebar.status) as client:
             async for model, index, ignored in self.app.github.get_candidates(
-                client, commits, self.app.repo.ignored_labels
+                client,
+                commits,
+                self.app.repo.ignored_labels,
+                self.pr_labels,
             ):
                 shown_index = str(index + 1)
                 self.sidebar.label.update(f' {shown_index} / {total} ({ignored} ignored)')
@@ -253,9 +264,15 @@ class CandidateSidebar(LabeledBox):
     }
     """
 
-    def __init__(self, previous_ref: str, current_ref: str, labels: tuple[str, ...]):
+    def __init__(
+        self,
+        previous_ref: str,
+        current_ref: str,
+        labels: tuple[str, ...],
+        pr_labels: list[str] | None = None,
+    ):
         self.__status = StatusLabel()
-        self.__listing = CandidateListing(self, previous_ref, current_ref, labels)
+        self.__listing = CandidateListing(self, previous_ref, current_ref, labels, pr_labels)
         self.__button = Button('Create', variant='primary', disabled=True, id='sidebar-button')
 
         super().__init__(
@@ -446,12 +463,21 @@ class CreateScreen(Screen):
     }
     """
 
-    def __init__(self, previous_ref: str, current_ref: str, labels: tuple[str, ...], *args, **kwargs):
+    def __init__(
+        self,
+        previous_ref: str,
+        current_ref: str,
+        labels: tuple[str, ...],
+        pr_labels: list[str] | None = None,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
 
         self.__previous_ref = previous_ref
         self.__current_ref = current_ref
         self.__labels = labels
+        self.__include__labels = pr_labels
 
     @property
     def previous_ref(self) -> str:
@@ -465,10 +491,17 @@ class CreateScreen(Screen):
     def labels(self) -> tuple[str, ...]:
         return self.__labels
 
+    @property
+    def pr_labels(self) -> list[str] | None:
+        return self.__include__labels
+
     def compose(self) -> ComposeResult:
         yield Header()
         yield Container(
-            Container(CandidateSidebar(self.previous_ref, self.current_ref, self.labels), id='screen-create-sidebar'),
+            Container(
+                CandidateSidebar(self.previous_ref, self.current_ref, self.labels, self.pr_labels),
+                id='screen-create-sidebar',
+            ),
             Container(CandidateRendering(), id='screen-create-rendering'),
             id='screen-create',
         )
