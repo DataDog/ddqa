@@ -13,7 +13,7 @@ def test_default_scrubbed(ddqa, config_file, helpers):
         """
         repo = ""
         cache_dir = ""
-        include_labels = []
+        pr_labels = []
 
         [github]
         user = "foo"
@@ -39,7 +39,7 @@ def test_reveal(ddqa, config_file, helpers):
         """
         repo = ""
         cache_dir = ""
-        include_labels = []
+        pr_labels = []
 
         [github]
         user = "foo"

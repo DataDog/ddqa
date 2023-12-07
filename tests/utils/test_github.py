@@ -279,7 +279,7 @@ class TestCandidates:
 
         assert candidates == [(None, 0, 1)]
 
-    async def test_get_candidates_include_labels(self, app, git_repository, mocker):
+    async def test_get_candidates_pr_labels(self, app, git_repository, mocker):
         app.configure(
             git_repository,
             caching=True,

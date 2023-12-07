@@ -81,7 +81,7 @@ class CandidateListing(DataTable):
         previous_ref: str,
         current_ref: str,
         labels: tuple[str, ...],
-        include_labels: list[str] | None = None,
+        pr_labels: list[str] | None = None,
         *args,
         **kwargs,
     ):
@@ -91,7 +91,7 @@ class CandidateListing(DataTable):
         self.previous_ref = previous_ref
         self.current_ref = current_ref
         self.labels = labels
-        self.include_labels = include_labels
+        self.pr_labels = pr_labels
 
         self.candidates: dict[int, Candidate] = {}
 
@@ -130,7 +130,7 @@ class CandidateListing(DataTable):
                 client,
                 commits,
                 self.app.repo.ignored_labels,
-                self.include_labels,
+                self.pr_labels,
             ):
                 shown_index = str(index + 1)
                 self.sidebar.label.update(f' {shown_index} / {total} ({ignored} ignored)')
@@ -269,10 +269,10 @@ class CandidateSidebar(LabeledBox):
         previous_ref: str,
         current_ref: str,
         labels: tuple[str, ...],
-        include_labels: list[str] | None = None,
+        pr_labels: list[str] | None = None,
     ):
         self.__status = StatusLabel()
-        self.__listing = CandidateListing(self, previous_ref, current_ref, labels, include_labels)
+        self.__listing = CandidateListing(self, previous_ref, current_ref, labels, pr_labels)
         self.__button = Button('Create', variant='primary', disabled=True, id='sidebar-button')
 
         super().__init__(
@@ -468,7 +468,7 @@ class CreateScreen(Screen):
         previous_ref: str,
         current_ref: str,
         labels: tuple[str, ...],
-        include_labels: list[str] | None = None,
+        pr_labels: list[str] | None = None,
         *args,
         **kwargs,
     ):
@@ -477,7 +477,7 @@ class CreateScreen(Screen):
         self.__previous_ref = previous_ref
         self.__current_ref = current_ref
         self.__labels = labels
-        self.__include__labels = include_labels
+        self.__include__labels = pr_labels
 
     @property
     def previous_ref(self) -> str:
@@ -492,14 +492,14 @@ class CreateScreen(Screen):
         return self.__labels
 
     @property
-    def include_labels(self) -> list[str] | None:
+    def pr_labels(self) -> list[str] | None:
         return self.__include__labels
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield Container(
             Container(
-                CandidateSidebar(self.previous_ref, self.current_ref, self.labels, self.include_labels),
+                CandidateSidebar(self.previous_ref, self.current_ref, self.labels, self.pr_labels),
                 id='screen-create-sidebar',
             ),
             Container(CandidateRendering(), id='screen-create-rendering'),

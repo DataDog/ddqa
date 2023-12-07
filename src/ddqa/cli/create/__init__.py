@@ -23,9 +23,8 @@ if TYPE_CHECKING:
     help='Labels that will be attached to created issues',
 )
 @click.option(
-    '-i',
-    '--include-labels',
-    'include_labels',
+    '-pl',
+    '--pr-labels',
     required=False,
     multiple=True,
     help='Labels that should be present in the PRs',
@@ -36,13 +35,13 @@ def create(
     previous_ref: str,
     current_ref: str,
     labels: tuple[str, ...],
-    include_labels: list[str] | None = None,
+    pr_labels: list[str] | None = None,
 ):
     """Create QA items."""
     from ddqa.screens.create import CreateScreen
 
-    if not include_labels:
-        include_labels = app.config.app.include_labels
+    if not pr_labels:
+        pr_labels = app.config.app.pr_labels
 
-    app.select_screen('create', CreateScreen(previous_ref, current_ref, labels, include_labels))
+    app.select_screen('create', CreateScreen(previous_ref, current_ref, labels, pr_labels))
     app.run()
