@@ -64,7 +64,7 @@ class Candidate:
             else:
                 self.data.assigned_teams.discard(team_name)
 
-            self.__cache.cache_candidate_data(self.data.id, self.data.dict())
+            self.__cache.cache_candidate_data(self.data.id, self.data.model_dump())
 
 
 class CandidateListing(DataTable):

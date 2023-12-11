@@ -6,7 +6,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from datetime import datetime
 
-from pydantic import BaseModel, Extra, Field, HttpUrl, validator
+from pydantic import BaseModel, Field, HttpUrl, field_validator
 
 
 class Status(BaseModel):
@@ -26,25 +26,27 @@ class JiraIssue(BaseModel):
     project: str
     type: str  # noqa: A003
     status: Status
-    assignee: Assignee | None
+    assignee: Assignee | None = None
     description: str
     labels: list[str]
     summary: str
     updated: datetime
     components: list[str]
 
-    @validator('description', pre=True)
-    def coerce_description(cls, v):  # noqa: N805
+    @field_validator('description', mode='before')
+    @classmethod
+    def coerce_description(cls, v):
         return v or ''
 
 
-class JiraConfig(BaseModel, extra=Extra.allow):
+class JiraConfig(BaseModel, extra='allow'):
     jira_server: HttpUrl
     members: dict[str, str]
     __reversed_members: dict[str, str] | None = None
 
-    @validator('members')
-    def check_members(cls, v):  # noqa: N805
+    @field_validator('members')
+    @classmethod
+    def check_members(cls, v):
         if not v:
             message = 'must have at least one member'
             raise ValueError(message)

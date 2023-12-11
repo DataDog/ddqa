@@ -7,6 +7,8 @@ import json
 from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
+from pydantic import HttpUrl
+
 from ddqa.utils.fs import Path
 
 if TYPE_CHECKING:
@@ -52,13 +54,19 @@ class GitHubCache:
         path.parent.ensure_dir_exists()
         return path
 
-    def save_global_config(self, source: str, global_config: dict[str, Any]) -> None:
+    def save_global_config(self, source: HttpUrl, global_config: dict[str, Any]) -> None:
         data = {}
         if self.global_config_file.is_file():
             data.update(json.loads(self.global_config_file.read_text()))
 
-        data[source] = global_config
+        data[str(source)] = global_config
         self.global_config_file.write_atomic(json.dumps(data), 'w', encoding='utf-8')
+
+    def load_global_config(self, source: HttpUrl) -> dict[str, Any]:
+        if not self.global_config_file.is_file():
+            return {}
+
+        return json.loads(self.global_config_file.read_text()).get(str(source), {})
 
     def get_team_members_file(self, team):
         return self.cache_dir_team_members / f'{team}.txt'

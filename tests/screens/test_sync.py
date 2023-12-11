@@ -122,7 +122,7 @@ async def test_save_members(app, git_repository, helpers, mocker):
             Response(500, request=Request('GET', '')),
         ],
     )
-    repo_config = app.repo.dict()
+    repo_config = app.repo.model_dump()
     repo_config['teams'] = {
         'foo': {
             'jira_project': 'FOO',
@@ -190,7 +190,7 @@ async def test_save_teams(app, git_repository, helpers, mocker):
     mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1']))
     mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users', return_value=MagicMock(return_value=[]))
 
-    repo_config = dict(app.repo.dict())
+    repo_config = dict(app.repo.model_dump())
     repo_config['teams'] = {
         'foo': {
             'jira_project': 'FOO',
@@ -262,7 +262,7 @@ async def test_deactivated_jira_user(app, git_repository, helpers, mocker):
     mock = MagicMock()
     mock.__aiter__.return_value = [{'accountId': 'j'}]
     mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users', return_value=mock)
-    repo_config = dict(app.repo.dict())
+    repo_config = dict(app.repo.model_dump())
     repo_config['teams'] = {
         'foo': {
             'jira_project': 'FOO',
@@ -331,7 +331,7 @@ async def test_github_user_not_in_jira(app, git_repository, helpers, mocker):
     mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1']))
     mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users')
 
-    repo_config = dict(app.repo.dict())
+    repo_config = dict(app.repo.model_dump())
     repo_config['teams'] = {
         'foo': {
             'jira_project': 'FOO',

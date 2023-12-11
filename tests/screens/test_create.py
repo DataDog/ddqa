@@ -320,7 +320,7 @@ class TestAssignment:
             data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
             github_teams={'foo-team': ['github-foo1']},
         )
-        repo_config = dict(app.repo.dict())
+        repo_config = dict(app.repo.model_dump())
         repo_config['teams'] = {
             'foo': {
                 'jira_project': 'FOO',
@@ -401,7 +401,7 @@ class TestAssignment:
             data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
             github_teams={'foo-team': ['github-foo1']},
         )
-        repo_config = dict(app.repo.dict())
+        repo_config = dict(app.repo.model_dump())
         repo_config['teams'] = {
             'foo-team': {
                 'jira_project': 'FOO',
@@ -470,7 +470,7 @@ class TestAssignment:
             data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
             github_teams={'foo-team': ['github-foo1']},
         )
-        repo_config = dict(app.repo.dict())
+        repo_config = dict(app.repo.model_dump())
         repo_config['teams'] = {
             'foo': {
                 'jira_project': 'FOO',
@@ -592,7 +592,7 @@ class TestAssignment:
             data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
             github_teams={'foo-team': ['github-foo1']},
         )
-        repo_config = dict(app.repo.dict())
+        repo_config = dict(app.repo.model_dump())
         repo_config['ignored_labels'] = ['baz-label']
         repo_config['teams'] = {
             'foo': {
@@ -677,7 +677,7 @@ class TestCreation:
                 'bar-team': ['github-bar1', 'github-bar2', 'github-bar3', 'github-bar4', 'github-bar5', 'github-bar6'],
             },
         )
-        repo_config = dict(app.repo.dict())
+        repo_config = dict(app.repo.model_dump())
         repo_config['teams'] = {
             'Foo Baz': {
                 'jira_project': 'FOO',
@@ -940,7 +940,7 @@ class TestCreation:
 
 class TestGetAssignee:
     def test_no_team_members_in_github(self, jira_config, team_config):
-        candidate = Candidate.construct(
+        candidate = Candidate.model_construct(
             user='author',
         )
         assignee = get_assignee(set(), jira_config, candidate, team_config, {})
@@ -948,7 +948,7 @@ class TestGetAssignee:
 
     def test_no_team_members_available(self, jira_config, team_config):
         assignment_counts = defaultdict(lambda: defaultdict(int))
-        candidate = Candidate.construct(
+        candidate = Candidate.model_construct(
             user='author',
         )
         assignee = get_assignee({'author'}, jira_config, candidate, team_config, assignment_counts)
@@ -958,7 +958,7 @@ class TestGetAssignee:
         team_config.exclude_members = ['excluded_reviewer']
         assignment_counts = defaultdict(lambda: defaultdict(int))
 
-        candidate = Candidate.construct(
+        candidate = Candidate.model_construct(
             user='author',
         )
         assignee = get_assignee({'author', 'excluded_reviewer'}, jira_config, candidate, team_config, assignment_counts)
@@ -966,7 +966,7 @@ class TestGetAssignee:
 
     def test_only_one_other_member_but_not_declared_in_jira(self, jira_config, team_config):
         assignment_counts = defaultdict(lambda: defaultdict(int))
-        candidate = Candidate.construct(
+        candidate = Candidate.model_construct(
             user='g1',
         )
         assignee = get_assignee({'g1', 'g3'}, jira_config, candidate, team_config, assignment_counts)
@@ -976,14 +976,14 @@ class TestGetAssignee:
         assignment_counts = defaultdict(lambda: defaultdict(int))
         jira_config.members.clear()
 
-        candidate = Candidate.construct(
+        candidate = Candidate.model_construct(
             user='g1',
         )
         assignee = get_assignee({'g1', 'g3'}, jira_config, candidate, team_config, assignment_counts)
         assert assignee is None
 
     def test_assign(self, jira_config, team_config):
-        candidate = Candidate.construct(
+        candidate = Candidate.model_construct(
             user='g1',
         )
         assignment_counts = defaultdict(lambda: defaultdict(int))

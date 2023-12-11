@@ -36,15 +36,15 @@ async def test_default_state(app, helpers):
             """
             Configuration errors
             ├── repo
-            │     field required
+            │     Field required
             ├── github -> user
-            │     field required
+            │     Field required
             ├── github -> token
-            │     field required
+            │     Field required
             ├── jira -> email
-            │     field required
+            │     Field required
             └── jira -> token
-                  field required
+                  Field required
             """
         )
 
@@ -72,7 +72,7 @@ class TestRepoNameInput:
                 """
                 Configuration errors
                 └── repo
-                      field required
+                      Field required
                 """
             )
 
@@ -98,7 +98,7 @@ class TestRepoNameInput:
                 """
                 Configuration errors
                 └── repo
-                      str type expected
+                      Input should be a valid string
                 """
             )
 
@@ -149,7 +149,7 @@ class TestRepoNameInput:
                 """
                 Configuration errors
                 └── repo
-                      field required
+                      Field required
                 """
             )
             assert save_button.disabled is True
@@ -187,7 +187,7 @@ class TestRepoPathInput:
                 """
                 Configuration errors
                 └── repos -> agent -> path
-                      field required
+                      Field required
                 """
             )
 
@@ -214,7 +214,7 @@ class TestRepoPathInput:
                 """
                 Configuration errors
                 └── repos -> agent -> path
-                      str type expected
+                      Input should be a valid string
                 """
             )
 
@@ -242,7 +242,7 @@ class TestRepoPathInput:
                 f"""
                 Configuration errors
                 └── repos -> agent -> path
-                      directory does not exist: {path}
+                      Directory does not exist: {path}
                 """
             )
 
@@ -270,7 +270,7 @@ class TestRepoPathInput:
                 """
                 Configuration errors
                 └── repos -> agent -> path
-                      field required
+                      Field required
                 """
             )
 
@@ -308,7 +308,7 @@ class TestGitHubUserInput:
                 """
                 Configuration errors
                 └── github -> user
-                      field required
+                      Field required
                 """
             )
 
@@ -335,7 +335,7 @@ class TestGitHubUserInput:
                 """
                 Configuration errors
                 └── github -> user
-                      str type expected
+                      Input should be a valid string
                 """
             )
 
@@ -362,7 +362,7 @@ class TestGitHubUserInput:
                 """
                 Configuration errors
                 └── github -> user
-                      field required
+                      Field required
                 """
             )
 
@@ -400,7 +400,7 @@ class TestGitHubTokenInput:
                 """
                 Configuration errors
                 └── github -> token
-                      field required
+                      Field required
                 """
             )
 
@@ -428,7 +428,7 @@ class TestGitHubTokenInput:
                 """
                 Configuration errors
                 └── github -> token
-                      str type expected
+                      Input should be a valid string
                 """
             )
 
@@ -456,7 +456,7 @@ class TestGitHubTokenInput:
                 """
                 Configuration errors
                 └── github -> token
-                      field required
+                      Field required
                 """
             )
 
@@ -494,7 +494,7 @@ class TestJiraEmailInput:
                 """
                 Configuration errors
                 └── jira -> email
-                      field required
+                      Field required
                 """
             )
 
@@ -521,7 +521,7 @@ class TestJiraEmailInput:
                 """
                 Configuration errors
                 └── jira -> email
-                      str type expected
+                      Input should be a valid string
                 """
             )
 
@@ -548,7 +548,7 @@ class TestJiraEmailInput:
                 """
                 Configuration errors
                 └── jira -> email
-                      field required
+                      Field required
                 """
             )
 
@@ -586,7 +586,7 @@ class TestJiraTokenInput:
                 """
                 Configuration errors
                 └── jira -> token
-                      field required
+                      Field required
                 """
             )
 
@@ -614,7 +614,7 @@ class TestJiraTokenInput:
                 """
                 Configuration errors
                 └── jira -> token
-                      str type expected
+                      Input should be a valid string
                 """
             )
 
@@ -642,7 +642,7 @@ class TestJiraTokenInput:
                 """
                 Configuration errors
                 └── jira -> token
-                      field required
+                      Field required
                 """
             )
 
