@@ -31,7 +31,7 @@ dependencies = [
   "platformdirs==4.0.0",
   "pydantic==1.10.13",
   "rich==13.7.0",
-  "textual==0.42.0",
+  "textual==0.45.1",
   "tomli-w==1.0.0",
 ]
 
