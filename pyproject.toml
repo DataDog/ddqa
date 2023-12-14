@@ -32,7 +32,7 @@ dependencies = [
   "pydantic==2.5.2",
   "pydantic-settings==2.1.0",
   "rich==13.7.0",
-  "textual==0.42.0",
+  "textual==0.45.1",
   "tomli-w==1.0.0",
 ]
 
