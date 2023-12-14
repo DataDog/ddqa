@@ -3,11 +3,12 @@
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
 
-import json
 import time
 from collections.abc import AsyncIterator, Iterable
 from functools import cached_property
 from typing import TYPE_CHECKING, Any
+
+from pydantic import HttpUrl
 
 from ddqa.cache.github import GitHubCache
 from ddqa.utils.fs import Path
@@ -61,11 +62,8 @@ class GitHubRepository:
     def repo_name(self) -> str:
         return self.repo_id.partition('/')[2]
 
-    def load_global_config(self, source: str) -> dict[str, Any]:
-        if not self.cache.global_config_file.is_file():
-            return {}
-
-        return json.loads(self.cache.global_config_file.read_text()).get(source, {})
+    def load_global_config(self, source: HttpUrl) -> dict[str, Any]:
+        return self.cache.load_global_config(source)
 
     async def get_team_members(self, client: ResponsiveNetworkClient, team: str, *, refresh: bool = False) -> set[str]:
         members = self.cache.get_team_members(team)

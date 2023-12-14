@@ -101,7 +101,7 @@ class TestCandidates:
             mocker.call('https://api.github.com/repos/org/repo/pulls/123/reviews', auth=('foo', 'bar')),
         ]
 
-        assert candidate.dict() == {
+        assert candidate.model_dump() == {
             'id': '123',
             'title': 'title123',
             'url': 'https://github.com/org/repo/pull/123',
@@ -289,13 +289,19 @@ class TestCandidates:
         mocker.patch(
             'ddqa.utils.github.GitHubRepository.get_candidate',
             side_effect=(
-                Candidate.construct(
+                Candidate.model_construct(
                     id='1',
-                    labels=[PullRequestLabel.construct(name='label1'), PullRequestLabel.construct(name='label2')],
+                    labels=[
+                        PullRequestLabel.model_construct(name='label1'),
+                        PullRequestLabel.model_construct(name='label2'),
+                    ],
                 ),
-                Candidate.construct(
+                Candidate.model_construct(
                     id='2',
-                    labels=[PullRequestLabel.construct(name='label2'), PullRequestLabel.construct(name='label3')],
+                    labels=[
+                        PullRequestLabel.model_construct(name='label2'),
+                        PullRequestLabel.model_construct(name='label3'),
+                    ],
                 ),
             ),
         )
@@ -346,7 +352,7 @@ class TestCandidates:
             ),
         ]
 
-        assert candidate.dict() == {
+        assert candidate.model_dump() == {
             'id': 'hash9000',
             'title': 'subject9000',
             'url': 'https://github.com/org/repo/commit/hash9000',
@@ -391,16 +397,16 @@ class TestCandidates:
         assert len(candidates) == 1
         assert candidates == [
             (
-                {
-                    'id': 'hash9000',
-                    'title': 'subject9000',
-                    'url': 'https://github.com/org/repo/commit/hash9000',
-                    'user': '',
-                    'labels': [],
-                    'body': '',
-                    'reviewers': [],
-                    'assigned_teams': set(),
-                },
+                Candidate.model_construct(
+                    id='hash9000',
+                    title='subject9000',
+                    url='https://github.com/org/repo/commit/hash9000',
+                    user='',
+                    labels=[],
+                    body='',
+                    reviewers=[],
+                    assigned_teams=set(),
+                ),
                 0,
                 0,
             )
@@ -434,7 +440,7 @@ class TestCandidates:
                 auth=('foo', 'bar'),
             ),
         ]
-        assert candidate.dict() == {
+        assert candidate.model_dump() == {
             'id': 'hash1',
             'title': 'subject1',
             'url': 'https://github.com/org/repo/commit/hash1',
@@ -502,7 +508,7 @@ class TestCandidates:
             ),
             mocker.call('https://api.github.com/repos/org/repo/pulls/123/reviews', auth=('foo', 'bar')),
         ]
-        assert candidate.dict() == {
+        assert candidate.model_dump() == {
             'id': '123',
             'title': 'title123',
             'url': 'https://github.com/org/repo/pull/123',
@@ -536,7 +542,7 @@ class TestCandidates:
                 auth=('foo', 'bar'),
             ),
         ]
-        assert candidate.dict() == {
+        assert candidate.model_dump() == {
             'id': '123',
             'title': 'title123',
             'url': 'https://github.com/org/repo/pull/123',
@@ -596,7 +602,7 @@ class TestCandidates:
             ResponsiveNetworkClient(Static()), GitCommit(hash='hash1', subject='subject1')
         )
         assert not response_mock.call_args_list
-        assert candidate.dict() == {
+        assert candidate.model_dump() == {
             'id': 'hash1',
             'title': 'subject1',
             'url': 'https://github.com/org/repo/commit/hash1',
@@ -610,7 +616,7 @@ class TestCandidates:
             ResponsiveNetworkClient(Static()), GitCommit(hash='hash2', subject='subject2')
         )
         assert not response_mock.call_args_list
-        assert candidate.dict() == {
+        assert candidate.model_dump() == {
             'id': '123',
             'title': 'title123',
             'url': 'https://github.com/org/repo/pull/123',
@@ -627,7 +633,7 @@ class TestCandidates:
             ResponsiveNetworkClient(Static()), GitCommit(hash='hash3', subject='subject3')
         )
         assert not response_mock.call_args_list
-        assert candidate.dict() == {
+        assert candidate.model_dump() == {
             'id': '123',
             'title': 'title123',
             'url': 'https://github.com/org/repo/pull/123',
@@ -852,7 +858,7 @@ async def test_rate_limit_handling(app, git_repository, mocker):
         mocker.call('https://api.github.com/repos/org/repo/pulls/123/reviews', auth=('foo', 'bar')),
         mocker.call('https://api.github.com/repos/org/repo/pulls/123/reviews', auth=('foo', 'bar')),
     ]
-    assert candidate.dict() == {
+    assert candidate.model_dump() == {
         'id': '123',
         'title': 'title123',
         'url': 'https://github.com/org/repo/pull/123',

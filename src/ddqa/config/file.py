@@ -43,7 +43,7 @@ class ConfigFile:
         import tomli_w
 
         config = Config({})
-        default = config.app.dict()
+        default = config.app.model_dump()
 
         # Add these so the configuration error messages are more granular about missing keys
         default['github'] = {}

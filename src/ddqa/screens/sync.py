@@ -58,7 +58,7 @@ class InteractiveSidebar(Widget):
             )
             try:
                 response = await client.get(
-                    self.app.repo.global_config_source,
+                    str(self.app.repo.global_config_source),
                     auth=(self.app.config.auth.github.user, self.app.config.auth.github.token),
                 )
                 response.raise_for_status()
