@@ -32,8 +32,9 @@ from ddqa.config.constants import AppEnvVars, ConfigEnvVars
     help='The path to a custom config file to use [env var: `DDQA_CONFIG`]',
 )
 @click.version_option(version=__version__, prog_name='ddqa')
+@click.option('--auto', 'auto_mode', is_flag=True, help='Automatically runs the UI without any user interactions')
 @click.pass_context
-def ddqa(ctx: click.Context, color, cache_dir, config_file_path):
+def ddqa(ctx: click.Context, color, cache_dir, config_file_path, auto_mode):
     """
     \b
          _     _
@@ -69,7 +70,7 @@ def ddqa(ctx: click.Context, color, cache_dir, config_file_path):
                 )
                 ctx.exit(1)
 
-    app = Application(config_file, cache_dir, color)
+    app = Application(config_file, cache_dir, color, auto_mode)
 
     if not ctx.invoked_subcommand:
         click.echo(ctx.get_help())

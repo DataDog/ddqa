@@ -43,5 +43,5 @@ def create(
     if not pr_labels:
         pr_labels = app.config.app.pr_labels
 
-    app.select_screen('create', CreateScreen(previous_ref, current_ref, labels, pr_labels))
+    app.select_screen('create', CreateScreen(previous_ref, current_ref, labels, pr_labels, auto_mode=app.auto_mode))
     app.run()

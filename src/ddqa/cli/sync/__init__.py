@@ -17,5 +17,5 @@ def sync(app: Application):
     """Sync team data."""
     from ddqa.screens.sync import SyncScreen
 
-    app.select_screen('sync', SyncScreen(manual_execution=True))
+    app.select_screen('sync', SyncScreen(manual_execution=True, auto_mode=app.auto_mode))
     app.run()
