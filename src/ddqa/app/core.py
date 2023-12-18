@@ -28,7 +28,15 @@ class Application(App):
     TITLE = 'Datadog QA'
     CSS = CSS
 
-    def __init__(self, config_file: ConfigFile, cache_dir: str = '', color: bool | None = None, *args, **kwargs):
+    def __init__(
+        self,
+        config_file: ConfigFile,
+        cache_dir: str = '',
+        color: bool | None = None,
+        auto_mode: bool = False,  # noqa
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
 
         self.__console = Console(
@@ -39,6 +47,7 @@ class Application(App):
             highlight=False,
         )
         self.config_file = config_file
+        self.auto_mode = auto_mode
         self.__cache_dir = cache_dir
         self.__queued_screens: list[tuple[str, Screen]] = []
 
@@ -124,7 +133,7 @@ class Application(App):
         elif not self.is_screen_installed('sync') and self.needs_syncing():
             from ddqa.screens.sync import SyncScreen
 
-            await self.push_screen(SyncScreen())
+            await self.push_screen(SyncScreen(auto_mode=self.auto_mode))
         else:
             for name, _ in self.__queued_screens:
                 await self.push_screen(name)
