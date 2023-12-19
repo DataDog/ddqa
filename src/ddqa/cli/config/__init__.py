@@ -7,6 +7,7 @@ from ddqa.cli.config.edit import edit
 from ddqa.cli.config.explore import explore
 from ddqa.cli.config.find import find
 from ddqa.cli.config.restore import restore
+from ddqa.cli.config.set import set_value
 from ddqa.cli.config.show import show
 
 
@@ -19,4 +20,5 @@ config.add_command(edit)
 config.add_command(explore)
 config.add_command(find)
 config.add_command(restore)
+config.add_command(set_value)
 config.add_command(show)

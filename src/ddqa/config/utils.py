@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 SCRUBBED_VALUE = '*****'
+SCRUBBED_GLOBS = ('github.token', 'jira.token')
 
 
 def scrub_config(config: dict):

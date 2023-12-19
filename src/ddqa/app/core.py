@@ -46,10 +46,14 @@ class Application(App):
             emoji=False,
             highlight=False,
         )
-        self.config_file = config_file
         self.auto_mode = auto_mode
+        self.__config_file = config_file
         self.__cache_dir = cache_dir
         self.__queued_screens: list[tuple[str, Screen]] = []
+
+    @property
+    def config_file(self) -> ConfigFile:
+        return self.__config_file
 
     @property
     def config(self) -> Config:
