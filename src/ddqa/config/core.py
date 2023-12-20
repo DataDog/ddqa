@@ -76,6 +76,17 @@ class Config:
         data['repos'] = repos
         return ReposConfig(**data).repos
 
+    def set_field(self, key: str, value: str):
+        config = self.data
+        fields = key.split('.')
+
+        for f in fields[:-1]:
+            if f not in config:
+                config[f] = {}
+            config = config[f]
+
+        config[fields[-1]] = value
+
 
 class TypeResilientDict(dict):
     """A `dict` whose `get` method also returns the default value when the key is not
