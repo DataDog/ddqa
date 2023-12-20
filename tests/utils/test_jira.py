@@ -8,6 +8,7 @@ from unittest import mock
 
 import pytest
 from httpx import Request, Response
+from pydantic import HttpUrl
 from textual.widgets import Static
 
 from ddqa.models.github import TestCandidate as Candidate
@@ -111,7 +112,7 @@ async def test_create_issues(app, git_repository, helpers, mocker):
         caching=True,
         data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
     )
-    repo_config = dict(app.repo.dict())
+    repo_config = dict(app.repo.model_dump())
     repo_config['teams'] = {
         'foo': {
             'jira_project': 'FOO',
@@ -255,7 +256,7 @@ async def test_search_issues(app, git_repository, mocker):
         caching=True,
         data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
     )
-    repo_config = dict(app.repo.dict())
+    repo_config = dict(app.repo.model_dump())
     repo_config['teams'] = {
         'foo': {
             'jira_project': 'FOO',
@@ -518,13 +519,13 @@ async def test_search_issues(app, git_repository, mocker):
     ]
 
     assert len(issues) == 5
-    assert issues[0].dict() == {
+    assert issues[0].model_dump() == {
         'key': 'FOO-1',
         'project': 'FOO',
         'type': 'Foo-Task',
         'status': {'id': '42', 'name': 'In Progress'},
         'assignee': {
-            'avatar_urls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
+            'avatar_urls': {'16x16': HttpUrl('https://secure.gravatar.com/avatar.png')},
             'id': 'qwerty1234567890',
             'name': 'U.N. Owen',
             'time_zone': 'America/New_York',
@@ -535,13 +536,13 @@ async def test_search_issues(app, git_repository, mocker):
         'updated': datetime(2023, 2, 13, 12, 8, 50, 58000, tzinfo=timezone(timedelta(days=-1, seconds=68400))),
         'components': ['Baz-Component'],
     }
-    assert issues[1].dict() == {
+    assert issues[1].model_dump() == {
         'key': 'BAR-1',
         'project': 'BAR',
         'type': 'Bar-Task',
         'status': {'id': '42', 'name': 'In Progress'},
         'assignee': {
-            'avatar_urls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
+            'avatar_urls': {'16x16': HttpUrl('https://secure.gravatar.com/avatar.png')},
             'id': 'qwerty1234567890',
             'name': 'U.N. Owen',
             'time_zone': 'America/New_York',
@@ -552,13 +553,13 @@ async def test_search_issues(app, git_repository, mocker):
         'updated': datetime(2023, 2, 13, 12, 8, 50, 58000, tzinfo=timezone(timedelta(days=-1, seconds=68400))),
         'components': ['Baz-Component'],
     }
-    assert issues[2].dict() == {
+    assert issues[2].model_dump() == {
         'key': 'FOO-2',
         'project': 'FOO',
         'type': 'Foo-Task',
         'status': {'id': '42', 'name': 'In Progress'},
         'assignee': {
-            'avatar_urls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
+            'avatar_urls': {'16x16': HttpUrl('https://secure.gravatar.com/avatar.png')},
             'id': 'qwerty1234567890',
             'name': 'U.N. Owen',
             'time_zone': 'America/New_York',
@@ -569,13 +570,13 @@ async def test_search_issues(app, git_repository, mocker):
         'updated': datetime(2023, 2, 13, 12, 8, 50, 58000, tzinfo=timezone(timedelta(days=-1, seconds=68400))),
         'components': ['Baz-Component'],
     }
-    assert issues[3].dict() == {
+    assert issues[3].model_dump() == {
         'key': 'BAR-2',
         'project': 'BAR',
         'type': 'Bar-Task',
         'status': {'id': '42', 'name': 'In Progress'},
         'assignee': {
-            'avatar_urls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
+            'avatar_urls': {'16x16': HttpUrl('https://secure.gravatar.com/avatar.png')},
             'id': 'qwerty1234567890',
             'name': 'U.N. Owen',
             'time_zone': 'America/New_York',
@@ -586,13 +587,13 @@ async def test_search_issues(app, git_repository, mocker):
         'updated': datetime(2023, 2, 13, 12, 8, 50, 58000, tzinfo=timezone(timedelta(days=-1, seconds=68400))),
         'components': ['Baz-Component'],
     }
-    assert issues[4].dict() == {
+    assert issues[4].model_dump() == {
         'key': 'FOO-3',
         'project': 'FOO',
         'type': 'Foo-Task',
         'status': {'id': '42', 'name': 'In Progress'},
         'assignee': {
-            'avatar_urls': {'16x16': 'https://secure.gravatar.com/avatar.png'},
+            'avatar_urls': {'16x16': HttpUrl('https://secure.gravatar.com/avatar.png')},
             'id': 'qwerty1234567890',
             'name': 'U.N. Owen',
             'time_zone': 'America/New_York',
@@ -611,7 +612,7 @@ async def test_rate_limit_handling(app, git_repository, mocker):
         caching=True,
         data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
     )
-    repo_config = dict(app.repo.dict())
+    repo_config = dict(app.repo.model_dump())
     repo_config['teams'] = {
         'foo': {
             'jira_project': 'FOO',

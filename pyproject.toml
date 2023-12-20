@@ -29,9 +29,10 @@ dependencies = [
   "httpx==0.25.2",
   "pillow==10.1.0",
   "platformdirs==4.0.0",
-  "pydantic==1.10.13",
+  "pydantic==2.5.2",
+  "pydantic-settings==2.1.0",
   "rich==13.7.0",
-  "textual==0.42.0",
+  "textual==0.45.1",
   "tomli-w==1.0.0",
 ]
 

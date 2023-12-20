@@ -13,6 +13,7 @@ from textual.binding import Binding
 from textual.containers import Container, HorizontalScroll, VerticalScroll
 from textual.screen import Screen
 from textual.widgets import Button, DataTable, Header, Label, Markdown, Switch
+from textual.worker import Worker, WorkerState
 
 from ddqa.cache.github import GitHubCache
 from ddqa.models.jira import JiraConfig
@@ -64,7 +65,7 @@ class Candidate:
             else:
                 self.data.assigned_teams.discard(team_name)
 
-            self.__cache.cache_candidate_data(self.data.id, self.data.dict())
+            self.__cache.cache_candidate_data(self.data.id, self.data.model_dump())
 
 
 class CandidateListing(DataTable):
@@ -82,6 +83,7 @@ class CandidateListing(DataTable):
         current_ref: str,
         labels: tuple[str, ...],
         pr_labels: list[str] | None = None,
+        auto_mode: bool = False,  # noqa
         *args,
         **kwargs,
     ):
@@ -92,6 +94,7 @@ class CandidateListing(DataTable):
         self.current_ref = current_ref
         self.labels = labels
         self.pr_labels = pr_labels
+        self.auto_mode = auto_mode
 
         self.candidates: dict[int, Candidate] = {}
 
@@ -151,6 +154,10 @@ class CandidateListing(DataTable):
 
         self.app.print('Finished processing candidates')
         self.sidebar.update_assignment_status()
+
+    async def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
+        if event.state not in (WorkerState.PENDING, WorkerState.RUNNING) and self.auto_mode:
+            await self.sidebar.create_cards_or_exit()
 
     async def create(self) -> None:
         candidates: dict[int, Candidate] = {}
@@ -232,6 +239,9 @@ class CandidateListing(DataTable):
         self.sidebar.status.update('Finished')
         self.sidebar.button.disabled = False
 
+        if self.sidebar.auto_mode:
+            self.app.exit()
+
 
 class StatusLabel(Label):
     def loading(self) -> None:
@@ -270,10 +280,13 @@ class CandidateSidebar(LabeledBox):
         current_ref: str,
         labels: tuple[str, ...],
         pr_labels: list[str] | None = None,
+        *,
+        auto_mode: bool = False,
     ):
         self.__status = StatusLabel()
-        self.__listing = CandidateListing(self, previous_ref, current_ref, labels, pr_labels)
+        self.__listing = CandidateListing(self, previous_ref, current_ref, labels, pr_labels, auto_mode=auto_mode)
         self.__button = Button('Create', variant='primary', disabled=True, id='sidebar-button')
+        self.__auto_mode = auto_mode
 
         super().__init__(
             '',
@@ -294,6 +307,10 @@ class CandidateSidebar(LabeledBox):
     def button(self) -> Button:
         return self.__button
 
+    @property
+    def auto_mode(self) -> bool:
+        return self.__auto_mode
+
     def update_assignment_status(self, *, override_is_loading_flag: bool = True) -> None:
         assigned = 0
 
@@ -310,6 +327,9 @@ class CandidateSidebar(LabeledBox):
         self.status.update('Ready for creation' if assigned else 'No candidates assigned')
 
     async def on_button_pressed(self, _event: Button.Pressed) -> None:
+        await self.create_cards_or_exit()
+
+    async def create_cards_or_exit(self) -> None:
         if str(self.button.label) == 'Create':
             self.button.disabled = True
             self.button.label = 'Exit'
@@ -319,6 +339,10 @@ class CandidateSidebar(LabeledBox):
 
             self.run_worker(self.listing.create())
         else:
+            self.app.exit()
+
+    async def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
+        if event.state not in (WorkerState.PENDING, WorkerState.RUNNING) and self.auto_mode:
             self.app.exit()
 
 
@@ -470,6 +494,7 @@ class CreateScreen(Screen):
         labels: tuple[str, ...],
         pr_labels: list[str] | None = None,
         *args,
+        auto_mode: bool = False,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -478,6 +503,7 @@ class CreateScreen(Screen):
         self.__current_ref = current_ref
         self.__labels = labels
         self.__include__labels = pr_labels
+        self.__auto_mode = auto_mode
 
     @property
     def previous_ref(self) -> str:
@@ -495,11 +521,17 @@ class CreateScreen(Screen):
     def pr_labels(self) -> list[str] | None:
         return self.__include__labels
 
+    @property
+    def auto_mode(self) -> bool:
+        return self.__auto_mode
+
     def compose(self) -> ComposeResult:
         yield Header()
         yield Container(
             Container(
-                CandidateSidebar(self.previous_ref, self.current_ref, self.labels, self.pr_labels),
+                CandidateSidebar(
+                    self.previous_ref, self.current_ref, self.labels, self.pr_labels, auto_mode=self.__auto_mode
+                ),
                 id='screen-create-sidebar',
             ),
             Container(CandidateRendering(), id='screen-create-rendering'),

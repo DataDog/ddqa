@@ -12,7 +12,7 @@ from rich.console import Console
 # The default time to wait for all triggered events to complete
 ASYNC_WAIT = 0.5
 
-_initial_value = object()
+_initial_value = 'initial_value'
 
 
 class MutatingEqualityValue:

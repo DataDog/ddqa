@@ -56,7 +56,7 @@ class TestFilterSelect:
     def test_sorted_by_filter_key(self):
         dummy_filter = DummyIssueFilter()
         for issue_id in ('c', 'b', 'z', 'a'):
-            issue = JiraIssue.construct(key=f'key-{issue_id}')
+            issue = JiraIssue.model_construct(key=f'key-{issue_id}')
             dummy_filter.add(issue_id, issue)
 
         select = FilterSelect(dummy_filter)
@@ -72,7 +72,7 @@ class TestStatus:
             data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
             github_teams={'foo-team': ['github-foo1']},
         )
-        repo_config = dict(app.repo.dict())
+        repo_config = dict(app.repo.model_dump())
         repo_config['teams'] = {
             'foo': {
                 'jira_project': 'FOO',
@@ -83,32 +83,32 @@ class TestStatus:
         }
         app.save_repo_config(repo_config)
 
-        issue1 = JiraIssue.construct(
+        issue1 = JiraIssue.model_construct(
             key='i1',
             project='FOO',
             components=[],
             summary='',
             updated=datetime.now(tz=ZoneInfo('UTC')),
-            status=Status.construct(name='Backlog'),
-            assignee=Assignee.construct(id='1', name='jira-foo1'),
+            status=Status.model_construct(name='Backlog'),
+            assignee=Assignee.model_construct(id='1', name='jira-foo1'),
         )
-        issue2 = JiraIssue.construct(
+        issue2 = JiraIssue.model_construct(
             key='i2',
             project='FOO',
             components=[],
             summary='',
             updated=datetime.now(tz=ZoneInfo('UTC')),
-            status=Status.construct(name='Sprint'),
-            assignee=Assignee.construct(id='2', name='jira-foo2'),
+            status=Status.model_construct(name='Sprint'),
+            assignee=Assignee.model_construct(id='2', name='jira-foo2'),
         )
-        issue3 = JiraIssue.construct(
+        issue3 = JiraIssue.model_construct(
             key='i3',
             project='FOO',
             components=[],
             summary='',
             updated=datetime.now(tz=ZoneInfo('UTC')),
-            status=Status.construct(name='Done'),
-            assignee=Assignee.construct(id='1', name='jira-foo1'),
+            status=Status.model_construct(name='Done'),
+            assignee=Assignee.model_construct(id='1', name='jira-foo1'),
         )
 
         jira_mock = MagicMock()
@@ -152,7 +152,7 @@ class TestStatus:
             data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
             github_teams={'foo-team': ['github-foo1']},
         )
-        repo_config = dict(app.repo.dict())
+        repo_config = dict(app.repo.model_dump())
         repo_config['teams'] = {
             'foo': {
                 'jira_project': 'FOO',
@@ -169,32 +169,32 @@ class TestStatus:
         }
         app.save_repo_config(repo_config)
 
-        issue1 = JiraIssue.construct(
+        issue1 = JiraIssue.model_construct(
             key='i1',
             project='FOO',
             components=[],
             summary='',
             updated=datetime.now(tz=ZoneInfo('UTC')),
-            status=Status.construct(name='Backlog'),
-            assignee=Assignee.construct(id='1', name='jira-foo1'),
+            status=Status.model_construct(name='Backlog'),
+            assignee=Assignee.model_construct(id='1', name='jira-foo1'),
         )
-        issue2 = JiraIssue.construct(
+        issue2 = JiraIssue.model_construct(
             key='i2',
             project='FOO',
             components=[],
             summary='',
             updated=datetime.now(tz=ZoneInfo('UTC')),
-            status=Status.construct(name='Sprint'),
-            assignee=Assignee.construct(id='2', name='jira-foo2'),
+            status=Status.model_construct(name='Sprint'),
+            assignee=Assignee.model_construct(id='2', name='jira-foo2'),
         )
-        issue3 = JiraIssue.construct(
+        issue3 = JiraIssue.model_construct(
             key='i3',
             project='BAR',
             components=[],
             summary='',
             updated=datetime.now(tz=ZoneInfo('UTC')),
-            status=Status.construct(name='Done'),
-            assignee=Assignee.construct(id='1', name='jira-foo1'),
+            status=Status.model_construct(name='Done'),
+            assignee=Assignee.model_construct(id='1', name='jira-foo1'),
         )
 
         jira_mock = MagicMock()
@@ -228,7 +228,7 @@ class TestStatus:
             data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
             github_teams={'foo-team': ['github-foo1']},
         )
-        repo_config = dict(app.repo.dict())
+        repo_config = dict(app.repo.model_dump())
         repo_config['teams'] = {
             'foo': {
                 'jira_project': 'FOO',
@@ -239,32 +239,32 @@ class TestStatus:
         }
         app.save_repo_config(repo_config)
 
-        issue1 = JiraIssue.construct(
+        issue1 = JiraIssue.model_construct(
             key='i1',
             project='FOO',
             components=[],
             summary='',
             updated=datetime.now(tz=ZoneInfo('UTC')),
-            status=Status.construct(name='Backlog'),
-            assignee=Assignee.construct(id='1', name='jira-foo1'),
+            status=Status.model_construct(name='Backlog'),
+            assignee=Assignee.model_construct(id='1', name='jira-foo1'),
         )
-        issue2 = JiraIssue.construct(
+        issue2 = JiraIssue.model_construct(
             key='i2',
             project='FOO',
             components=[],
             summary='',
             updated=datetime.now(tz=ZoneInfo('UTC')),
-            status=Status.construct(name='Sprint'),
-            assignee=Assignee.construct(id='2', name='jira-foo2'),
+            status=Status.model_construct(name='Sprint'),
+            assignee=Assignee.model_construct(id='2', name='jira-foo2'),
         )
-        issue3 = JiraIssue.construct(
+        issue3 = JiraIssue.model_construct(
             key='i3',
             project='FOO',
             components=[],
             summary='',
             updated=datetime.now(tz=ZoneInfo('UTC')),
-            status=Status.construct(name='Done'),
-            assignee=Assignee.construct(id='1', name='jira-foo1'),
+            status=Status.model_construct(name='Done'),
+            assignee=Assignee.model_construct(id='1', name='jira-foo1'),
         )
 
         jira_mock = MagicMock()

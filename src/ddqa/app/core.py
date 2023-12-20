@@ -28,7 +28,15 @@ class Application(App):
     TITLE = 'Datadog QA'
     CSS = CSS
 
-    def __init__(self, config_file: ConfigFile, cache_dir: str = '', color: bool | None = None, *args, **kwargs):
+    def __init__(
+        self,
+        config_file: ConfigFile,
+        cache_dir: str = '',
+        color: bool | None = None,
+        auto_mode: bool = False,  # noqa
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
 
         self.__console = Console(
@@ -38,9 +46,14 @@ class Application(App):
             emoji=False,
             highlight=False,
         )
-        self.config_file = config_file
+        self.auto_mode = auto_mode
+        self.__config_file = config_file
         self.__cache_dir = cache_dir
         self.__queued_screens: list[tuple[str, Screen]] = []
+
+    @property
+    def config_file(self) -> ConfigFile:
+        return self.__config_file
 
     @property
     def config(self) -> Config:
@@ -71,7 +84,7 @@ class Application(App):
         from ddqa.models.jira import JiraConfig
         from ddqa.utils.jira import JiraClient
 
-        jira_config = JiraConfig(**self.github.load_global_config(str(self.repo.global_config_source)))
+        jira_config = JiraConfig(**self.github.load_global_config(self.repo.global_config_source))
         return JiraClient(jira_config, self.config.auth.jira, self.repo, self.cache_dir)
 
     @cached_property
@@ -83,7 +96,7 @@ class Application(App):
             if isinstance(config.jira_statuses, dict):
                 if missing_statuses := set(self.repo.qa_statuses).difference(config.jira_statuses):
                     ordered_statuses = [status for status in self.repo.qa_statuses if status in missing_statuses]
-                    message = f'repos -> {team} -> jira_statuses\n  missing statuses: {", ".join(ordered_statuses)}'
+                    message = f'repos -> {team} -> jira_statuses\n  Missing statuses: {", ".join(ordered_statuses)}'
                     raise ValueError(message)
 
                 statuses.update(config.jira_statuses)
@@ -91,7 +104,7 @@ class Application(App):
                 if (num_statuses := len(config.jira_statuses)) != (expected_statuses := len(self.repo.qa_statuses)):
                     message = (
                         f'repos -> {team} -> jira_statuses\n'
-                        f'  expected {expected_statuses} statuses, found {num_statuses}'
+                        f'  Expected {expected_statuses} statuses, found {num_statuses}'
                     )
                     raise ValueError(message)
 
@@ -124,7 +137,7 @@ class Application(App):
         elif not self.is_screen_installed('sync') and self.needs_syncing():
             from ddqa.screens.sync import SyncScreen
 
-            await self.push_screen(SyncScreen())
+            await self.push_screen(SyncScreen(auto_mode=self.auto_mode))
         else:
             for name, _ in self.__queued_screens:
                 await self.push_screen(name)
@@ -136,7 +149,7 @@ class Application(App):
         self.__console.print(*args, **kwargs)
 
     def needs_syncing(self) -> bool:
-        return not self.github.load_global_config(str(self.repo.global_config_source)) or not any(
+        return not self.github.load_global_config(self.repo.global_config_source) or not any(
             self.github.cache.cache_dir_team_members.iterdir()
         )
 
@@ -152,7 +165,7 @@ class Application(App):
                 errors.append(f'{" -> ".join(map(str, error["loc"]))}\n  {error["msg"]}')
         else:
             if not repo_name:
-                errors.append('repo\n  field required')
+                errors.append('repo\n  Field required')
             else:
                 try:
                     repos = self.config.repos
@@ -165,9 +178,9 @@ class Application(App):
                     else:
                         repo_path = repos[repo_name].path
                         if not repo_path:
-                            errors.append(f'repos -> {repo_name} -> path\n  field required')
+                            errors.append(f'repos -> {repo_name} -> path\n  Field required')
                         elif not os.path.isdir(repo_path):
-                            errors.append(f'repos -> {repo_name} -> path\n  directory does not exist: {repo_path}')
+                            errors.append(f'repos -> {repo_name} -> path\n  Directory does not exist: {repo_path}')
 
                         try:
                             _ = self.qa_statuses

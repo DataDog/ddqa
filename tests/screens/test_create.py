@@ -20,6 +20,7 @@ from ddqa.screens.create import (
     get_assignee,
 )
 from ddqa.utils.git import GitCommit
+from tests.common import assert_return_code
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -54,6 +55,14 @@ def mock_remote_url():
 def app(app):
     app.select_screen('create', CreateScreen('previous_ref', 'current_ref', ('qa-1.2.3', 'label-9000')))
     return app
+
+
+@pytest.fixture
+def auto_mode_app(auto_mode_app):
+    auto_mode_app.select_screen(
+        'create', CreateScreen('previous_ref', 'current_ref', ('qa-1.2.3', 'label-9000'), auto_mode=True)
+    )
+    return auto_mode_app
 
 
 @pytest.fixture
@@ -137,7 +146,15 @@ class TestDefaultState:
             assert str(assignments[0].label.render()) == 'foo'
             assert assignments[0].switch.value is False
 
-    async def test_no_candidates(self, app, git_repository, helpers):
+    @pytest.mark.parametrize(
+        'application,auto_mode',
+        [
+            pytest.param('app', False, id='manual'),
+            pytest.param('auto_mode_app', True, id='auto'),
+        ],
+    )
+    async def test_no_candidates(self, application, auto_mode, request, git_repository, helpers):
+        app = request.getfixturevalue(application)
         app.configure(
             git_repository,
             caching=True,
@@ -154,8 +171,8 @@ class TestDefaultState:
             assert sidebar is not None
             assert not sidebar.listing.rows
             assert str(sidebar.label.render()) == ' No candidates '
-            assert str(sidebar.status.render()) == 'previous_ref -> current_ref'
-            assert sidebar.button.disabled
+            assert str(sidebar.status.render()) == ('previous_ref -> current_ref' if not auto_mode else 'Finished')
+            assert sidebar.button.disabled != auto_mode
 
             rendering = app.query_one(CandidateRendering)
             assert rendering is not None
@@ -167,6 +184,8 @@ class TestDefaultState:
             assert len(assignments) == 1
             assert str(assignments[0].label.render()) == 'foo'
             assert assignments[0].switch.value is False
+
+        assert_return_code(app, auto_mode)
 
 
 async def test_population(app, git_repository, helpers, mock_pull_requests):
@@ -320,7 +339,7 @@ class TestAssignment:
             data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
             github_teams={'foo-team': ['github-foo1']},
         )
-        repo_config = dict(app.repo.dict())
+        repo_config = dict(app.repo.model_dump())
         repo_config['teams'] = {
             'foo': {
                 'jira_project': 'FOO',
@@ -394,6 +413,91 @@ class TestAssignment:
             assert str(assignments[1].label.render()) == 'bar'
             assert not assignments[1].switch.value
 
+    async def test_auto_mode(self, auto_mode_app, git_repository, helpers, mock_pull_requests, mocker):
+        auto_mode_app.configure(
+            git_repository,
+            caching=True,
+            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            github_teams={'foo-team': ['github-foo1']},
+        )
+        repo_config = dict(auto_mode_app.repo.model_dump())
+        repo_config['teams'] = {
+            'foo': {
+                'jira_project': 'FOO',
+                'jira_issue_type': 'Foo-Task',
+                'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
+                'github_team': 'foo-team',
+                'github_labels': ['foo-label'],
+            },
+            'bar': {
+                'jira_project': 'BAR',
+                'jira_issue_type': 'Bar-Task',
+                'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
+                'github_team': 'bar-team',
+                'github_labels': ['bar-label'],
+            },
+        }
+        auto_mode_app.save_repo_config(repo_config)
+
+        mock_pull_requests(
+            {
+                'number': '2',
+                'title': 'title2',
+                'user': {'login': 'username2'},
+                'labels': [{'name': 'foo-label', 'color': '632ca6'}, {'name': 'baz-label', 'color': '632ca6'}],
+                'body': 'foo2\r\nbar2',
+            },
+            {
+                'number': '2',
+                'title': 'title2',
+                'user': {'login': 'username2'},
+                'labels': [{'name': 'foo-label', 'color': '632ca6'}, {'name': 'baz-label', 'color': '632ca6'}],
+                'body': 'foo2\r\nbar2',
+            },
+            {},
+            {
+                'number': '1',
+                'title': 'title1',
+                'user': {'login': 'username1'},
+                'labels': [{'name': 'bar-label', 'color': '632ca6'}, {'name': 'baz-label', 'color': '632ca6'}],
+                'body': 'foo1\r\nbar1',
+            },
+        )
+
+        create_issues_mock = mocker.patch('ddqa.utils.jira.JiraClient.create_issues')
+
+        async with auto_mode_app.run_test() as pilot:
+            await pilot.pause(helpers.ASYNC_WAIT)
+
+            sidebar = auto_mode_app.query_one(CandidateSidebar)
+            table = sidebar.listing
+            num_candidates = len(table.rows)
+            assert num_candidates == 2
+            assert table.get_row_at(0) == ['✓', 'title2']
+            assert table.get_row_at(1) == ['', 'title1']
+            assert [c.assigned for c in table.candidates.values()] == [
+                True,
+                True,
+            ]
+
+            assert table.cursor_coordinate == Coordinate(0, 0)
+
+            assert str(sidebar.label.render()) == f' 2 / {num_candidates} '
+            assert str(sidebar.status.render()) == 'Ready for creation'
+            assert not sidebar.button.disabled
+
+            rendering = auto_mode_app.query_one(CandidateRendering)
+            assignments = list(rendering.candidate_assignments.query(LabeledSwitch).results())
+            assert len(assignments) == 2
+            assert str(assignments[0].label.render()) == 'foo'
+            assert assignments[0].switch.value
+            assert str(assignments[1].label.render()) == 'bar'
+            assert not assignments[1].switch.value
+
+            assert create_issues_mock.call_count == 1
+
+            assert auto_mode_app.return_code == 0
+
     async def test_default_with_cached_assignment(self, app, git_repository, helpers, mock_pull_requests):
         app.configure(
             git_repository,
@@ -401,7 +505,7 @@ class TestAssignment:
             data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
             github_teams={'foo-team': ['github-foo1']},
         )
-        repo_config = dict(app.repo.dict())
+        repo_config = dict(app.repo.model_dump())
         repo_config['teams'] = {
             'foo-team': {
                 'jira_project': 'FOO',
@@ -470,7 +574,7 @@ class TestAssignment:
             data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
             github_teams={'foo-team': ['github-foo1']},
         )
-        repo_config = dict(app.repo.dict())
+        repo_config = dict(app.repo.model_dump())
         repo_config['teams'] = {
             'foo': {
                 'jira_project': 'FOO',
@@ -592,7 +696,7 @@ class TestAssignment:
             data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
             github_teams={'foo-team': ['github-foo1']},
         )
-        repo_config = dict(app.repo.dict())
+        repo_config = dict(app.repo.model_dump())
         repo_config['ignored_labels'] = ['baz-label']
         repo_config['teams'] = {
             'foo': {
@@ -677,7 +781,7 @@ class TestCreation:
                 'bar-team': ['github-bar1', 'github-bar2', 'github-bar3', 'github-bar4', 'github-bar5', 'github-bar6'],
             },
         )
-        repo_config = dict(app.repo.dict())
+        repo_config = dict(app.repo.model_dump())
         repo_config['teams'] = {
             'Foo Baz': {
                 'jira_project': 'FOO',
@@ -940,7 +1044,7 @@ class TestCreation:
 
 class TestGetAssignee:
     def test_no_team_members_in_github(self, jira_config, team_config):
-        candidate = Candidate.construct(
+        candidate = Candidate.model_construct(
             user='author',
         )
         assignee = get_assignee(set(), jira_config, candidate, team_config, {})
@@ -948,7 +1052,7 @@ class TestGetAssignee:
 
     def test_no_team_members_available(self, jira_config, team_config):
         assignment_counts = defaultdict(lambda: defaultdict(int))
-        candidate = Candidate.construct(
+        candidate = Candidate.model_construct(
             user='author',
         )
         assignee = get_assignee({'author'}, jira_config, candidate, team_config, assignment_counts)
@@ -958,7 +1062,7 @@ class TestGetAssignee:
         team_config.exclude_members = ['excluded_reviewer']
         assignment_counts = defaultdict(lambda: defaultdict(int))
 
-        candidate = Candidate.construct(
+        candidate = Candidate.model_construct(
             user='author',
         )
         assignee = get_assignee({'author', 'excluded_reviewer'}, jira_config, candidate, team_config, assignment_counts)
@@ -966,7 +1070,7 @@ class TestGetAssignee:
 
     def test_only_one_other_member_but_not_declared_in_jira(self, jira_config, team_config):
         assignment_counts = defaultdict(lambda: defaultdict(int))
-        candidate = Candidate.construct(
+        candidate = Candidate.model_construct(
             user='g1',
         )
         assignee = get_assignee({'g1', 'g3'}, jira_config, candidate, team_config, assignment_counts)
@@ -976,14 +1080,14 @@ class TestGetAssignee:
         assignment_counts = defaultdict(lambda: defaultdict(int))
         jira_config.members.clear()
 
-        candidate = Candidate.construct(
+        candidate = Candidate.model_construct(
             user='g1',
         )
         assignee = get_assignee({'g1', 'g3'}, jira_config, candidate, team_config, assignment_counts)
         assert assignee is None
 
     def test_assign(self, jira_config, team_config):
-        candidate = Candidate.construct(
+        candidate = Candidate.model_construct(
             user='g1',
         )
         assignment_counts = defaultdict(lambda: defaultdict(int))

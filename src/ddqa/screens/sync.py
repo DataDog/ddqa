@@ -9,6 +9,7 @@ from textual.containers import Container
 from textual.screen import Screen
 from textual.widget import Widget
 from textual.widgets import Button, Header, Label, RichLog
+from textual.worker import Worker, WorkerState
 
 from ddqa.utils.network import ResponsiveNetworkClient
 from ddqa.widgets.static import Placeholder
@@ -32,10 +33,11 @@ class InteractiveSidebar(Widget):
     }
     """
 
-    def __init__(self, *args, manual_execution, **kwargs):
+    def __init__(self, *args, manual_execution: bool = False, auto_mode: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.__manual_execution = manual_execution
+        self.__auto_mode = auto_mode
 
     def compose(self) -> ComposeResult:
         yield Label()
@@ -58,7 +60,7 @@ class InteractiveSidebar(Widget):
             )
             try:
                 response = await client.get(
-                    self.app.repo.global_config_source,
+                    str(self.app.repo.global_config_source),
                     auth=(self.app.config.auth.github.user, self.app.config.auth.github.token),
                 )
                 response.raise_for_status()
@@ -120,7 +122,14 @@ class InteractiveSidebar(Widget):
 
             button.disabled = False
 
+    async def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
+        if event.state not in (WorkerState.PENDING, WorkerState.RUNNING) and self.__auto_mode:
+            await self.exit_screen()
+
     async def on_button_pressed(self, _event: Button.Pressed) -> None:
+        await self.exit_screen()
+
+    async def exit_screen(self) -> None:
         if self.__manual_execution:
             self.app.exit()
         else:
@@ -150,15 +159,19 @@ class SyncScreen(Screen):
     }
     """
 
-    def __init__(self, *args, manual_execution=False, **kwargs):
+    def __init__(self, *args, manual_execution=False, auto_mode: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.__manual_execution = manual_execution
+        self.__auto_mode = auto_mode
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield Container(
-            Container(InteractiveSidebar(manual_execution=self.__manual_execution), id='screen-sync-sidebar'),
+            Container(
+                InteractiveSidebar(manual_execution=self.__manual_execution, auto_mode=self.__auto_mode),
+                id='screen-sync-sidebar',
+            ),
             Container(Placeholder(width_factor=2), id='screen-sync-placeholder'),
             id='screen-sync',
         )

@@ -21,19 +21,19 @@ class JiraClient:
     PAGINATION_RESULT_SIZE = 100
 
     # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-myself/#api-rest-api-2-myself-get
-    SELF_INSPECTION_API = '/rest/api/2/myself'
+    SELF_INSPECTION_API = 'rest/api/2/myself'
 
     # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-post
-    ISSUE_API = '/rest/api/2/issue'
+    ISSUE_API = 'rest/api/2/issue'
 
     # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-issueidorkey-transitions-get
-    TRANSITIONS_API = '/rest/api/2/issue/{issue_key}/transitions'
+    TRANSITIONS_API = 'rest/api/2/issue/{issue_key}/transitions'
 
     # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-search/#api-rest-api-2-search-post
-    SEARCH_API = '/rest/api/2/search'
+    SEARCH_API = 'rest/api/2/search'
 
     # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-users/#api-rest-api-2-user-bulk-get
-    USER_BULK_API = '/rest/api/2/user/bulk'
+    USER_BULK_API = 'rest/api/2/user/bulk'
 
     def __init__(self, config: JiraConfig, auth: JiraAuth, repo_config: RepoConfig, cache_dir: Path):
         self.__config = config
@@ -243,7 +243,7 @@ class JiraClient:
             return response
 
     def construct_issue_url(self, issue_key: str) -> str:
-        return f'{self.config.jira_server}/browse/{issue_key}'
+        return f'{self.config.jira_server}browse/{issue_key}'
 
     @staticmethod
     def format_label(status: str) -> str:

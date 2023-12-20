@@ -9,6 +9,7 @@ from httpx import Request, Response
 from textual.widgets import Button, Label, RichLog
 
 from ddqa.screens.sync import InteractiveSidebar, SyncScreen
+from tests.common import assert_return_code
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -21,6 +22,12 @@ def mock_remote_url():
 def app(app):
     app.select_screen('sync', SyncScreen(manual_execution=True))
     return app
+
+
+@pytest.fixture
+def auto_mode_app(auto_mode_app):
+    auto_mode_app.select_screen('sync', SyncScreen(manual_execution=True, auto_mode=True))
+    return auto_mode_app
 
 
 async def test_response_error(app, git_repository, helpers, mocker):
@@ -73,7 +80,15 @@ async def test_parsing_error(app, git_repository, helpers, mocker):
         assert button.disabled
 
 
-async def test_no_members(app, git_repository, helpers, mocker):
+@pytest.mark.parametrize(
+    'application,auto_mode',
+    [
+        pytest.param('app', False, id='manual'),
+        pytest.param('auto_mode_app', True, id='auto'),
+    ],
+)
+async def test_no_members(application, auto_mode, request, git_repository, helpers, mocker):
+    app = request.getfixturevalue(application)
     app.configure(
         git_repository,
         caching=True,
@@ -97,8 +112,18 @@ async def test_no_members(app, git_repository, helpers, mocker):
         button = sidebar.query_one(Button)
         assert button.disabled
 
+    assert_return_code(app, auto_mode)
 
-async def test_save_members(app, git_repository, helpers, mocker):
+
+@pytest.mark.parametrize(
+    'application,auto_mode',
+    [
+        pytest.param('app', False, id='manual'),
+        pytest.param('auto_mode_app', True, id='auto'),
+    ],
+)
+async def test_save_members(application, auto_mode, request, git_repository, helpers, mocker):
+    app = request.getfixturevalue(application)
     app.configure(
         git_repository,
         caching=True,
@@ -122,7 +147,7 @@ async def test_save_members(app, git_repository, helpers, mocker):
             Response(500, request=Request('GET', '')),
         ],
     )
-    repo_config = app.repo.dict()
+    repo_config = app.repo.model_dump()
     repo_config['teams'] = {
         'foo': {
             'jira_project': 'FOO',
@@ -139,11 +164,10 @@ async def test_save_members(app, git_repository, helpers, mocker):
     }
     app.save_repo_config(repo_config)
 
+    mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=[])
+
     async with app.run_test():
         sidebar = app.query_one(InteractiveSidebar)
-
-        status = sidebar.query_one(Label)
-        assert '500' in str(status.render())
 
         text_log = sidebar.query_one(RichLog)
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
@@ -161,8 +185,18 @@ async def test_save_members(app, git_repository, helpers, mocker):
             'members': {'g': 'j'},
         }
 
+    assert_return_code(app, auto_mode)
 
-async def test_save_teams(app, git_repository, helpers, mocker):
+
+@pytest.mark.parametrize(
+    'application,auto_mode',
+    [
+        pytest.param('app', False, id='manual'),
+        pytest.param('auto_mode_app', True, id='auto'),
+    ],
+)
+async def test_save_teams(application, auto_mode, git_repository, helpers, mocker, request):
+    app = request.getfixturevalue(application)
     app.configure(
         git_repository,
         caching=True,
@@ -190,7 +224,7 @@ async def test_save_teams(app, git_repository, helpers, mocker):
     mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1']))
     mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users', return_value=MagicMock(return_value=[]))
 
-    repo_config = dict(app.repo.dict())
+    repo_config = dict(app.repo.model_dump())
     repo_config['teams'] = {
         'foo': {
             'jira_project': 'FOO',
@@ -231,8 +265,18 @@ async def test_save_teams(app, git_repository, helpers, mocker):
             'members': {'g': 'j', 'bar1': 'jira-bar1', 'foo1': 'jira-foo1'},
         }
 
+        assert_return_code(app, auto_mode)
 
-async def test_deactivated_jira_user(app, git_repository, helpers, mocker):
+
+@pytest.mark.parametrize(
+    'application,auto_mode',
+    [
+        pytest.param('app', False, id='manual'),
+        pytest.param('auto_mode_app', True, id='auto'),
+    ],
+)
+async def test_deactivated_jira_user(application, auto_mode, git_repository, helpers, mocker, request):
+    app = request.getfixturevalue(application)
     app.configure(
         git_repository,
         caching=True,
@@ -262,7 +306,7 @@ async def test_deactivated_jira_user(app, git_repository, helpers, mocker):
     mock = MagicMock()
     mock.__aiter__.return_value = [{'accountId': 'j'}]
     mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users', return_value=mock)
-    repo_config = dict(app.repo.dict())
+    repo_config = dict(app.repo.model_dump())
     repo_config['teams'] = {
         'foo': {
             'jira_project': 'FOO',
@@ -301,8 +345,18 @@ async def test_deactivated_jira_user(app, git_repository, helpers, mocker):
             'members': {'bar1': 'jira-bar1', 'foo1': 'jira-foo1'},
         }
 
+    assert_return_code(app, auto_mode)
 
-async def test_github_user_not_in_jira(app, git_repository, helpers, mocker):
+
+@pytest.mark.parametrize(
+    'application,auto_mode',
+    [
+        pytest.param('app', False, id='manual'),
+        pytest.param('auto_mode_app', True, id='auto'),
+    ],
+)
+async def test_github_user_not_in_jira(application, auto_mode, git_repository, helpers, mocker, request):
+    app = request.getfixturevalue(application)
     app.configure(
         git_repository,
         caching=True,
@@ -331,7 +385,7 @@ async def test_github_user_not_in_jira(app, git_repository, helpers, mocker):
     mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1']))
     mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users')
 
-    repo_config = dict(app.repo.dict())
+    repo_config = dict(app.repo.model_dump())
     repo_config['teams'] = {
         'foo': {
             'jira_project': 'FOO',
@@ -368,3 +422,5 @@ async def test_github_user_not_in_jira(app, git_repository, helpers, mocker):
             'jira_server': 'https://foo.atlassian.net',
             'members': {'foo1': 'jira-foo1', 'g': 'j'},
         }
+
+        assert_return_code(app, auto_mode)

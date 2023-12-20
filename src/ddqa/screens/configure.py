@@ -197,7 +197,7 @@ class ConfigurationInput(Widget):
         if self.app.needs_syncing():
             from ddqa.screens.sync import SyncScreen
 
-            self.app.install_screen(SyncScreen(), 'sync')
+            self.app.install_screen(SyncScreen(auto_mode=self.app.auto_mode), 'sync')
             await self.app.switch_screen('sync')
         else:
             await self.app.switch_screen(list(self.app._installed_screens)[0])

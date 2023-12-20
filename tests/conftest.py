@@ -94,6 +94,11 @@ def app(config_file):
 
 
 @pytest.fixture
+def auto_mode_app(config_file):
+    return TestApplication(config_file, os.environ[ConfigEnvVars.CACHE], auto_mode=True)
+
+
+@pytest.fixture
 def temp_dir(tmp_path) -> Path:
     path = Path(tmp_path, 'temp')
     path.mkdir()
