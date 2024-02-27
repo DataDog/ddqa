@@ -110,6 +110,8 @@ class GitHubRepository:
         candidate_data['title'] = pr_data['title']
         candidate_data['url'] = f'https://github.com/{self.repo_id}/pull/{pr_data["number"]}'
         candidate_data['user'] = pr_data['user']['login']
+        candidate_data['user_url'] = pr_data['user']['html_url']
+
         candidate_data['labels'] = [{'name': label['name'], 'color': label['color']} for label in pr_data['labels']]
 
         if pr_data['body'] is not None:

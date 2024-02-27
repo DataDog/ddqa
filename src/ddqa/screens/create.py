@@ -431,7 +431,7 @@ class CandidateRendering(LabeledBox):
         label = f' [link={data.url}]{data.short_display()}[/link] '
 
         if data.user:
-            label += f'by [link=https://github.com/{data.user}]{data.user}[/link] '
+            label += f'by [link={data.user_url}]{escape(data.user)}[/link] '
 
         self.label.update(label)
         self.title.update(RichMarkdown(data.title))

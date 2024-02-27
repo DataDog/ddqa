@@ -55,7 +55,7 @@ class TestCandidates:
                                 {
                                     'number': '123',
                                     'title': 'title123',
-                                    'user': {'login': 'username123'},
+                                    'user': {'login': 'username123', 'html_url': 'https://github.com/username123'},
                                     'labels': [
                                         {'name': 'label1', 'color': '632ca6'},
                                         {'name': 'label2', 'color': '632ca6'},
@@ -72,15 +72,15 @@ class TestCandidates:
                     content=json.dumps(
                         [
                             {
-                                'user': {'login': 'username1'},
+                                'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
                                 'author_association': 'MEMBER',
                             },
                             {
-                                'user': {'login': 'username2'},
+                                'user': {'login': 'username2', 'html_url': 'https://github.com/username2'},
                                 'author_association': 'COLLABORATOR',
                             },
                             {
-                                'user': {'login': 'username1'},
+                                'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
                                 'author_association': 'MEMBER',
                             },
                         ],
@@ -106,6 +106,7 @@ class TestCandidates:
             'title': 'title123',
             'url': 'https://github.com/org/repo/pull/123',
             'user': 'username123',
+            'user_url': 'https://github.com/username123',
             'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
             'body': 'foo\nbar',
             'reviewers': [
@@ -134,7 +135,7 @@ class TestCandidates:
                                 {
                                     'number': '123',
                                     'title': 'title123',
-                                    'user': {'login': 'username123'},
+                                    'user': {'login': 'username123', 'html_url': 'https://github.com/username123'},
                                     'labels': [
                                         {'name': 'label1', 'color': '632ca6'},
                                         {'name': 'label2', 'color': '632ca6'},
@@ -151,15 +152,15 @@ class TestCandidates:
                     content=json.dumps(
                         [
                             {
-                                'user': {'login': 'username1'},
+                                'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
                                 'author_association': 'MEMBER',
                             },
                             {
-                                'user': {'login': 'username2'},
+                                'user': {'login': 'username2', 'html_url': 'https://github.com/username2'},
                                 'author_association': 'COLLABORATOR',
                             },
                             {
-                                'user': {'login': 'username1'},
+                                'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
                                 'author_association': 'MEMBER',
                             },
                         ],
@@ -193,6 +194,7 @@ class TestCandidates:
                         'title': 'title123',
                         'url': 'https://github.com/org/repo/pull/123',
                         'user': 'username123',
+                        'user_url': 'https://github.com/username123',
                         'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
                         'body': 'foo\nbar',
                         'reviewers': [
@@ -225,7 +227,7 @@ class TestCandidates:
                                 {
                                     'number': '123',
                                     'title': 'title123',
-                                    'user': {'login': 'username123'},
+                                    'user': {'login': 'username123', 'html_url': 'https://github.com/username123'},
                                     'labels': [
                                         {'name': 'label1', 'color': '632ca6'},
                                         {'name': 'label2', 'color': '632ca6'},
@@ -242,15 +244,15 @@ class TestCandidates:
                     content=json.dumps(
                         [
                             {
-                                'user': {'login': 'username1'},
+                                'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
                                 'author_association': 'MEMBER',
                             },
                             {
-                                'user': {'login': 'username2'},
+                                'user': {'login': 'username2', 'html_url': 'https://github.com/username2'},
                                 'author_association': 'COLLABORATOR',
                             },
                             {
-                                'user': {'login': 'username1'},
+                                'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
                                 'author_association': 'MEMBER',
                             },
                         ],
@@ -357,6 +359,7 @@ class TestCandidates:
             'title': 'subject9000',
             'url': 'https://github.com/org/repo/commit/hash9000',
             'user': '',
+            'user_url': '',
             'labels': [],
             'body': '',
             'reviewers': [],
@@ -445,6 +448,7 @@ class TestCandidates:
             'title': 'subject1',
             'url': 'https://github.com/org/repo/commit/hash1',
             'user': '',
+            'user_url': '',
             'labels': [],
             'body': '',
             'reviewers': [],
@@ -464,7 +468,7 @@ class TestCandidates:
                                 {
                                     'number': '123',
                                     'title': 'title123',
-                                    'user': {'login': 'username123'},
+                                    'user': {'login': 'username123', 'html_url': 'https://github.com/username123'},
                                     'labels': [
                                         {'name': 'label1', 'color': '632ca6'},
                                         {'name': 'label2', 'color': '632ca6'},
@@ -481,15 +485,15 @@ class TestCandidates:
                     content=json.dumps(
                         [
                             {
-                                'user': {'login': 'username1'},
+                                'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
                                 'author_association': 'MEMBER',
                             },
                             {
-                                'user': {'login': 'username2'},
+                                'user': {'login': 'username2', 'html_url': 'https://github.com/username2'},
                                 'author_association': 'COLLABORATOR',
                             },
                             {
-                                'user': {'login': 'username1'},
+                                'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
                                 'author_association': 'MEMBER',
                             },
                         ],
@@ -513,6 +517,7 @@ class TestCandidates:
             'title': 'title123',
             'url': 'https://github.com/org/repo/pull/123',
             'user': 'username123',
+            'user_url': 'https://github.com/username123',
             'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
             'body': 'foo\nbar',
             'reviewers': [
@@ -547,6 +552,7 @@ class TestCandidates:
             'title': 'title123',
             'url': 'https://github.com/org/repo/pull/123',
             'user': 'username123',
+            'user_url': 'https://github.com/username123',
             'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
             'body': 'foo\nbar',
             'reviewers': [
@@ -588,6 +594,7 @@ class TestCandidates:
             'title': 'title123',
             'url': 'https://github.com/org/repo/pull/123',
             'user': 'username123',
+            'user_url': 'https://github.com/username123',
             'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
             'body': 'foo\nbar',
             'reviewers': [
@@ -607,6 +614,7 @@ class TestCandidates:
             'title': 'subject1',
             'url': 'https://github.com/org/repo/commit/hash1',
             'user': '',
+            'user_url': '',
             'labels': [],
             'body': '',
             'reviewers': [],
@@ -621,6 +629,7 @@ class TestCandidates:
             'title': 'title123',
             'url': 'https://github.com/org/repo/pull/123',
             'user': 'username123',
+            'user_url': 'https://github.com/username123',
             'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
             'body': 'foo\nbar',
             'reviewers': [
@@ -638,6 +647,7 @@ class TestCandidates:
             'title': 'title123',
             'url': 'https://github.com/org/repo/pull/123',
             'user': 'username123',
+            'user_url': 'https://github.com/username123',
             'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
             'body': 'foo\nbar',
             'reviewers': [
@@ -807,7 +817,7 @@ async def test_rate_limit_handling(app, git_repository, mocker):
                             {
                                 'number': '123',
                                 'title': 'title123',
-                                'user': {'login': 'username123'},
+                                'user': {'login': 'username123', 'html_url': 'https://github.com/username123'},
                                 'labels': [
                                     {'name': 'label1', 'color': '632ca6'},
                                     {'name': 'label2', 'color': '632ca6'},
@@ -828,15 +838,15 @@ async def test_rate_limit_handling(app, git_repository, mocker):
                 content=json.dumps(
                     [
                         {
-                            'user': {'login': 'username1'},
+                            'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
                             'author_association': 'MEMBER',
                         },
                         {
-                            'user': {'login': 'username2'},
+                            'user': {'login': 'username2', 'html_url': 'https://github.com/username2'},
                             'author_association': 'COLLABORATOR',
                         },
                         {
-                            'user': {'login': 'username1'},
+                            'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
                             'author_association': 'MEMBER',
                         },
                     ],
@@ -863,6 +873,7 @@ async def test_rate_limit_handling(app, git_repository, mocker):
         'title': 'title123',
         'url': 'https://github.com/org/repo/pull/123',
         'user': 'username123',
+        'user_url': 'https://github.com/username123',
         'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
         'body': 'foo\nbar',
         'reviewers': [
