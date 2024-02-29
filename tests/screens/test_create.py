@@ -245,7 +245,8 @@ async def test_population(app, git_repository, helpers, mock_pull_requests):
         assert assignments[0].switch.value is False
 
 
-async def test_rendering(app, git_repository, helpers, mock_pull_requests):
+@pytest.mark.parametrize('login', ['username2', 'username2[bot]'])
+async def test_rendering(app, git_repository, helpers, mock_pull_requests, login):
     app.configure(
         git_repository,
         caching=True,
@@ -257,7 +258,7 @@ async def test_rendering(app, git_repository, helpers, mock_pull_requests):
         {
             'number': '2',
             'title': 'title2',
-            'user': {'login': 'username2', 'html_url': 'https://github.com/username2'},
+            'user': {'login': login, 'html_url': 'https://github.com/username2'},
             'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
             'body': 'foo2\r\nbar2',
         },
@@ -287,7 +288,7 @@ async def test_rendering(app, git_repository, helpers, mock_pull_requests):
         rendering = app.query_one(CandidateRendering)
         rendered_label = rendering.label.render()
         rendered_label_text = str(rendered_label)
-        assert rendered_label_text == ' #2 by username2 '
+        assert rendered_label_text == f' #2 by {login} '
         assert len(rendered_label.spans) == 2
         rendered_label_span = rendered_label.spans[0]
         assert rendered_label_span.start == 1
