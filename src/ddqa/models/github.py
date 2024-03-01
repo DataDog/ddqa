@@ -21,6 +21,7 @@ class TestCandidate(BaseModel):
     title: str
     url: str
     user: str = ''
+    user_url: str = ''
     body: str = ''
     labels: list[PullRequestLabel] = []
     reviewers: list[PullRequestReviewer] = []

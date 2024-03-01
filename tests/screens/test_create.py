@@ -200,14 +200,14 @@ async def test_population(app, git_repository, helpers, mock_pull_requests):
         {
             'number': '2',
             'title': 'title2',
-            'user': {'login': 'username2'},
+            'user': {'login': 'username2', 'html_url': 'https://github.com/username2'},
             'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
             'body': 'foo2\r\nbar2',
         },
         {
             'number': '2',
             'title': 'title2',
-            'user': {'login': 'username2'},
+            'user': {'login': 'username2', 'html_url': 'https://github.com/username2'},
             'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
             'body': 'foo2\r\nbar2',
         },
@@ -215,7 +215,7 @@ async def test_population(app, git_repository, helpers, mock_pull_requests):
         {
             'number': '1',
             'title': 'title1',
-            'user': {'login': 'username1'},
+            'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
             'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
             'body': 'foo1\r\nbar1',
         },
@@ -245,7 +245,8 @@ async def test_population(app, git_repository, helpers, mock_pull_requests):
         assert assignments[0].switch.value is False
 
 
-async def test_rendering(app, git_repository, helpers, mock_pull_requests):
+@pytest.mark.parametrize('login', ['username2', 'username2[bot]'])
+async def test_rendering(app, git_repository, helpers, mock_pull_requests, login):
     app.configure(
         git_repository,
         caching=True,
@@ -257,14 +258,14 @@ async def test_rendering(app, git_repository, helpers, mock_pull_requests):
         {
             'number': '2',
             'title': 'title2',
-            'user': {'login': 'username2'},
+            'user': {'login': login, 'html_url': 'https://github.com/username2'},
             'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
             'body': 'foo2\r\nbar2',
         },
         {
             'number': '2',
             'title': 'title2',
-            'user': {'login': 'username2'},
+            'user': {'login': 'username2', 'html_url': 'https://github.com/username2'},
             'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
             'body': 'foo2\r\nbar2',
         },
@@ -272,7 +273,7 @@ async def test_rendering(app, git_repository, helpers, mock_pull_requests):
         {
             'number': '1',
             'title': 'title1',
-            'user': {'login': 'username1'},
+            'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
             'labels': [{'name': 'label1', 'color': '632ca6'}, {'name': 'label2', 'color': '632ca6'}],
             'body': 'foo1\r\nbar1',
         },
@@ -287,7 +288,7 @@ async def test_rendering(app, git_repository, helpers, mock_pull_requests):
         rendering = app.query_one(CandidateRendering)
         rendered_label = rendering.label.render()
         rendered_label_text = str(rendered_label)
-        assert rendered_label_text == ' #2 by username2 '
+        assert rendered_label_text == f' #2 by {login} '
         assert len(rendered_label.spans) == 2
         rendered_label_span = rendered_label.spans[0]
         assert rendered_label_span.start == 1
@@ -362,14 +363,14 @@ class TestAssignment:
             {
                 'number': '2',
                 'title': 'title2',
-                'user': {'login': 'username2'},
+                'user': {'login': 'username2', 'html_url': 'https://github.com/username2'},
                 'labels': [{'name': 'foo-label', 'color': '632ca6'}, {'name': 'baz-label', 'color': '632ca6'}],
                 'body': 'foo2\r\nbar2',
             },
             {
                 'number': '2',
                 'title': 'title2',
-                'user': {'login': 'username2'},
+                'user': {'login': 'username2', 'html_url': 'https://github.com/username2'},
                 'labels': [{'name': 'foo-label', 'color': '632ca6'}, {'name': 'baz-label', 'color': '632ca6'}],
                 'body': 'foo2\r\nbar2',
             },
@@ -377,7 +378,7 @@ class TestAssignment:
             {
                 'number': '1',
                 'title': 'title1',
-                'user': {'login': 'username1'},
+                'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
                 'labels': [{'name': 'bar-label', 'color': '632ca6'}, {'name': 'baz-label', 'color': '632ca6'}],
                 'body': 'foo1\r\nbar1',
             },
@@ -443,14 +444,14 @@ class TestAssignment:
             {
                 'number': '2',
                 'title': 'title2',
-                'user': {'login': 'username2'},
+                'user': {'login': 'username2', 'html_url': 'https://github.com/username2'},
                 'labels': [{'name': 'foo-label', 'color': '632ca6'}, {'name': 'baz-label', 'color': '632ca6'}],
                 'body': 'foo2\r\nbar2',
             },
             {
                 'number': '2',
                 'title': 'title2',
-                'user': {'login': 'username2'},
+                'user': {'login': 'username2', 'html_url': 'https://github.com/username2'},
                 'labels': [{'name': 'foo-label', 'color': '632ca6'}, {'name': 'baz-label', 'color': '632ca6'}],
                 'body': 'foo2\r\nbar2',
             },
@@ -458,7 +459,7 @@ class TestAssignment:
             {
                 'number': '1',
                 'title': 'title1',
-                'user': {'login': 'username1'},
+                'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
                 'labels': [{'name': 'bar-label', 'color': '632ca6'}, {'name': 'baz-label', 'color': '632ca6'}],
                 'body': 'foo1\r\nbar1',
             },
@@ -538,7 +539,7 @@ class TestAssignment:
             {
                 'number': '1',
                 'title': 'title1',
-                'user': {'login': 'username1'},
+                'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
                 'labels': [{'name': 'bar-label', 'color': '632ca6'}, {'name': 'baz-label', 'color': '632ca6'}],
                 'body': 'foo1\r\nbar1',
             },
@@ -597,14 +598,14 @@ class TestAssignment:
             {
                 'number': '2',
                 'title': 'title2',
-                'user': {'login': 'username2'},
+                'user': {'login': 'username2', 'html_url': 'https://github.com/username2'},
                 'labels': [{'name': 'foo-label', 'color': '632ca6'}, {'name': 'baz-label', 'color': '632ca6'}],
                 'body': 'foo2\r\nbar2',
             },
             {
                 'number': '2',
                 'title': 'title2',
-                'user': {'login': 'username2'},
+                'user': {'login': 'username2', 'html_url': 'https://github.com/username2'},
                 'labels': [{'name': 'foo-label', 'color': '632ca6'}, {'name': 'baz-label', 'color': '632ca6'}],
                 'body': 'foo2\r\nbar2',
             },
@@ -612,7 +613,7 @@ class TestAssignment:
             {
                 'number': '1',
                 'title': 'title1',
-                'user': {'login': 'username1'},
+                'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
                 'labels': [{'name': 'bar-label', 'color': '632ca6'}, {'name': 'baz-label', 'color': '632ca6'}],
                 'body': 'foo1\r\nbar1',
             },
@@ -720,14 +721,14 @@ class TestAssignment:
             {
                 'number': '2',
                 'title': 'title2',
-                'user': {'login': 'username2'},
+                'user': {'login': 'username2', 'html_url': 'https://github.com/username2'},
                 'labels': [{'name': 'foo-label', 'color': '632ca6'}, {'name': 'baz-label', 'color': '632ca6'}],
                 'body': 'foo2\r\nbar2',
             },
             {
                 'number': '2',
                 'title': 'title2',
-                'user': {'login': 'username2'},
+                'user': {'login': 'username2', 'html_url': 'https://github.com/username2'},
                 'labels': [{'name': 'foo-label', 'color': '632ca6'}, {'name': 'baz-label', 'color': '632ca6'}],
                 'body': 'foo2\r\nbar2',
             },
@@ -735,7 +736,7 @@ class TestAssignment:
             {
                 'number': '1',
                 'title': 'title1',
-                'user': {'login': 'username1'},
+                'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
                 'labels': [{'name': 'bar-label', 'color': '632ca6'}, {'name': 'bar-label', 'color': '632ca6'}],
                 'body': 'foo1\r\nbar1',
             },
@@ -804,7 +805,7 @@ class TestCreation:
             {
                 'number': '2',
                 'title': 'title2',
-                'user': {'login': 'github-foo1'},
+                'user': {'login': 'github-foo1', 'html_url': 'https://github.com/github-foo1'},
                 'labels': [{'name': 'foo-label', 'color': '632ca6'}],
                 'body': 'foo2\r\nbar2',
                 'reviewers': [
@@ -817,7 +818,7 @@ class TestCreation:
             {
                 'number': '2',
                 'title': 'title2',
-                'user': {'login': 'github-foo1'},
+                'user': {'login': 'github-foo1', 'html_url': 'https://github.com/github-foo1'},
                 'labels': [{'name': 'foo-label', 'color': '632ca6'}],
                 'body': 'foo2\r\nbar2',
                 'reviewers': [
@@ -831,7 +832,7 @@ class TestCreation:
             {
                 'number': '1',
                 'title': 'title1',
-                'user': {'login': 'github-bar1'},
+                'user': {'login': 'github-bar1', 'html_url': 'https://github.com/github-foo1'},
                 'labels': [{'name': 'foo-label', 'color': '632ca6'}, {'name': 'bar-label', 'color': '632ca6'}],
                 'body': 'foo1\r\nbar1',
                 'reviewers': [
