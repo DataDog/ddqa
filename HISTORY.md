@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Do not show PRs that have a ignored label in the create screen
 - Strip the PR title in the `create` screen
 - Stop assigning cards to users that are not declared in the Jira config
+- Verify that no duplicated Jira users are found in the config in the `sync` screen
 
 ***Added:***
 

@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 import tomllib
+from collections import Counter
 
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -99,6 +100,21 @@ class InteractiveSidebar(Widget):
                 except Exception as e:
                     status.update(str(e))
                     return
+
+            text_log.write('Validating the github-metadata configuration...', shrink=False)
+
+            members = global_config.get('members', {})
+            members_values_counter = Counter(members.values())
+
+            if duplicate_users := [key for key, value in members.items() if members_values_counter[value] > 1]:
+                for duplicate_user in duplicate_users:
+                    text_log.write(
+                        f'Jira user `{members[duplicate_user]}` is declared multiple times in the '
+                        f'[link={self.app.repo.global_config_source}]Jira config[/link] with GitHub '
+                        f'user `{duplicate_user}`',
+                        shrink=False,
+                    )
+                return
 
             text_log.write(f'Validating {len(global_config.get("members", {}))} Jira users...', shrink=False)
             try:
