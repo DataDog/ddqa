@@ -38,7 +38,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install Hatch
-      run: pip install --upgrade hatch
+      uses: pypa/hatch@install
 
     - name: Lint
       run: hatch run lint:all
