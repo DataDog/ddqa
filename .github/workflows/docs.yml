@@ -34,7 +34,7 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Install Hatch
-      run: pip install --upgrade hatch
+      uses: pypa/hatch@install
 
     - name: Build documentation
       run: hatch run docs:build
