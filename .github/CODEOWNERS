@@ -10,4 +10,4 @@
 # and another the rest of the directory.
 
 # All your base
-*                   @DataDog/agent-developer-tools
+*                   @DataDog/agent-devx-loops
