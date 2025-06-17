@@ -13,7 +13,7 @@ DDQA will always ensure valid config by loading the configuration screen if ther
 
 ## GitHub auth
 
-You'll need to create a [personal access token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#personal-access-tokens-classic) with `repo` and `read:org` permissions and, if required by the organization, [enable SAML single sign-on](https://docs.github.com/en/enterprise-cloud@latest/authentication/authenticating-with-saml-single-sign-on/authorizing-a-personal-access-token-for-use-with-saml-single-sign-on).
+You'll need to create a [fine-grain access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#personal-access-tokens-classic) using `DataDog` resource owner with `Pull requests: read-only` repository permission and `Members: read-only` organization permissions.
 
 <figure markdown>
   ![GitHub token 1](../assets/images/github-token1.png){ loading=lazy role="img" }
