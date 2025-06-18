@@ -13,11 +13,22 @@ DDQA will always ensure valid config by loading the configuration screen if ther
 
 ## GitHub auth
 
-You'll need to create a [fine-grain access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#personal-access-tokens-classic) using `DataDog` resource owner with `Pull requests: read-only` repository permission and `Members: read-only` organization permissions.
+You'll need to create a [fine-grain access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#personal-access-tokens-classic) using `DataDog` resource owner.
+
+Restrict its access to the concerned repositories:
+- `DataDog/github-metadata`, to access user mapping.
+- the list of repositories you are creating cards for (e.g. `DataDog/datadog-agent`) 
 
 <figure markdown>
-  ![GitHub token 1](../assets/images/github-token1.png){ loading=lazy role="img" }
-  ![GitHub token 2](../assets/images/github-token2.png){ loading=lazy role="img" }
+  ![GitHub token repositories](../assets/images/github-token-repositories.png){ loading=lazy role="img" }
+</figure>
+
+Set the required permissions:
+- `Content: read-only` and `Pull requests: read-only` repository permissions.
+- `Members: read-only` organization permission.
+
+<figure markdown>
+  ![GitHub token permissions](../assets/images/github-token-permissions.png){ loading=lazy role="img" }
 </figure>
 
 The following APIs are used:
