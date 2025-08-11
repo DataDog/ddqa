@@ -89,7 +89,7 @@ class GitHubRepository:
             # https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests
             # https://github.blog/changelog/2025-03-06-github-issues-projects-api-support-for-issues-advanced-search-and-more/
             params={
-                'q': f'sha:{commit.hash} AND repo:{self.repo_id} AND is:merged AND is:pull-request',
+                'q': f'{commit.hash} AND repo:{self.repo_id} AND is:merged AND is:pull-request',
                 'advanced_search': True,
             },
         )
