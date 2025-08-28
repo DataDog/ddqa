@@ -1,14 +1,15 @@
+---
 name: build
 
 on:
   push:
     tags:
-    - v*
+      - v*
     branches:
-    - master
+      - master
   pull_request:
     branches:
-    - master
+      - master
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -29,56 +30,53 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+        with:
+          fetch-depth: 0
 
-    - name: Install build frontend
-      run: python -m pip install --upgrade build
+      - name: Install build frontend
+        run: python -m pip install --upgrade build
 
-    - name: Build
-      run: python -m build
+      - name: Build
+        run: python -m build
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-      with:
-        name: python-artifacts
-        path: dist/*
-        if-no-files-found: error
+      - name: Upload artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: python-artifacts
+          path: dist/*
+          if-no-files-found: error
 
   binaries:
     name: ${{ matrix.job.target }} (${{ matrix.job.os }})
     needs:
-    - python-artifacts
+      - python-artifacts
     runs-on: ${{ matrix.job.os }}
     strategy:
       fail-fast: false
       matrix:
         job:
-        # Linux
-        - target: aarch64-unknown-linux-gnu
-          os: ubuntu-22.04
-          cross: true
-        - target: x86_64-unknown-linux-gnu
-          os: ubuntu-22.04
-          cross: true
-        - target: x86_64-unknown-linux-musl
-          os: ubuntu-22.04
-          cross: true
-        - target: powerpc64le-unknown-linux-gnu
-          os: ubuntu-22.04
-          cross: true
-        # Windows
-        - target: x86_64-pc-windows-msvc
-          os: windows-2022
-        - target: i686-pc-windows-msvc
-          os: windows-2022
-        # macOS
-        - target: aarch64-apple-darwin
-          os: macos-15
-        - target: x86_64-apple-darwin
-          os: macos-15
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-22.04
+            cross: true
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-22.04
+            cross: true
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-22.04
+            cross: true
+          - target: powerpc64le-unknown-linux-gnu
+            os: ubuntu-22.04
+            cross: true
+          - target: x86_64-pc-windows-msvc
+            os: windows-2022
+          - target: i686-pc-windows-msvc
+            os: windows-2022
+          - target: aarch64-apple-darwin
+            os: macos-15
+          - target: x86_64-apple-darwin
+            os: macos-15
 
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -90,113 +88,113 @@ jobs:
       PYAPP_VERSION: "0.19.0"
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+        with:
+          fetch-depth: 0
 
-    - name: Fetch PyApp
-      run: >-
-        mkdir $PYAPP_REPO && curl -L
-        https://github.com/ofek/pyapp/releases/download/v$PYAPP_VERSION/source.tar.gz
-        |
-        tar --strip-components=1 -xzf - -C $PYAPP_REPO
+      - name: Fetch PyApp
+        run: >-
+          mkdir $PYAPP_REPO && curl -L
+          https://github.com/ofek/pyapp/releases/download/v$PYAPP_VERSION/source.tar.gz
+          |
+          tar --strip-components=1 -xzf - -C $PYAPP_REPO
 
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v.5.6.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: Install Hatch
-      uses: pypa/hatch@install
+      - name: Install Hatch
+        uses: pypa/hatch@257e27e51a6a5616ed08a39a408a21c35c9931bc  # install
 
-    - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: ${{ matrix.job.target }}
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6  # stable
+        with:
+          targets: ${{ matrix.job.target }}
 
-    - name: Set up cross compiling
-      if: matrix.job.cross
-      uses: taiki-e/install-action@v2
-      with:
-        tool: cross
+      - name: Set up cross compiling
+        if: matrix.job.cross
+        uses: taiki-e/install-action@bb5b6ec0fe226d4254f80ec39794c3a8c1b6525f  # v2.58.25
+        with:
+          tool: cross
 
-    - name: Configure cross compiling
-      if: matrix.job.cross
-      run: echo "CARGO=cross" >> $GITHUB_ENV
+      - name: Configure cross compiling
+        if: matrix.job.cross
+        run: echo "CARGO=cross" >> $GITHUB_ENV
 
-    - name: Configure target
-      run: |-
-        config_file="$PYAPP_REPO/.cargo/config_${{ matrix.job.target }}.toml"
-        if [[ -f "$config_file" ]]; then
-          mv "$config_file" "$PYAPP_REPO/.cargo/config.toml"
-        fi
+      - name: Configure target
+        run: |-
+          config_file="$PYAPP_REPO/.cargo/config_${{ matrix.job.target }}.toml"
+          if [[ -f "$config_file" ]]; then
+            mv "$config_file" "$PYAPP_REPO/.cargo/config.toml"
+          fi
 
-    - name: Download Python artifacts
-      if: ${{ !startsWith(github.event.ref, 'refs/tags') }}
-      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-      with:
-        name: python-artifacts
-        path: dist
+      - name: Download Python artifacts
+        if: ${{ !startsWith(github.event.ref, 'refs/tags') }}
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: python-artifacts
+          path: dist
 
-    - name: Configure embedded project
-      if: ${{ !startsWith(github.event.ref, 'refs/tags') }}
-      run: |-
-        cd dist
-        wheel="$(echo *.whl)"
-        mv "$wheel" "../$PYAPP_REPO"
-        echo "PYAPP_PROJECT_PATH=$wheel" >> $GITHUB_ENV
+      - name: Configure embedded project
+        if: ${{ !startsWith(github.event.ref, 'refs/tags') }}
+        run: |-
+          cd dist
+          wheel="$(echo *.whl)"
+          mv "$wheel" "../$PYAPP_REPO"
+          echo "PYAPP_PROJECT_PATH=$wheel" >> $GITHUB_ENV
 
-    - name: Build binary
-      run: hatch build --target app
+      - name: Build binary
+        run: hatch build --target app
 
-    # Windows installers don't accept non-integer versions so we ubiquitously
-    # perform the following transformation: X.Y.Z.devN -> X.Y.Z.N
-    - name: Set project version
-      id: version
-      run: |-
-        old_version="$(hatch version)"
-        version="${old_version/dev/}"
+      # Windows installers don't accept non-integer versions so we ubiquitously
+      # perform the following transformation: X.Y.Z.devN -> X.Y.Z.N
+      - name: Set project version
+        id: version
+        run: |-
+          old_version="$(hatch version)"
+          version="${old_version/dev/}"
 
-        if [[ "$version" != "$old_version" ]]; then
+          if [[ "$version" != "$old_version" ]]; then
+            cd dist/app
+            old_binary="$(ls)"
+            binary="${old_binary/$old_version/$version}"
+            mv "$old_binary" "$binary"
+          fi
+
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "$version"
+
+      - name: Archive binary
+        run: |-
+          mkdir packaging
           cd dist/app
-          old_binary="$(ls)"
-          binary="${old_binary/$old_version/$version}"
-          mv "$old_binary" "$binary"
-        fi
 
-        echo "version=$version" >> $GITHUB_OUTPUT
-        echo "$version"
+          binary="$(ls)"
 
-    - name: Archive binary
-      run: |-
-        mkdir packaging
-        cd dist/app
+          if [[ "$binary" =~ -pc-windows- ]]; then
+            7z a "../../packaging/${binary:0:-4}.zip" "$binary"
+          else
+            chmod +x "$binary"
+            tar -czf "../../packaging/$binary.tar.gz" "$binary"
+          fi
 
-        binary="$(ls)"
+      - name: Upload staged archive
+        if: runner.os != 'Linux'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: staged-${{ matrix.job.target }}
+          path: packaging/*
+          if-no-files-found: error
 
-        if [[ "$binary" =~ -pc-windows- ]]; then
-          7z a "../../packaging/${binary:0:-4}.zip" "$binary"
-        else
-          chmod +x "$binary"
-          tar -czf "../../packaging/$binary.tar.gz" "$binary"
-        fi
-
-    - name: Upload staged archive
-      if: runner.os != 'Linux'
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-      with:
-        name: staged-${{ matrix.job.target }}
-        path: packaging/*
-        if-no-files-found: error
-
-    - name: Upload archive
-      if: runner.os == 'Linux'
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-      with:
-        name: standalone-${{ matrix.job.target }}
-        path: packaging/*
-        if-no-files-found: error
+      - name: Upload archive
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: standalone-${{ matrix.job.target }}
+          path: packaging/*
+          if-no-files-found: error
 
   windows-packaging:
     name: Build Windows installers
@@ -208,66 +206,66 @@ jobs:
       VERSION: ${{ needs.binaries.outputs.version }}
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
 
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v.5.6.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: Install PyOxidizer ${{ env.PYOXIDIZER_VERSION }}
-      run: pip install pyoxidizer==${{ env.PYOXIDIZER_VERSION }}
+      - name: Install PyOxidizer ${{ env.PYOXIDIZER_VERSION }}
+        run: pip install pyoxidizer==${{ env.PYOXIDIZER_VERSION }}
 
-    - name: Download staged binaries
-      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-      with:
-        pattern: staged-*windows*
-        path: archives
-        merge-multiple: true
+      - name: Download staged binaries
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: staged-*windows*
+          path: archives
+          merge-multiple: true
 
-    - name: Extract staged binaries
-      run: |-
-        mkdir bin
-        for f in archives/*; do
-          7z e "$f" -obin
-        done
+      - name: Extract staged binaries
+        run: |-
+          mkdir bin
+          for f in archives/*; do
+            7z e "$f" -obin
+          done
 
-    # bin/<APP_NAME>-<VERSION>-<TARGET>.exe -> targets/<TARGET>/<APP_NAME>.exe
-    - name: Prepare binaries
-      run: |-
-        mkdir targets
-        for f in bin/*; do
-          if [[ "$f" =~ ${{ env.VERSION }}-(.+).exe$ ]]; then
-            target="${BASH_REMATCH[1]}"
-            mkdir "targets/$target"
-            mv "$f" "targets/$target/${{ env.APP_NAME }}.exe"
-          fi
-        done
+      # bin/<APP_NAME>-<VERSION>-<TARGET>.exe -> targets/<TARGET>/<APP_NAME>.exe
+      - name: Prepare binaries
+        run: |-
+          mkdir targets
+          for f in bin/*; do
+            if [[ "$f" =~ ${{ env.VERSION }}-(.+).exe$ ]]; then
+              target="${BASH_REMATCH[1]}"
+              mkdir "targets/$target"
+              mv "$f" "targets/$target/${{ env.APP_NAME }}.exe"
+            fi
+          done
 
-    - name: Build installers
-      run: >-
-        pyoxidizer build windows_installers
-        --release
-        --var version ${{ env.VERSION }}
+      - name: Build installers
+        run: >-
+          pyoxidizer build windows_installers
+          --release
+          --var version ${{ env.VERSION }}
 
-    - name: Prepare installers
-      run: |-
-        mkdir installers
-        mv build/*/release/*/*.{exe,msi} installers
+      - name: Prepare installers
+        run: |-
+          mkdir installers
+          mv build/*/release/*/*.{exe,msi} installers
 
-    - name: Upload binaries
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-      with:
-        name: standalone-win
-        path: archives/*
-        if-no-files-found: error
+      - name: Upload binaries
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: standalone-win
+          path: archives/*
+          if-no-files-found: error
 
-    - name: Upload installers
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-      with:
-        name: installers-win
-        path: installers/*
+      - name: Upload installers
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: installers-win
+          path: installers/*
 
   macos-packaging:
     name: Build macOS installer and sign/notarize artifacts
@@ -279,204 +277,204 @@ jobs:
       VERSION: ${{ needs.binaries.outputs.version }}
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
 
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v.5.6.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: Install PyOxidizer ${{ env.PYOXIDIZER_VERSION }}
-      run: pip install pyoxidizer==${{ env.PYOXIDIZER_VERSION }}
+      - name: Install PyOxidizer ${{ env.PYOXIDIZER_VERSION }}
+        run: pip install pyoxidizer==${{ env.PYOXIDIZER_VERSION }}
 
-    - name: Install create-dmg
-      run: brew install create-dmg
+      - name: Install create-dmg
+        run: brew install create-dmg
 
-    - name: Install rcodesign
-      run: cargo install apple-codesign
+      - name: Install rcodesign
+        run: cargo install apple-codesign
 
-    - name: Download staged binaries
-      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-      with:
-        pattern: staged-*apple*
-        path: archives
-        merge-multiple: true
+      - name: Download staged binaries
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: staged-*apple*
+          path: archives
+          merge-multiple: true
 
-    - name: Extract staged binaries
-      run: |-
-        mkdir bin
-        for f in archives/*; do
-          tar -xzf "$f" -C bin
-        done
+      - name: Extract staged binaries
+        run: |-
+          mkdir bin
+          for f in archives/*; do
+            tar -xzf "$f" -C bin
+          done
 
-    - name: Write credentials
-      env:
-        APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE: "${{ secrets.APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE }}"
-        APPLE_DEVELOPER_ID_APPLICATION_PRIVATE_KEY: "${{ secrets.APPLE_DEVELOPER_ID_APPLICATION_PRIVATE_KEY }}"
-        APPLE_APP_STORE_CONNECT_API_DATA: "${{ secrets.APPLE_APP_STORE_CONNECT_API_DATA }}"
-      run: |-
-        echo "$APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE" > /tmp/certificate.pem
-        echo "$APPLE_DEVELOPER_ID_APPLICATION_PRIVATE_KEY" > /tmp/private-key.pem
-        echo "$APPLE_APP_STORE_CONNECT_API_DATA" > /tmp/app-store-connect.json
+      - name: Write credentials
+        env:
+          APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE: "${{ secrets.APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE }}"
+          APPLE_DEVELOPER_ID_APPLICATION_PRIVATE_KEY: "${{ secrets.APPLE_DEVELOPER_ID_APPLICATION_PRIVATE_KEY }}"
+          APPLE_APP_STORE_CONNECT_API_DATA: "${{ secrets.APPLE_APP_STORE_CONNECT_API_DATA }}"
+        run: |-
+          echo "$APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE" > /tmp/certificate.pem
+          echo "$APPLE_DEVELOPER_ID_APPLICATION_PRIVATE_KEY" > /tmp/private-key.pem
+          echo "$APPLE_APP_STORE_CONNECT_API_DATA" > /tmp/app-store-connect.json
 
-    # https://developer.apple.com/documentation/security/hardened_runtime
-    - name: Sign binaries
-      run: |-
-        for f in bin/*; do
-          rcodesign sign -vv \
-          --pem-source /tmp/certificate.pem \
-          --pem-source /tmp/private-key.pem \
-          --code-signature-flags runtime \
-          "$f"
-        done
+      # https://developer.apple.com/documentation/security/hardened_runtime
+      - name: Sign binaries
+        run: |-
+          for f in bin/*; do
+            rcodesign sign -vv \
+            --pem-source /tmp/certificate.pem \
+            --pem-source /tmp/private-key.pem \
+            --code-signature-flags runtime \
+            "$f"
+          done
 
-    # https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution
-    - name: Notarize binaries
-      run: |-
-        mkdir notarize-bin
+      # https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution
+      - name: Notarize binaries
+        run: |-
+          mkdir notarize-bin
 
-        cd bin
-        for f in *; do
-          zip "../notarize-bin/$f.zip" "$f"
-        done
+          cd bin
+          for f in *; do
+            zip "../notarize-bin/$f.zip" "$f"
+          done
 
-        cd ../notarize-bin
-        for f in *; do
-          rcodesign notary-submit -vv \
-          --api-key-path /tmp/app-store-connect.json \
-          "$f"
-        done
+          cd ../notarize-bin
+          for f in *; do
+            rcodesign notary-submit -vv \
+            --api-key-path /tmp/app-store-connect.json \
+            "$f"
+          done
 
-    - name: Archive binaries
-      run: |-
-        rm archives/*
-        cd bin
+      - name: Archive binaries
+        run: |-
+          rm archives/*
+          cd bin
 
-        for f in *; do
-          tar -czf "../archives/$f.tar.gz" "$f"
-        done
+          for f in *; do
+            tar -czf "../archives/$f.tar.gz" "$f"
+          done
 
-    # bin/<APP_NAME>-<VERSION>-<TARGET> -> targets/<TARGET>/<APP_NAME>
-    - name: Prepare binaries
-      run: |-
-        mkdir targets
-        for f in bin/*; do
-          if [[ "$f" =~ ${{ env.VERSION }}-(.+)$ ]]; then
-            target="${BASH_REMATCH[1]}"
-            mkdir "targets/$target"
-            mv "$f" "targets/$target/${{ env.APP_NAME }}"
-          fi
-        done
+      # bin/<APP_NAME>-<VERSION>-<TARGET> -> targets/<TARGET>/<APP_NAME>
+      - name: Prepare binaries
+        run: |-
+          mkdir targets
+          for f in bin/*; do
+            if [[ "$f" =~ ${{ env.VERSION }}-(.+)$ ]]; then
+              target="${BASH_REMATCH[1]}"
+              mkdir "targets/$target"
+              mv "$f" "targets/$target/${{ env.APP_NAME }}"
+            fi
+          done
 
-    - name: Build app bundle
-      run: >-
-        pyoxidizer build macos_app_bundle
-        --release
-        --var version ${{ env.VERSION }}
+      - name: Build app bundle
+        run: >-
+          pyoxidizer build macos_app_bundle
+          --release
+          --var version ${{ env.VERSION }}
 
-    - name: Stage app bundle
-      id: stage
-      run: |-
-        mkdir staged
-        mkdir signed
-        mv build/*/release/*/*.app staged
-        app_bundle="$(ls staged)"
-        app_name="${app_bundle:0:${#app_bundle}-4}"
+      - name: Stage app bundle
+        id: stage
+        run: |-
+          mkdir staged
+          mkdir signed
+          mv build/*/release/*/*.app staged
+          app_bundle="$(ls staged)"
+          app_name="${app_bundle:0:${#app_bundle}-4}"
 
-        echo "app-bundle=$app_bundle" >> "$GITHUB_OUTPUT"
-        echo "app-name=$app_name-${{ env.VERSION }}.dmg" >> "$GITHUB_OUTPUT"
-        echo "dmg-file=$app_name-${{ env.VERSION }}.dmg" >> "$GITHUB_OUTPUT"
+          echo "app-bundle=$app_bundle" >> "$GITHUB_OUTPUT"
+          echo "app-name=$app_name-${{ env.VERSION }}.dmg" >> "$GITHUB_OUTPUT"
+          echo "dmg-file=$app_name-${{ env.VERSION }}.dmg" >> "$GITHUB_OUTPUT"
 
-    - name: Sign app bundle
-      run: >-
-        rcodesign sign -vv
-        --pem-source /tmp/certificate.pem
-        --pem-source /tmp/private-key.pem
-        "staged/${{ steps.stage.outputs.app-bundle }}"
-        "signed/${{ steps.stage.outputs.app-bundle }}"
+      - name: Sign app bundle
+        run: >-
+          rcodesign sign -vv
+          --pem-source /tmp/certificate.pem
+          --pem-source /tmp/private-key.pem
+          "staged/${{ steps.stage.outputs.app-bundle }}"
+          "signed/${{ steps.stage.outputs.app-bundle }}"
 
-    - name: Create DMG
-      run: >-
-        create-dmg
-        --volname "${{ steps.stage.outputs.app-name }}"
-        --hide-extension "${{ steps.stage.outputs.app-bundle }}"
-        --window-pos 200 120
-        --window-size 800 400
-        --icon-size 100
-        --app-drop-link 600 185
-        "${{ steps.stage.outputs.dmg-file }}"
-        signed
+      - name: Create DMG
+        run: >-
+          create-dmg
+          --volname "${{ steps.stage.outputs.app-name }}"
+          --hide-extension "${{ steps.stage.outputs.app-bundle }}"
+          --window-pos 200 120
+          --window-size 800 400
+          --icon-size 100
+          --app-drop-link 600 185
+          "${{ steps.stage.outputs.dmg-file }}"
+          signed
 
-    - name: Sign DMG
-      run: >-
-        rcodesign sign -vv
-        --pem-source /tmp/certificate.pem
-        --pem-source /tmp/private-key.pem
-        "${{ steps.stage.outputs.dmg-file }}"
-        "${{ steps.stage.outputs.dmg-file }}"
+      - name: Sign DMG
+        run: >-
+          rcodesign sign -vv
+          --pem-source /tmp/certificate.pem
+          --pem-source /tmp/private-key.pem
+          "${{ steps.stage.outputs.dmg-file }}"
+          "${{ steps.stage.outputs.dmg-file }}"
 
-    - name: Notarize DMG
-      run: >-
-        rcodesign notary-submit
-        --api-key-path /tmp/app-store-connect.json
-        --staple
-        "${{ steps.stage.outputs.dmg-file }}"
+      - name: Notarize DMG
+        run: >-
+          rcodesign notary-submit
+          --api-key-path /tmp/app-store-connect.json
+          --staple
+          "${{ steps.stage.outputs.dmg-file }}"
 
-    - name: Upload binaries
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-      with:
-        name: standalone-mac
-        path: archives/*
-        if-no-files-found: error
+      - name: Upload binaries
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: standalone-mac
+          path: archives/*
+          if-no-files-found: error
 
-    - name: Upload installer
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-      with:
-        name: installers-mac
-        path: ${{ steps.stage.outputs.dmg-file }}
+      - name: Upload installer
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: installers-mac
+          path: ${{ steps.stage.outputs.dmg-file }}
 
   publish:
     name: Publish release
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
     needs:
-    - python-artifacts
-    - binaries
-    - windows-packaging
-    - macos-packaging
+      - python-artifacts
+      - binaries
+      - windows-packaging
+      - macos-packaging
     runs-on: ubuntu-latest
 
     steps:
-    - name: Download Python artifacts
-      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-      with:
-        name: python-artifacts
-        path: dist
+      - name: Download Python artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: python-artifacts
+          path: dist
 
-    - name: Download binaries
-      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-      with:
-        pattern: standalone-*
-        path: archives
-        merge-multiple: true
+      - name: Download binaries
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: standalone-*
+          path: archives
+          merge-multiple: true
 
-    - name: Download installers
-      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-      with:
-        pattern: installers-*
-        path: installers
-        merge-multiple: true
+      - name: Download installers
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: installers-*
+          path: installers
+          merge-multiple: true
 
-    - name: Push Python artifacts to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.10.0
-      with:
-        skip-existing: true
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Push Python artifacts to PyPI
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc  # v1.12.4
+        with:
+          skip-existing: true
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
 
-    - name: Add assets to current release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: |-
-          archives/*
-          installers/*
+      - name: Add assets to current release
+        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8  # v.2.3.2
+        with:
+          files: |-
+            archives/*
+            installers/*
