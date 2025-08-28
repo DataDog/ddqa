@@ -95,8 +95,11 @@ class TestCandidates:
         assert response_mock.call_args_list == [
             mocker.call(
                 'https://api.github.com/search/issues',
-                params={'q': 'sha:hash9000 repo:org/repo is:merged'},
                 auth=('foo', 'bar'),
+                params={
+                    'q': 'hash9000 AND repo:org/repo AND is:merged AND is:pull-request',
+                    'advanced_search': True,
+                },
             ),
             mocker.call('https://api.github.com/repos/org/repo/pulls/123/reviews', auth=('foo', 'bar')),
         ]
@@ -179,8 +182,11 @@ class TestCandidates:
         assert response_mock.call_args_list == [
             mocker.call(
                 'https://api.github.com/search/issues',
-                params={'q': 'sha:hash9000 repo:org/repo is:merged'},
                 auth=('foo', 'bar'),
+                params={
+                    'q': 'hash9000 AND repo:org/repo AND is:merged AND is:pull-request',
+                    'advanced_search': True,
+                },
             ),
             mocker.call('https://api.github.com/repos/org/repo/pulls/123/reviews', auth=('foo', 'bar')),
         ]
@@ -273,8 +279,11 @@ class TestCandidates:
         assert response_mock.call_args_list == [
             mocker.call(
                 'https://api.github.com/search/issues',
-                params={'q': 'sha:hash9000 repo:org/repo is:merged'},
                 auth=('foo', 'bar'),
+                params={
+                    'q': 'hash9000 AND repo:org/repo AND is:merged AND is:pull-request',
+                    'advanced_search': True,
+                },
             ),
             mocker.call('https://api.github.com/repos/org/repo/pulls/123/reviews', auth=('foo', 'bar')),
         ]
@@ -349,8 +358,11 @@ class TestCandidates:
         assert response_mock.call_args_list == [
             mocker.call(
                 'https://api.github.com/search/issues',
-                params={'q': 'sha:hash9000 repo:org/repo is:merged'},
                 auth=('foo', 'bar'),
+                params={
+                    'q': 'hash9000 AND repo:org/repo AND is:merged AND is:pull-request',
+                    'advanced_search': True,
+                },
             ),
         ]
 
@@ -392,8 +404,11 @@ class TestCandidates:
         assert response_mock.call_args_list == [
             mocker.call(
                 'https://api.github.com/search/issues',
-                params={'q': 'sha:hash9000 repo:org/repo is:merged'},
                 auth=('foo', 'bar'),
+                params={
+                    'q': 'hash9000 AND repo:org/repo AND is:merged AND is:pull-request',
+                    'advanced_search': True,
+                },
             ),
         ]
 
@@ -439,8 +454,8 @@ class TestCandidates:
         assert response_mock.call_args_list == [
             mocker.call(
                 'https://api.github.com/search/issues',
-                params={'q': 'sha:hash1 repo:org/repo is:merged'},
                 auth=('foo', 'bar'),
+                params={'q': 'hash1 AND repo:org/repo AND is:merged AND is:pull-request', 'advanced_search': True},
             ),
         ]
         assert candidate.model_dump() == {
@@ -507,8 +522,8 @@ class TestCandidates:
         assert response_mock.call_args_list == [
             mocker.call(
                 'https://api.github.com/search/issues',
-                params={'q': 'sha:hash2 repo:org/repo is:merged'},
                 auth=('foo', 'bar'),
+                params={'q': 'hash2 AND repo:org/repo AND is:merged AND is:pull-request', 'advanced_search': True},
             ),
             mocker.call('https://api.github.com/repos/org/repo/pulls/123/reviews', auth=('foo', 'bar')),
         ]
@@ -543,8 +558,8 @@ class TestCandidates:
         assert response_mock.call_args_list == [
             mocker.call(
                 'https://api.github.com/search/issues',
-                params={'q': 'sha:hash3 repo:org/repo is:merged'},
                 auth=('foo', 'bar'),
+                params={'q': 'hash3 AND repo:org/repo AND is:merged AND is:pull-request', 'advanced_search': True},
             ),
         ]
         assert candidate.model_dump() == {
@@ -862,8 +877,8 @@ async def test_rate_limit_handling(app, git_repository, mocker):
     assert response_mock.call_args_list == [
         mocker.call(
             'https://api.github.com/search/issues',
-            params={'q': 'sha:hash9000 repo:org/repo is:merged'},
             auth=('foo', 'bar'),
+            params={'q': 'hash9000 AND repo:org/repo AND is:merged AND is:pull-request', 'advanced_search': True},
         ),
         mocker.call('https://api.github.com/repos/org/repo/pulls/123/reviews', auth=('foo', 'bar')),
         mocker.call('https://api.github.com/repos/org/repo/pulls/123/reviews', auth=('foo', 'bar')),

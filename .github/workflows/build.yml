@@ -41,7 +41,7 @@ jobs:
       run: python -m build
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: python-artifacts
         path: dist/*
@@ -76,9 +76,9 @@ jobs:
           os: windows-2022
         # macOS
         - target: aarch64-apple-darwin
-          os: macos-12
+          os: macos-15
         - target: x86_64-apple-darwin
-          os: macos-12
+          os: macos-15
 
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -134,7 +134,7 @@ jobs:
 
     - name: Download Python artifacts
       if: ${{ !startsWith(github.event.ref, 'refs/tags') }}
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
       with:
         name: python-artifacts
         path: dist
@@ -184,17 +184,17 @@ jobs:
 
     - name: Upload staged archive
       if: runner.os != 'Linux'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
-        name: staged-${{ runner.os }}
+        name: staged-${{ matrix.job.target }}
         path: packaging/*
         if-no-files-found: error
 
     - name: Upload archive
       if: runner.os == 'Linux'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
-        name: standalone
+        name: standalone-${{ matrix.job.target }}
         path: packaging/*
         if-no-files-found: error
 
@@ -220,10 +220,11 @@ jobs:
       run: pip install pyoxidizer==${{ env.PYOXIDIZER_VERSION }}
 
     - name: Download staged binaries
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
       with:
-        name: staged-${{ runner.os }}
+        pattern: staged-*windows*
         path: archives
+        merge-multiple: true
 
     - name: Extract staged binaries
       run: |-
@@ -256,23 +257,23 @@ jobs:
         mv build/*/release/*/*.{exe,msi} installers
 
     - name: Upload binaries
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
-        name: standalone
+        name: standalone-win
         path: archives/*
         if-no-files-found: error
 
     - name: Upload installers
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
-        name: installers
+        name: installers-win
         path: installers/*
 
   macos-packaging:
     name: Build macOS installer and sign/notarize artifacts
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     needs: binaries
-    runs-on: macos-12
+    runs-on: macos-15
 
     env:
       VERSION: ${{ needs.binaries.outputs.version }}
@@ -296,10 +297,11 @@ jobs:
       run: cargo install apple-codesign
 
     - name: Download staged binaries
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
       with:
-        name: staged-${{ runner.os }}
+        pattern: staged-*apple*
         path: archives
+        merge-multiple: true
 
     - name: Extract staged binaries
       run: |-
@@ -422,16 +424,16 @@ jobs:
         "${{ steps.stage.outputs.dmg-file }}"
 
     - name: Upload binaries
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
-        name: standalone
+        name: standalone-mac
         path: archives/*
         if-no-files-found: error
 
     - name: Upload installer
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
-        name: installers
+        name: installers-mac
         path: ${{ steps.stage.outputs.dmg-file }}
 
   publish:
@@ -446,22 +448,24 @@ jobs:
 
     steps:
     - name: Download Python artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
       with:
         name: python-artifacts
         path: dist
 
     - name: Download binaries
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
       with:
-        name: standalone
+        pattern: standalone-*
         path: archives
+        merge-multiple: true
 
     - name: Download installers
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
       with:
-        name: installers
+        pattern: installers-*
         path: installers
+        merge-multiple: true
 
     - name: Push Python artifacts to PyPI
       uses: pypa/gh-action-pypi-publish@v1.12.2

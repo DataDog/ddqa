@@ -87,7 +87,11 @@ class GitHubRepository:
             client,
             self.ISSUE_SEARCH_API,
             # https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests
-            params={'q': f'sha:{commit.hash} repo:{self.repo_id} is:merged'},
+            # https://github.blog/changelog/2025-03-06-github-issues-projects-api-support-for-issues-advanced-search-and-more/
+            params={
+                'q': f'{commit.hash} AND repo:{self.repo_id} AND is:merged AND is:pull-request',
+                'advanced_search': True,
+            },
         )
         pr_data = response.json()
 
