@@ -115,7 +115,7 @@ jobs:
 
       - name: Set up cross compiling
         if: matrix.job.cross
-        uses: taiki-e/install-action@bb5b6ec0fe226d4254f80ec39794c3a8c1b6525f  # v2.58.25
+        uses: taiki-e/install-action@c0dee14250395ae6b1754a99f67c1d693138b102  # v2.58.30
         with:
           tool: cross
 
