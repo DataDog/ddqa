@@ -466,14 +466,14 @@ jobs:
         merge-multiple: true
 
     - name: Push Python artifacts to PyPI
-      uses: pypa/gh-action-pypi-publish@v1.12.2
+      uses: pypa/gh-action-pypi-publish@15c56dba361d8335944d31a2ecd17d700fc7bcbc # v1.12.2
       with:
         skip-existing: true
         user: __token__
         password: ${{ secrets.PYPI_API_TOKEN }}
 
     - name: Add assets to current release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@aec2ec56f94eb8180ceec724245f64ef008b89f5 # v2.4.0
       with:
         files: |-
           archives/*
