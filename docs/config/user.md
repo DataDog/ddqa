@@ -53,6 +53,32 @@ The following APIs are used:
 - `/rest/api/2/myself` ([GET](https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-myself/#api-rest-api-2-myself-get))
 - `/rest/api/2/search` ([POST](https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-search/#api-rest-api-2-search-post))
 - `/rest/api/2/issue/{issueIdOrKey}/transitions` ([GET](https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-issueidorkey-transitions-get), [POST](https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-issueidorkey-transitions-post))
+- `/rest/api/2/user/bulk` ([GET](https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-users/#api-rest-api-2-user-bulk-get))
+
+### Example: JIRA API token Scopes (14 Nov 2025)
+```
+Write
+  write:issue:jira
+  write:issue.property:jira
+  write:comment:jira
+  write:comment.property:jira
+  write:attachment:jira
+Read
+  read:issue.transition:jira
+  read:status:jira
+  read:field-configuration:jira
+  read:issue-details:jira
+  read:field.default-value:jira
+  read:field.option:jira
+  read:field:jira
+  read:group:jira
+  read:application-role:jira
+  read:user:jira
+  read:avatar:jira
+  read:issue:jira
+  read:issue:jira-software
+```
+
 
 !!! tip
     You can configure your Jira credentials using the `DDQA_JIRA_EMAIL` and `DDQA_JIRA_TOKEN` environment variables.
