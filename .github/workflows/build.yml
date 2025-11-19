@@ -309,6 +309,7 @@ jobs:
           done
 
       - name: Write credentials
+        if: github.event_name == 'push'
         env:
           APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE: "${{ secrets.APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE }}"
           APPLE_DEVELOPER_ID_APPLICATION_PRIVATE_KEY: "${{ secrets.APPLE_DEVELOPER_ID_APPLICATION_PRIVATE_KEY }}"
@@ -320,6 +321,7 @@ jobs:
 
       # https://developer.apple.com/documentation/security/hardened_runtime
       - name: Sign binaries
+        if: github.event_name == 'push'
         run: |-
           for f in bin/*; do
             rcodesign sign -vv \
@@ -331,6 +333,7 @@ jobs:
 
       # https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution
       - name: Notarize binaries
+        if: github.event_name == 'push'
         run: |-
           mkdir notarize-bin
 
@@ -387,6 +390,7 @@ jobs:
           echo "dmg-file=$app_name-${{ env.VERSION }}.dmg" >> "$GITHUB_OUTPUT"
 
       - name: Sign app bundle
+        if: github.event_name == 'push'
         run: >-
           rcodesign sign -vv
           --pem-source /tmp/certificate.pem
@@ -407,6 +411,7 @@ jobs:
           signed
 
       - name: Sign DMG
+        if: github.event_name == 'push'
         run: >-
           rcodesign sign -vv
           --pem-source /tmp/certificate.pem
@@ -415,6 +420,7 @@ jobs:
           "${{ steps.stage.outputs.dmg-file }}"
 
       - name: Notarize DMG
+        if: github.event_name == 'push'
         run: >-
           rcodesign notary-submit
           --api-key-path /tmp/app-store-connect.json
