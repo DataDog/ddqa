@@ -443,6 +443,8 @@ jobs:
       - windows-packaging
       - macos-packaging
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
 
     steps:
     - name: Download Python artifacts
