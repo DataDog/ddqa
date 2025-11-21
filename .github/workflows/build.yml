@@ -398,6 +398,13 @@ jobs:
           "staged/${{ steps.stage.outputs.app-bundle }}"
           "signed/${{ steps.stage.outputs.app-bundle }}"
 
+      - name: Copy unsigned app bundle
+        if: github.event_name != 'push'
+        run: >-
+          cp -R
+          "staged/${{ steps.stage.outputs.app-bundle }}"
+          "signed/${{ steps.stage.outputs.app-bundle }}"
+
       - name: Create DMG
         run: >-
           create-dmg
