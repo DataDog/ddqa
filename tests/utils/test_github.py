@@ -290,6 +290,140 @@ class TestCandidates:
 
         assert candidates == [(None, 0, 1)]
 
+    async def test_get_candidates_pr_qa_done_label(self, app, git_repository, mocker):
+        app.configure(
+            git_repository,
+            caching=True,
+            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        )
+
+        response_mock = mocker.patch(
+            'httpx.AsyncClient.get',
+            side_effect=[
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps(
+                        {
+                            'items': [
+                                {
+                                    'number': '123',
+                                    'title': 'title123',
+                                    'user': {'login': 'username123', 'html_url': 'https://github.com/username123'},
+                                    'labels': [
+                                        {'name': 'qa/done', 'color': '632ca6'},
+                                    ],
+                                    'body': 'foo\r\nbar',
+                                },
+                            ],
+                        },
+                    ),
+                ),
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps(
+                        [
+                            {
+                                'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
+                                'author_association': 'MEMBER',
+                            },
+                        ],
+                    ),
+                ),
+            ],
+        )
+
+        candidates = []
+
+        async for model, index, ignore in app.github.get_candidates(
+            ResponsiveNetworkClient(Static()),
+            [GitCommit(hash='hash9000', subject='subject9000')],
+        ):
+            candidates.append((model, index, ignore))
+
+        assert response_mock.call_args_list == [
+            mocker.call(
+                'https://api.github.com/search/issues',
+                auth=('foo', 'bar'),
+                params={
+                    'q': 'hash9000 AND repo:org/repo AND is:merged AND is:pull-request',
+                    'advanced_search': True,
+                },
+            ),
+            mocker.call('https://api.github.com/repos/org/repo/pulls/123/reviews', auth=('foo', 'bar')),
+        ]
+
+        # PR should be ignored automatically due to qa/done label
+        assert candidates == [(None, 0, 1)]
+
+    async def test_get_candidates_pr_qa_no_code_change_label(self, app, git_repository, mocker):
+        app.configure(
+            git_repository,
+            caching=True,
+            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        )
+
+        response_mock = mocker.patch(
+            'httpx.AsyncClient.get',
+            side_effect=[
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps(
+                        {
+                            'items': [
+                                {
+                                    'number': '456',
+                                    'title': 'title456',
+                                    'user': {'login': 'username456', 'html_url': 'https://github.com/username456'},
+                                    'labels': [
+                                        {'name': 'qa/no-code-change', 'color': '632ca6'},
+                                    ],
+                                    'body': 'documentation update',
+                                },
+                            ],
+                        },
+                    ),
+                ),
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps(
+                        [
+                            {
+                                'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
+                                'author_association': 'MEMBER',
+                            },
+                        ],
+                    ),
+                ),
+            ],
+        )
+
+        candidates = []
+
+        async for model, index, ignore in app.github.get_candidates(
+            ResponsiveNetworkClient(Static()),
+            [GitCommit(hash='hash9001', subject='subject9001')],
+        ):
+            candidates.append((model, index, ignore))
+
+        assert response_mock.call_args_list == [
+            mocker.call(
+                'https://api.github.com/search/issues',
+                auth=('foo', 'bar'),
+                params={
+                    'q': 'hash9001 AND repo:org/repo AND is:merged AND is:pull-request',
+                    'advanced_search': True,
+                },
+            ),
+            mocker.call('https://api.github.com/repos/org/repo/pulls/456/reviews', auth=('foo', 'bar')),
+        ]
+
+        # PR should be ignored automatically due to qa/no-code-change label
+        assert candidates == [(None, 0, 1)]
+
     async def test_get_candidates_pr_labels(self, app, git_repository, mocker):
         app.configure(
             git_repository,

@@ -30,6 +30,9 @@ class GitHubRepository:
     # https://docs.github.com/en/rest/teams/members?apiVersion=2022-11-28#list-team-members
     TEAM_MEMBERS_API = 'https://api.github.com/orgs/{org}/teams/{team}/members'
 
+    # Default labels that always skip QA card creation
+    DEFAULT_QA_SKIP_LABELS = {'qa/done', 'qa/no-code-change'}
+
     def __init__(self, repo: GitRepository, auth: GitHubAuth, cache_dir: Path):
         self.__repo = repo
         self.__auth = auth
@@ -148,6 +151,11 @@ class GitHubRepository:
     ) -> AsyncIterator[tuple[TestCandidate | None, int, int]]:
         processed_pr_numbers = set()
         ignored = 0
+        # Combine default QA skip labels with configured ignored labels
+        all_ignored_labels = set(self.DEFAULT_QA_SKIP_LABELS)
+        if ignored_labels:
+            all_ignored_labels.update(ignored_labels)
+
         for index, commit in enumerate(commits):
             model = await self.get_candidate(client, commit)
 
@@ -159,8 +167,8 @@ class GitHubRepository:
                 processed_pr_numbers.add(model.id)
 
                 labels = {label.name for label in model.labels}
-                if (pr_labels and not any(label in labels for label in pr_labels)) or (
-                    ignored_labels and any(label in labels for label in ignored_labels)
+                if (pr_labels and not any(label in labels for label in pr_labels)) or any(
+                    label in labels for label in all_ignored_labels
                 ):
                     ignored += 1
                     yield None, index, ignored
