@@ -42,7 +42,7 @@ jobs:
         run: python -m build
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
         with:
           name: python-artifacts
           path: dist/*
@@ -182,7 +182,7 @@ jobs:
 
       - name: Upload staged archive
         if: runner.os != 'Linux'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: staged-${{ matrix.job.target }}
           path: packaging/*
@@ -190,7 +190,7 @@ jobs:
 
       - name: Upload archive
         if: runner.os == 'Linux'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: standalone-${{ matrix.job.target }}
           path: packaging/*
@@ -255,14 +255,14 @@ jobs:
           mv build/*/release/*/*.{exe,msi} installers
 
       - name: Upload binaries
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: standalone-win
           path: archives/*
           if-no-files-found: error
 
       - name: Upload installers
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: installers-win
           path: installers/*
@@ -435,14 +435,14 @@ jobs:
           "${{ steps.stage.outputs.dmg-file }}"
 
       - name: Upload binaries
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: standalone-mac
           path: archives/*
           if-no-files-found: error
 
       - name: Upload installer
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: installers-mac
           path: ${{ steps.stage.outputs.dmg-file }}
