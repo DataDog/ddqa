@@ -12,6 +12,8 @@ concurrency:
 
 jobs:
   docs:
+    permissions:
+      contents: write
     uses: ./.github/workflows/docs.yml
 
   publish:
