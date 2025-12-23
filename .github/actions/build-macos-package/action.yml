@@ -1,0 +1,219 @@
+name: Build macOS Package
+description: Build macOS installer with optional signing and notarization
+
+inputs:
+  version:
+    description: Version of the application
+    required: true
+  app-name:
+    description: Name of the application
+    required: true
+  python-version:
+    description: Python version to use
+    required: true
+  pyoxidizer-version:
+    description: PyOxidizer version to use
+    required: true
+  should-sign:
+    description: Whether to sign and notarize the binaries
+    default: true
+    required: false
+  apple-certificate:
+    description: Apple Developer ID Application Certificate
+    required: false
+  apple-private-key:
+    description: Apple Developer ID Application Private Key
+    required: false
+  apple-api-key:
+    description: Apple App Store Connect API Key
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8  # v6.0.1
+
+    - name: Set up Python ${{ inputs.python-version }}
+      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c  # v.6.0.0
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: pip
+
+    - name: Install PyOxidizer ${{ inputs.pyoxidizer-version }}
+      shell: bash
+      run: pip install pyoxidizer==${{ inputs.pyoxidizer-version }}
+
+    - name: Install create-dmg
+      shell: bash
+      run: brew install create-dmg
+
+    - name: Install rcodesign
+      shell: bash
+      run: cargo install apple-codesign
+
+    - name: Download staged binaries
+      uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      with:
+        pattern: staged-*apple*
+        path: archives
+        merge-multiple: true
+
+    - name: Extract staged binaries
+      shell: bash
+      run: |-
+        mkdir bin
+        for f in archives/*; do
+          tar -xzf "$f" -C bin
+        done
+
+    - name: Write credentials
+      if: inputs.should-sign == 'true'
+      shell: bash
+      env:
+        APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE: ${{ inputs.apple-certificate }}
+        APPLE_DEVELOPER_ID_APPLICATION_PRIVATE_KEY: ${{ inputs.apple-private-key }}
+        APPLE_APP_STORE_CONNECT_API_DATA: ${{ inputs.apple-api-key }}
+      run: |-
+        echo "$APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE" > /tmp/certificate.pem
+        echo "$APPLE_DEVELOPER_ID_APPLICATION_PRIVATE_KEY" > /tmp/private-key.pem
+        echo "$APPLE_APP_STORE_CONNECT_API_DATA" > /tmp/app-store-connect.json
+
+    # https://developer.apple.com/documentation/security/hardened_runtime
+    - name: Sign binaries
+      if: inputs.should-sign == 'true'
+      shell: bash
+      run: |-
+        for f in bin/*; do
+          rcodesign sign -vv \
+          --pem-source /tmp/certificate.pem \
+          --pem-source /tmp/private-key.pem \
+          --code-signature-flags runtime \
+          "$f"
+        done
+
+    # https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution
+    - name: Notarize binaries
+      if: inputs.should-sign == 'true'
+      shell: bash
+      run: |-
+        mkdir notarize-bin
+
+        cd bin
+        for f in *; do
+          zip "../notarize-bin/$f.zip" "$f"
+        done
+
+        cd ../notarize-bin
+        for f in *; do
+          rcodesign notary-submit -vv \
+          --api-key-path /tmp/app-store-connect.json \
+          "$f"
+        done
+
+    - name: Archive binaries
+      shell: bash
+      run: |-
+        rm archives/*
+        cd bin
+
+        for f in *; do
+          tar -czf "../archives/$f.tar.gz" "$f"
+        done
+
+    # bin/<APP_NAME>-<VERSION>-<TARGET> -> targets/<TARGET>/<APP_NAME>
+    - name: Prepare binaries
+      shell: bash
+      run: |-
+        mkdir targets
+        for f in bin/*; do
+          if [[ "$f" =~ ${{ inputs.version }}-(.+)$ ]]; then
+            target="${BASH_REMATCH[1]}"
+            mkdir "targets/$target"
+            mv "$f" "targets/$target/${{ inputs.app-name }}"
+          fi
+        done
+
+    - name: Build app bundle
+      shell: bash
+      run: >-
+        pyoxidizer build macos_app_bundle
+        --release
+        --var version ${{ inputs.version }}
+
+    - name: Stage app bundle
+      id: stage
+      shell: bash
+      run: |-
+        mkdir staged
+        mkdir signed
+        mv build/*/release/*/*.app staged
+        app_bundle="$(ls staged)"
+        app_name="${app_bundle:0:${#app_bundle}-4}"
+
+        echo "app-bundle=$app_bundle" >> "$GITHUB_OUTPUT"
+        echo "app-name=$app_name-${{ inputs.version }}.dmg" >> "$GITHUB_OUTPUT"
+        echo "dmg-file=$app_name-${{ inputs.version }}.dmg" >> "$GITHUB_OUTPUT"
+
+    - name: Sign app bundle
+      if: inputs.should-sign == 'true'
+      shell: bash
+      run: >-
+        rcodesign sign -vv
+        --pem-source /tmp/certificate.pem
+        --pem-source /tmp/private-key.pem
+        "staged/${{ steps.stage.outputs.app-bundle }}"
+        "signed/${{ steps.stage.outputs.app-bundle }}"
+
+    - name: Copy unsigned app bundle
+      if: inputs.should-sign != 'true'
+      shell: bash
+      run: >-
+        cp -R
+        "staged/${{ steps.stage.outputs.app-bundle }}"
+        "signed/${{ steps.stage.outputs.app-bundle }}"
+
+    - name: Create DMG
+      shell: bash
+      run: >-
+        create-dmg
+        --volname "${{ steps.stage.outputs.app-name }}"
+        --hide-extension "${{ steps.stage.outputs.app-bundle }}"
+        --window-pos 200 120
+        --window-size 800 400
+        --icon-size 100
+        --app-drop-link 600 185
+        "${{ steps.stage.outputs.dmg-file }}"
+        signed
+
+    - name: Sign DMG
+      if: inputs.should-sign == 'true'
+      shell: bash
+      run: >-
+        rcodesign sign -vv
+        --pem-source /tmp/certificate.pem
+        --pem-source /tmp/private-key.pem
+        "${{ steps.stage.outputs.dmg-file }}"
+        "${{ steps.stage.outputs.dmg-file }}"
+
+    - name: Notarize DMG
+      if: inputs.should-sign == 'true'
+      shell: bash
+      run: >-
+        rcodesign notary-submit
+        --api-key-path /tmp/app-store-connect.json
+        --staple
+        "${{ steps.stage.outputs.dmg-file }}"
+
+    - name: Upload binaries
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      with:
+        name: standalone-mac
+        path: archives/*
+        if-no-files-found: error
+
+    - name: Upload installer
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      with:
+        name: installers-mac
+        path: ${{ steps.stage.outputs.dmg-file }}
