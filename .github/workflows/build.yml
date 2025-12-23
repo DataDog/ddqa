@@ -267,13 +267,13 @@ jobs:
           name: installers-win
           path: installers/*
 
-  macos-packaging-push:
-    name: Build macOS installer and sign/notarize artifacts (push)
+  macos-packaging-signed:
+    name: Build macOS installer and sign/notarize artifacts on protected branch/tag
     if: github.event_name == 'push'
     needs: binaries
     runs-on: macos-15
     environment:
-      name: main
+      name: protected
 
     env:
       VERSION: ${{ needs.binaries.outputs.version }}
@@ -293,8 +293,8 @@ jobs:
           apple-private-key: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION_PRIVATE_KEY }}
           apple-api-key: ${{ secrets.APPLE_APP_STORE_CONNECT_API_DATA }}
 
-  macos-packaging-pr:
-    name: Build macOS installer (pull request)
+  macos-packaging-unsigned:
+    name: Build macOS installer without signing
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     needs: binaries
     runs-on: macos-15
@@ -321,7 +321,7 @@ jobs:
       - python-artifacts
       - binaries
       - windows-packaging
-      - macos-packaging-push
+      - macos-packaging-signed
     runs-on: ubuntu-latest
     permissions:
       id-token: write
