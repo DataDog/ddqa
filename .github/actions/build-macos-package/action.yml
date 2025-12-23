@@ -16,7 +16,8 @@ inputs:
     required: true
   should-sign:
     description: Whether to sign and notarize the binaries
-    required: true
+    default: true
+    required: false
   apple-certificate:
     description: Apple Developer ID Application Certificate
     required: false
