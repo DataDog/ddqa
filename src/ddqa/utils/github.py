@@ -131,11 +131,13 @@ class GitHubRepository:
         )
         pr_review_data = response.json()
 
-        # Deduplicate
+        # Deduplicate, filtering out reviewers with deleted/ghost users
         candidate_data['reviewers'] = [
             {'name': name, 'association': association}
             for name, association in {
-                reviewer['user']['login']: reviewer['author_association'].lower() for reviewer in pr_review_data
+                reviewer['user']['login']: reviewer['author_association'].lower()
+                for reviewer in pr_review_data
+                if reviewer['user'] is not None
             }.items()
         ]
 
