@@ -338,7 +338,7 @@ class TestAssignment:
             git_repository,
             caching=True,
             data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
-            github_teams={'foo-team': ['github-foo1']},
+            github_teams={'foo-team': ['github-foo1'], 'bar-team': ['github-bar1']},
         )
         repo_config = dict(app.repo.model_dump())
         repo_config['teams'] = {
@@ -419,7 +419,7 @@ class TestAssignment:
             git_repository,
             caching=True,
             data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
-            github_teams={'foo-team': ['github-foo1']},
+            github_teams={'foo-team': ['github-foo1'], 'bar-team': ['github-bar1']},
         )
         repo_config = dict(auto_mode_app.repo.model_dump())
         repo_config['teams'] = {
@@ -568,12 +568,120 @@ class TestAssignment:
             assert str(assignments[1].label.render()) == 'bar-team'
             assert assignments[1].switch.value
 
+    async def test_author_team_overrides_labels(self, app, git_repository, helpers, mock_pull_requests):
+        app.configure(
+            git_repository,
+            caching=True,
+            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            github_teams={'foo-team': ['github-foo1'], 'bar-team': ['username1']},
+        )
+        repo_config = dict(app.repo.model_dump())
+        repo_config['teams'] = {
+            'foo': {
+                'jira_project': 'FOO',
+                'jira_issue_type': 'Foo-Task',
+                'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
+                'github_team': 'foo-team',
+                'github_labels': ['foo-label'],
+            },
+            'bar': {
+                'jira_project': 'BAR',
+                'jira_issue_type': 'Bar-Task',
+                'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
+                'github_team': 'bar-team',
+                'github_labels': ['bar-label'],
+            },
+        }
+        app.save_repo_config(repo_config)
+
+        # PR has foo-label AND bar-label but author (username1) is only in bar-team
+        mock_pull_requests(
+            {
+                'number': '1',
+                'title': 'title1',
+                'user': {'login': 'username1', 'html_url': 'https://github.com/username1'},
+                'labels': [{'name': 'foo-label', 'color': '632ca6'}, {'name': 'bar-label', 'color': '632ca6'}],
+                'body': 'foo1\r\nbar1',
+            },
+        )
+
+        async with app.run_test() as pilot:
+            await pilot.pause(helpers.ASYNC_WAIT)
+
+            sidebar = app.query_one(CandidateSidebar)
+            table = sidebar.listing
+            assert len(table.rows) == 1
+            assert table.get_row_at(0) == ['✓', 'title1']
+
+            rendering = app.query_one(CandidateRendering)
+            assignments = list(rendering.candidate_assignments.query(LabeledSwitch).results())
+            assert len(assignments) == 2
+            # Only bar is assigned (author's team), not foo (despite foo-label match)
+            assert str(assignments[0].label.render()) == 'foo'
+            assert not assignments[0].switch.value
+            assert str(assignments[1].label.render()) == 'bar'
+            assert assignments[1].switch.value
+
+    async def test_author_team_fallback_to_labels(self, app, git_repository, helpers, mock_pull_requests):
+        app.configure(
+            git_repository,
+            caching=True,
+            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            github_teams={'foo-team': ['github-foo1'], 'bar-team': ['github-bar1']},
+        )
+        repo_config = dict(app.repo.model_dump())
+        repo_config['teams'] = {
+            'foo': {
+                'jira_project': 'FOO',
+                'jira_issue_type': 'Foo-Task',
+                'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
+                'github_team': 'foo-team',
+                'github_labels': ['foo-label'],
+            },
+            'bar': {
+                'jira_project': 'BAR',
+                'jira_issue_type': 'Bar-Task',
+                'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
+                'github_team': 'bar-team',
+                'github_labels': ['bar-label'],
+            },
+        }
+        app.save_repo_config(repo_config)
+
+        # PR author (unknown-user) is not in any team, should fall back to label matching
+        mock_pull_requests(
+            {
+                'number': '1',
+                'title': 'title1',
+                'user': {'login': 'unknown-user', 'html_url': 'https://github.com/unknown-user'},
+                'labels': [{'name': 'foo-label', 'color': '632ca6'}],
+                'body': 'foo1\r\nbar1',
+            },
+        )
+
+        async with app.run_test() as pilot:
+            await pilot.pause(helpers.ASYNC_WAIT)
+
+            sidebar = app.query_one(CandidateSidebar)
+            table = sidebar.listing
+            assert len(table.rows) == 1
+            assert table.get_row_at(0) == ['✓', 'title1']
+
+            rendering = app.query_one(CandidateRendering)
+            assignments = list(rendering.candidate_assignments.query(LabeledSwitch).results())
+            assert len(assignments) == 2
+            # Falls back to label matching: foo-label matches foo team
+            assert str(assignments[0].label.render()) == 'foo'
+            assert assignments[0].switch.value
+            assert str(assignments[1].label.render()) == 'bar'
+            assert not assignments[1].switch.value
+
     async def test_choice(self, app, git_repository, helpers, mock_pull_requests):
         app.configure(
             git_repository,
             caching=True,
             data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
-            github_teams={'foo-team': ['github-foo1']},
+            github_teams={'foo-team': ['github-foo1'], 'bar-team': ['github-bar1']},
         )
         repo_config = dict(app.repo.model_dump())
         repo_config['teams'] = {
@@ -695,7 +803,7 @@ class TestAssignment:
             git_repository,
             caching=True,
             data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
-            github_teams={'foo-team': ['github-foo1']},
+            github_teams={'foo-team': ['github-foo1'], 'bar-team': ['github-bar1']},
         )
         repo_config = dict(app.repo.model_dump())
         repo_config['ignored_labels'] = ['baz-label']
@@ -875,15 +983,6 @@ class TestCreation:
                     request=Request('POST', ''),
                     content=json.dumps(
                         {
-                            'key': 'FOO-2',
-                        },
-                    ),
-                ),
-                Response(
-                    200,
-                    request=Request('POST', ''),
-                    content=json.dumps(
-                        {
                             'key': 'BAR-2',
                         },
                     ),
@@ -992,30 +1091,7 @@ class TestCreation:
                         },
                     },
                 ),
-                mocker.call(
-                    'POST',
-                    'https://foobarbaz.atlassian.net/rest/api/2/issue',
-                    auth=('foo@bar.baz', 'bar'),
-                    json={
-                        'fields': {
-                            'assignee': {'id': foo_team_value.inverse()},
-                            'description': helpers.dedent(
-                                """
-                                Pull request: [#1|https://github.com/org/repo/pull/1]
-                                Author: [github-bar1|https://github.com/github-bar1]
-                                Labels: {{foo-label}}, {{bar-label}}
-
-                                foo1
-                                bar1
-                                """
-                            ),
-                            'issuetype': {'name': 'Foo-Task'},
-                            'labels': ['qa-1.2.3', 'label-9000'],
-                            'project': {'key': 'FOO'},
-                            'summary': 'title1',
-                        },
-                    },
-                ),
+                # PR #1 author (github-bar1) is in bar-team, so only Bar Baz is assigned
                 mocker.call(
                     'POST',
                     'https://foobarbaz.atlassian.net/rest/api/2/issue',
