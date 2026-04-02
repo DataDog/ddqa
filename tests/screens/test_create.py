@@ -1053,16 +1053,14 @@ class TestCreation:
                     json={
                         'fields': {
                             'assignee': {'id': foo_team_value},
-                            'description': helpers.dedent(
-                                """
+                            'description': helpers.dedent("""
                                 Pull request: [#2|https://github.com/org/repo/pull/2]
                                 Author: [github-foo1|https://github.com/github-foo1]
                                 Labels: {{foo-label}}
 
                                 foo2
                                 bar2
-                                """
-                            ),
+                                """),
                             'issuetype': {'name': 'Foo-Task'},
                             'labels': ['qa-1.2.3', 'label-9000'],
                             'project': {'key': 'FOO'},
@@ -1077,13 +1075,11 @@ class TestCreation:
                     json={
                         'fields': {
                             'assignee': {'id': bar_team_value},
-                            'description': helpers.dedent(
-                                """
+                            'description': helpers.dedent("""
                                 Commit: [hash3|https://github.com/org/repo/commit/hash3]
 
 
-                                """
-                            ),
+                                """),
                             'issuetype': {'name': 'Bar-Task'},
                             'labels': ['qa-1.2.3', 'label-9000'],
                             'project': {'key': 'BAR'},
@@ -1099,16 +1095,14 @@ class TestCreation:
                     json={
                         'fields': {
                             'assignee': {'id': bar_team_value.inverse()},
-                            'description': helpers.dedent(
-                                """
+                            'description': helpers.dedent("""
                                 Pull request: [#1|https://github.com/org/repo/pull/1]
                                 Author: [github-bar1|https://github.com/github-bar1]
                                 Labels: {{foo-label}}, {{bar-label}}
 
                                 foo1
                                 bar1
-                                """
-                            ),
+                                """),
                             'issuetype': {'name': 'Bar-Task'},
                             'labels': ['qa-1.2.3', 'label-9000'],
                             'project': {'key': 'BAR'},

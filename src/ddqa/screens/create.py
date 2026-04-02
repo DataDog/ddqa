@@ -142,9 +142,7 @@ class CandidateListing(DataTable):
                     self.app.print(f'Processing {model.long_display()}')
 
                     if model.user and not model.assigned_teams:
-                        author_team = await self.app.github.get_author_team(
-                            client, model.user, self.app.repo.teams
-                        )
+                        author_team = await self.app.github.get_author_team(client, model.user, self.app.repo.teams)
                         if author_team:
                             model.assigned_teams = {author_team}
 

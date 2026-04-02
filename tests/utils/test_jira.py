@@ -182,8 +182,7 @@ async def test_create_issues(app, git_repository, helpers, mocker):
                 'fields': {
                     'assignee': {'id': 'jira-foo'},
                     'components': [{'name': 'Foo-Component'}],
-                    'description': helpers.dedent(
-                        """
+                    'description': helpers.dedent("""
                         Pull request: [#123|https://github.com/org/repo/pull/123]
                         Author: [user9000|https://github.com/user9000]
                         Labels: {{label1}}, {{label2}}
@@ -199,8 +198,7 @@ async def test_create_issues(app, git_repository, helpers, mocker):
                         {code}
 
                         [test link|https://example.com]
-                        """
-                    ),
+                        """),
                     'issuetype': {'name': 'Foo-Task'},
                     'labels': ['qa-1.2.3', 'label-9000'],
                     'project': {'key': 'FOO'},
@@ -216,8 +214,7 @@ async def test_create_issues(app, git_repository, helpers, mocker):
                 'fields': {
                     'assignee': {'id': 'jira-bar'},
                     'components': [{'name': 'Bar-Component'}],
-                    'description': helpers.dedent(
-                        """
+                    'description': helpers.dedent("""
                         Pull request: [#123|https://github.com/org/repo/pull/123]
                         Author: [user9000|https://github.com/user9000]
                         Labels: {{label1}}, {{label2}}
@@ -233,8 +230,7 @@ async def test_create_issues(app, git_repository, helpers, mocker):
                         {code}
 
                         [test link|https://example.com]
-                        """
-                    ),
+                        """),
                     'issuetype': {'name': 'Bar-Task'},
                     'labels': ['qa-1.2.3', 'label-9000'],
                     'project': {'key': 'BAR'},

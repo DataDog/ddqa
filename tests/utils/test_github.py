@@ -1066,10 +1066,12 @@ class TestAuthorTeam:
             return_value=Response(
                 200,
                 request=Request('GET', ''),
-                content=json.dumps([
-                    {'login': 'alice', 'type': 'User'},
-                    {'login': 'bob', 'type': 'User'},
-                ]),
+                content=json.dumps(
+                    [
+                        {'login': 'alice', 'type': 'User'},
+                        {'login': 'bob', 'type': 'User'},
+                    ]
+                ),
             ),
         )
 
