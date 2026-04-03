@@ -20,13 +20,9 @@ def test_standard(ddqa, config_file, helpers):
 
 
 def test_allow_invalid_config(ddqa, config_file, helpers):
-    config_file.save(
-        helpers.dedent(
-            """
+    config_file.save(helpers.dedent("""
             repo = [""]
-            """
-        )
-    )
+            """))
 
     result = ddqa('config', 'restore')
 

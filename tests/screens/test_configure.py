@@ -32,8 +32,7 @@ async def test_default_state(app, helpers):
         assert save_button.disabled is True
 
         text_log = app.query_one(RichLog)
-        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-            """
+        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
             Configuration errors
             ├── repo
             │     Field required
@@ -45,8 +44,7 @@ async def test_default_state(app, helpers):
             │     Field required
             └── jira -> token
                   Field required
-            """
-        )
+            """)
 
 
 class TestRepoNameInput:
@@ -68,13 +66,11 @@ class TestRepoNameInput:
             assert not app.config.data['repo']
             assert not input_box.value
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── repo
                       Field required
-                """
-            )
+                """)
 
     async def test_wrong_type(self, app, config_file, helpers):
         config_file.model.data.update(
@@ -94,13 +90,11 @@ class TestRepoNameInput:
             assert app.config.data['repo'] == ['foo']
             assert not input_box.value
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── repo
                       Input should be a valid string
-                """
-            )
+                """)
 
     async def test_unknown(self, app, config_file, helpers):
         config_file.model.data.update(
@@ -120,13 +114,11 @@ class TestRepoNameInput:
             assert app.config.data['repo'] == 'foo'
             assert input_box.value == 'foo'
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── repo
                       unknown repository: foo
-                """
-            )
+                """)
 
     async def test_save(self, app, isolation, config_file, helpers):
         config_file.model.data.update(
@@ -145,13 +137,11 @@ class TestRepoNameInput:
 
             assert not app.config.data['repo']
             assert not input_box.value
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── repo
                       Field required
-                """
-            )
+                """)
             assert save_button.disabled is True
 
             app.set_focus(input_box)
@@ -183,13 +173,11 @@ class TestRepoPathInput:
             assert app.config.data['repos'] == {'agent': {}}
             assert not input_box.value
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── repos -> agent -> path
                       Field required
-                """
-            )
+                """)
 
     async def test_wrong_type(self, app, config_file, helpers):
         config_file.model.data.update(
@@ -210,13 +198,11 @@ class TestRepoPathInput:
             assert app.config.data['repos'] == {'agent': {'path': ['foo']}}
             assert not input_box.value
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── repos -> agent -> path
                       Input should be a valid string
-                """
-            )
+                """)
 
     async def test_does_not_exist(self, app, isolation, config_file, helpers):
         path = str(isolation / 'foo')
@@ -238,13 +224,11 @@ class TestRepoPathInput:
             assert app.config.data['repos'] == {'agent': {'path': path}}
             assert input_box.value == path
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                f"""
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
                 Configuration errors
                 └── repos -> agent -> path
                       Directory does not exist: {path}
-                """
-            )
+                """)
 
     async def test_save(self, app, isolation, config_file, helpers):
         path = str(isolation)
@@ -266,13 +250,11 @@ class TestRepoPathInput:
             assert app.config.data['repos'] == {'agent': {}}
             assert not input_box.value
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── repos -> agent -> path
                       Field required
-                """
-            )
+                """)
 
             app.set_focus(input_box)
             await pilot.pause(helpers.ASYNC_WAIT)
@@ -304,13 +286,11 @@ class TestGitHubUserInput:
             assert app.config.data['github'] == {'token': 'bar'}
             assert not input_box.value
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── github -> user
                       Field required
-                """
-            )
+                """)
 
     async def test_wrong_type(self, app, isolation, config_file, helpers):
         config_file.model.data.update(
@@ -331,13 +311,11 @@ class TestGitHubUserInput:
             assert app.config.data['github'] == {'user': ['foo'], 'token': 'bar'}
             assert not input_box.value
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── github -> user
                       Input should be a valid string
-                """
-            )
+                """)
 
     async def test_save(self, app, isolation, config_file, helpers):
         config_file.model.data.update(
@@ -358,13 +336,11 @@ class TestGitHubUserInput:
             assert app.config.data['github'] == {'token': 'bar'}
             assert not input_box.value
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── github -> user
                       Field required
-                """
-            )
+                """)
 
             app.set_focus(input_box)
             await pilot.press(*'foo')
@@ -396,13 +372,11 @@ class TestGitHubTokenInput:
             assert input_box.password is True
             assert not input_box.value
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── github -> token
                       Field required
-                """
-            )
+                """)
 
     async def test_wrong_type(self, app, isolation, config_file, helpers):
         config_file.model.data.update(
@@ -424,13 +398,11 @@ class TestGitHubTokenInput:
             assert input_box.password is True
             assert not input_box.value
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── github -> token
                       Input should be a valid string
-                """
-            )
+                """)
 
     async def test_save(self, app, isolation, config_file, helpers):
         config_file.model.data.update(
@@ -452,13 +424,11 @@ class TestGitHubTokenInput:
             assert input_box.password is True
             assert not input_box.value
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── github -> token
                       Field required
-                """
-            )
+                """)
 
             app.set_focus(input_box)
             await pilot.press(*'bar')
@@ -490,13 +460,11 @@ class TestJiraEmailInput:
             assert app.config.data['jira'] == {'token': 'bar'}
             assert not input_box.value
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── jira -> email
                       Field required
-                """
-            )
+                """)
 
     async def test_wrong_type(self, app, isolation, config_file, helpers):
         config_file.model.data.update(
@@ -517,13 +485,11 @@ class TestJiraEmailInput:
             assert app.config.data['jira'] == {'email': ['foo'], 'token': 'bar'}
             assert not input_box.value
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── jira -> email
                       Input should be a valid string
-                """
-            )
+                """)
 
     async def test_save(self, app, isolation, config_file, helpers):
         config_file.model.data.update(
@@ -544,13 +510,11 @@ class TestJiraEmailInput:
             assert app.config.data['jira'] == {'token': 'bar'}
             assert not input_box.value
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── jira -> email
                       Field required
-                """
-            )
+                """)
 
             app.set_focus(input_box)
             await pilot.press(*'foo')
@@ -582,13 +546,11 @@ class TestJiraTokenInput:
             assert input_box.password is True
             assert not input_box.value
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── jira -> token
                       Field required
-                """
-            )
+                """)
 
     async def test_wrong_type(self, app, isolation, config_file, helpers):
         config_file.model.data.update(
@@ -610,13 +572,11 @@ class TestJiraTokenInput:
             assert input_box.password is True
             assert not input_box.value
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── jira -> token
                       Input should be a valid string
-                """
-            )
+                """)
 
     async def test_save(self, app, isolation, config_file, helpers):
         config_file.model.data.update(
@@ -638,13 +598,11 @@ class TestJiraTokenInput:
             assert input_box.password is True
             assert not input_box.value
             assert save_button.disabled is True
-            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-                """
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
                 Configuration errors
                 └── jira -> token
                       Field required
-                """
-            )
+                """)
 
             app.set_focus(input_box)
             await pilot.press(*'bar')
