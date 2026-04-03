@@ -39,8 +39,8 @@ class Candidate:
         self.assignments: dict[str, bool] = {}
 
         for team_name, team_data in repo_config.teams.items():
-            if candidate.assigned_teams and team_name in candidate.assigned_teams:
-                assigned = True
+            if candidate.assigned_teams:
+                assigned = team_name in candidate.assigned_teams
             elif ignored:
                 assigned = False
             else:
@@ -140,6 +140,11 @@ class CandidateListing(DataTable):
 
                 if model is not None:
                     self.app.print(f'Processing {model.long_display()}')
+
+                    if model.user and not model.assigned_teams:
+                        author_team = await self.app.github.get_author_team(client, model.user, self.app.repo.teams)
+                        if author_team:
+                            model.assigned_teams = {author_team}
 
                     candidate = Candidate(model, self.app.repo, self.app.github.cache)
                     self.candidates[num_candidates] = candidate

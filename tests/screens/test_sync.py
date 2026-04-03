@@ -45,11 +45,9 @@ async def test_response_error(app, git_repository, helpers, mocker):
         assert '500' in str(status.render())
 
         text_log = sidebar.query_one(RichLog)
-        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-            f"""
+        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
             Fetching global config from: {app.repo.global_config_source}
-            """
-        )
+            """)
 
         button = sidebar.query_one(Button)
         assert button.disabled
@@ -70,11 +68,9 @@ async def test_parsing_error(app, git_repository, helpers, mocker):
         assert str(status.render()) == 'Unable to parse TOML source'
 
         text_log = sidebar.query_one(RichLog)
-        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-            f"""
+        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
             Fetching global config from: {app.repo.global_config_source}
-            """
-        )
+            """)
 
         button = sidebar.query_one(Button)
         assert button.disabled
@@ -103,11 +99,9 @@ async def test_no_members(application, auto_mode, request, git_repository, helpe
         assert str(status.render()) == 'No members found in TOML source'
 
         text_log = sidebar.query_one(RichLog)
-        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-            f"""
+        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
             Fetching global config from: {app.repo.global_config_source}
-            """
-        )
+            """)
 
         button = sidebar.query_one(Button)
         assert button.disabled
@@ -135,14 +129,12 @@ async def test_save_members(application, auto_mode, request, git_repository, hel
             Response(
                 200,
                 request=Request('GET', ''),
-                content=helpers.dedent(
-                    """
+                content=helpers.dedent("""
                     jira_server = "https://foo.atlassian.net"
 
                     [members]
                     g = "j"
-                    """
-                ),
+                    """),
             ),
             Response(500, request=Request('GET', '')),
         ],
@@ -170,12 +162,10 @@ async def test_save_members(application, auto_mode, request, git_repository, hel
         sidebar = app.query_one(InteractiveSidebar)
 
         text_log = sidebar.query_one(RichLog)
-        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-            f"""
+        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
             Fetching global config from: {app.repo.global_config_source}
             Refreshing members for team: bar-team
-            """
-        )
+            """)
 
         button = sidebar.query_one(Button)
         assert button.disabled
@@ -208,16 +198,14 @@ async def test_save_teams(application, auto_mode, git_repository, helpers, mocke
             Response(
                 200,
                 request=Request('GET', ''),
-                content=helpers.dedent(
-                    """
+                content=helpers.dedent("""
                     jira_server = "https://foo.atlassian.net"
 
                     [members]
                     g = "j"
                     foo1 = "jira-foo1"
                     bar1 = "jira-bar1"
-                    """
-                ),
+                    """),
             ),
         ],
     )
@@ -248,15 +236,13 @@ async def test_save_teams(application, auto_mode, git_repository, helpers, mocke
         assert not str(status.render())
 
         text_log = sidebar.query_one(RichLog)
-        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-            f"""
+        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
             Fetching global config from: {app.repo.global_config_source}
             Refreshing members for team: bar-team
             Refreshing members for team: foo-team
             Validating the github-metadata configuration...
             Validating 3 Jira users...
-            """
-        )
+            """)
 
         button = sidebar.query_one(Button)
         assert not button.disabled
@@ -289,16 +275,14 @@ async def test_deactivated_jira_user(application, auto_mode, git_repository, hel
             Response(
                 200,
                 request=Request('GET', ''),
-                content=helpers.dedent(
-                    """
+                content=helpers.dedent("""
                     jira_server = "https://foo.atlassian.net"
 
                     [members]
                     g = "j"
                     foo1 = "jira-foo1"
                     bar1 = "jira-bar1"
-                    """
-                ),
+                    """),
             ),
         ],
     )
@@ -328,16 +312,14 @@ async def test_deactivated_jira_user(application, auto_mode, git_repository, hel
         sidebar = app.query_one(InteractiveSidebar)
         text_log = sidebar.query_one(RichLog)
 
-        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-            f"""
+        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
             Fetching global config from: {app.repo.global_config_source}
             Refreshing members for team: bar-team
             Refreshing members for team: foo-team
             Validating the github-metadata configuration...
             Validating 3 Jira users...
             User g is deactivated on Jira
-            """
-        )
+            """)
 
         button = sidebar.query_one(Button)
         assert not button.disabled
@@ -371,15 +353,13 @@ async def test_github_user_not_in_jira(application, auto_mode, git_repository, h
             Response(
                 200,
                 request=Request('GET', ''),
-                content=helpers.dedent(
-                    """
+                content=helpers.dedent("""
                     jira_server = "https://foo.atlassian.net"
 
                     [members]
                     g = "j"
                     foo1 = "jira-foo1"
-                    """
-                ),
+                    """),
             ),
         ],
     )
@@ -407,16 +387,14 @@ async def test_github_user_not_in_jira(application, auto_mode, git_repository, h
     async with app.run_test():
         sidebar = app.query_one(InteractiveSidebar)
         text_log = sidebar.query_one(RichLog)
-        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-            f"""
+        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
             Fetching global config from: {app.repo.global_config_source}
             Refreshing members for team: bar-team
             Refreshing members for team: foo-team
             GitHub user bar1 is not declared in the Jira config
             Validating the github-metadata configuration...
             Validating 2 Jira users...
-            """
-        )
+            """)
 
         button = sidebar.query_one(Button)
         assert not button.disabled
@@ -449,8 +427,7 @@ async def test_duplicate_jira_user(application, auto_mode, git_repository, helpe
             Response(
                 200,
                 request=Request('GET', ''),
-                content=helpers.dedent(
-                    """
+                content=helpers.dedent("""
                     jira_server = "https://foo.atlassian.net"
 
                     [members]
@@ -458,8 +435,7 @@ async def test_duplicate_jira_user(application, auto_mode, git_repository, helpe
                     foo1 = "jira-foo1"
                     bar1 = "jira-foo1"
                     baz1 = "jira-baz1"
-                    """
-                ),
+                    """),
             ),
         ],
     )
@@ -489,16 +465,14 @@ async def test_duplicate_jira_user(application, auto_mode, git_repository, helpe
         sidebar = app.query_one(InteractiveSidebar)
         text_log = sidebar.query_one(RichLog)
 
-        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(
-            f"""
+        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
             Fetching global config from: {app.repo.global_config_source}
             Refreshing members for team: bar-team
             Refreshing members for team: foo-team
             Validating the github-metadata configuration...
             Jira user `jira-foo1` is declared multiple times in the Jira config with GitHub user `foo1`
             Jira user `jira-foo1` is declared multiple times in the Jira config with GitHub user `bar1`
-            """
-        )
+            """)
 
         button = sidebar.query_one(Button)
         assert button.disabled

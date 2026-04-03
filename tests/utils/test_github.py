@@ -9,6 +9,7 @@ import pytest
 from httpx import Request, Response
 from textual.widgets import Static
 
+from ddqa.models.config.team import TeamConfig
 from ddqa.models.github import PullRequestLabel
 from ddqa.models.github import TestCandidate as Candidate
 from ddqa.utils.git import GitCommit
@@ -1031,3 +1032,100 @@ async def test_rate_limit_handling(app, git_repository, mocker):
         ],
         'assigned_teams': set(),
     }
+
+
+class TestAuthorTeam:
+    @pytest.fixture
+    def teams(self):
+        return {
+            'foo': TeamConfig(
+                jira_project='FOO',
+                jira_issue_type='Task',
+                jira_statuses=['TODO'],
+                github_team='foo-team',
+                github_labels=['foo-label'],
+            ),
+            'bar': TeamConfig(
+                jira_project='BAR',
+                jira_issue_type='Task',
+                jira_statuses=['TODO'],
+                github_team='bar-team',
+                github_labels=['bar-label'],
+            ),
+        }
+
+    async def test_author_in_first_team(self, app, git_repository, mocker, teams):
+        app.configure(
+            git_repository,
+            caching=True,
+            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        )
+
+        mocker.patch(
+            'httpx.AsyncClient.get',
+            return_value=Response(
+                200,
+                request=Request('GET', ''),
+                content=json.dumps(
+                    [
+                        {'login': 'alice', 'type': 'User'},
+                        {'login': 'bob', 'type': 'User'},
+                    ]
+                ),
+            ),
+        )
+
+        result = await app.github.get_author_team(ResponsiveNetworkClient(Static()), 'alice', teams)
+        assert result == 'foo'
+
+    async def test_author_in_second_team(self, app, git_repository, mocker, teams):
+        app.configure(
+            git_repository,
+            caching=True,
+            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        )
+
+        mocker.patch(
+            'httpx.AsyncClient.get',
+            side_effect=[
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps([{'login': 'alice', 'type': 'User'}]),
+                ),
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps([{'login': 'charlie', 'type': 'User'}]),
+                ),
+            ],
+        )
+
+        result = await app.github.get_author_team(ResponsiveNetworkClient(Static()), 'charlie', teams)
+        assert result == 'bar'
+
+    async def test_author_not_in_any_team(self, app, git_repository, mocker, teams):
+        app.configure(
+            git_repository,
+            caching=True,
+            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        )
+
+        mocker.patch(
+            'httpx.AsyncClient.get',
+            side_effect=[
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps([{'login': 'alice', 'type': 'User'}]),
+                ),
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps([{'login': 'bob', 'type': 'User'}]),
+                ),
+            ],
+        )
+
+        result = await app.github.get_author_team(ResponsiveNetworkClient(Static()), 'unknown-user', teams)
+        assert result is None
