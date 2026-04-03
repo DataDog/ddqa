@@ -65,7 +65,7 @@ This section displays detailed information about the candidate, using the PR bod
 
 ### Pending assignments
 
-This section displays a toggle for each team determining whether they should be assigned to the candidate. The default state of each team's toggle will be enabled if any of the candidate's PR labels match the team's [defined labels](../config/repo.md#github-labels).
+This section displays a toggle for each team determining whether they should be assigned to the candidate. By default, if the PR author belongs to a configured GitHub team, only that team's toggle will be enabled. When the author is not a member of any configured team, the default state falls back to label matching: each team's toggle will be enabled if any of the candidate's PR labels match the team's [defined labels](../config/repo.md#github-labels).
 
 <figure markdown>
   ![Creation screen candidate assignments](../assets/images/creation-screen-candidate-assignments.png){ loading=lazy role="img" }
