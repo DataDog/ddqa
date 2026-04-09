@@ -15,6 +15,7 @@ from ddqa.utils.fs import Path
 
 if TYPE_CHECKING:
     from ddqa.models.config.auth import GitHubAuth
+    from ddqa.models.config.team import TeamConfig
     from ddqa.models.github import TestCandidate
     from ddqa.utils.git import GitCommit, GitRepository
     from ddqa.utils.network import ResponsiveNetworkClient
@@ -78,6 +79,15 @@ class GitHubRepository:
             self.cache.save_team_members(team, members)
 
         return members
+
+    async def get_author_team(
+        self, client: ResponsiveNetworkClient, user: str, teams: dict[str, TeamConfig]
+    ) -> str | None:
+        for team_name, team_config in teams.items():
+            members = await self.get_team_members(client, team_config.github_team)
+            if user in members:
+                return team_name
+        return None
 
     async def get_candidate(self, client: ResponsiveNetworkClient, commit: GitCommit) -> TestCandidate:
         from ddqa.models.github import TestCandidate

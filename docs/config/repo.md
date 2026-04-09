@@ -97,7 +97,7 @@ This is an array of Jira statuses that correspond to the order of [QA status](#q
 
 Key: `github_labels`
 
-This team will be assigned by default to any pull requests that are labeled with any of the entries (as long as the pull request has no labels that match any of those defined as [ignored](#ignored-labels)).
+When a pull request author belongs to a configured [GitHub team](#github-team), only that team will be assigned by default. When the author is not a member of any configured team, this team will be assigned by default to any pull requests that are labeled with any of the entries (as long as the pull request has no labels that match any of those defined as [ignored](#ignored-labels)).
 
 ### Jira component
 
