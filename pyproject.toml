@@ -28,7 +28,7 @@ classifiers = [
 dependencies = [
   "click==8.1.7",
   "httpx==0.25.2",
-  "pillow==10.1.0",
+  "pillow==12.2.0",
   "platformdirs==4.0.0",
   "pydantic==2.7.3",
   "pydantic-settings==2.3.0",
