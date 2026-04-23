@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling>=1.17.0", "hatch-vcs", "hatch-fancy-pypi-readme"]
+requires = ["hatchling>=1.17.1", "hatch-vcs", "hatch-fancy-pypi-readme"]
 build-backend = "hatchling.build"
 
 [project]
@@ -26,15 +26,15 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
 ]
 dependencies = [
-  "click==8.1.7",
+  "click==8.1.8",
   "httpx==0.25.2",
   "pillow==10.1.0",
   "platformdirs==4.0.0",
-  "pydantic==2.7.3",
-  "pydantic-settings==2.3.0",
-  "rich==13.7.0",
+  "pydantic==2.7.4",
+  "pydantic-settings==2.3.4",
+  "rich==13.7.1",
   "textual==0.45.1",
-  "tomli-w==1.0.0",
+  "tomli-w==1.2.0",
 ]
 
 [project.urls]
