@@ -29,11 +29,11 @@ dependencies = [
   "click==8.1.7",
   "httpx==0.25.2",
   "pillow==10.1.0",
-  "platformdirs==4.0.0",
+  "platformdirs==4.9.6",
   "pydantic==2.7.3",
   "pydantic-settings==2.3.0",
   "rich==13.7.0",
-  "textual==0.45.1",
+  "textual==8.2.4",
   "tomli-w==1.0.0",
 ]
 
