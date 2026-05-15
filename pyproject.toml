@@ -23,14 +23,16 @@ classifiers = [
   "Intended Audience :: System Administrators",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Implementation :: CPython",
 ]
 dependencies = [
   "click==8.1.7",
   "httpx==0.25.2",
-  "pillow==10.1.0",
+  "pillow==12.2.0",
   "platformdirs==4.0.0",
-  "pydantic==2.7.3",
+  "pydantic==2.13.4",
   "pydantic-settings==2.3.0",
   "rich==13.7.0",
   "textual==0.45.1",
