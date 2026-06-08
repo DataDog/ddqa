@@ -242,6 +242,7 @@ async def test_save_teams(application, auto_mode, git_repository, helpers, mocke
             Refreshing members for team: foo-team
             Validating the github-metadata configuration...
             Validating 3 Jira users...
+            Sync finished correctly
             """)
 
         button = sidebar.query_one(Button)
@@ -319,6 +320,7 @@ async def test_deactivated_jira_user(application, auto_mode, git_repository, hel
             Validating the github-metadata configuration...
             Validating 3 Jira users...
             User g is deactivated on Jira
+            Sync finished correctly
             """)
 
         button = sidebar.query_one(Button)
@@ -394,6 +396,7 @@ async def test_github_user_not_in_jira(application, auto_mode, git_repository, h
             GitHub user bar1 is not declared in the Jira config
             Validating the github-metadata configuration...
             Validating 2 Jira users...
+            Sync finished correctly
             """)
 
         button = sidebar.query_one(Button)

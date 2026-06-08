@@ -123,10 +123,13 @@ class InteractiveSidebar(Widget):
                 async for jira_user in self.app.jira.get_deactivated_users(
                     client, global_config.get('members', {}).values()
                 ):
-                    github_user_id = members_rev[jira_user['accountId']]
+                    account_id = jira_user.get('accountId')
+                    if not account_id or not (github_user_id := members_rev.get(account_id)):
+                        continue
+
                     text_log.write(
                         f'User [link=https://github.com/{github_user_id}]{github_user_id}[/link] is deactivated on '
-                        f'[link={self.app.jira.config.jira_server}/jira/people/{jira_user["accountId"]}]Jira[/link]',
+                        f'[link={self.app.jira.config.jira_server}/jira/people/{account_id}]Jira[/link]',
                         shrink=False,
                     )
                     del global_config['members'][github_user_id]
@@ -136,6 +139,7 @@ class InteractiveSidebar(Widget):
                 status.update(str(e))
                 return
 
+            text_log.write('Sync finished correctly', shrink=False)
             button.disabled = False
 
     async def on_worker_state_changed(self, event: Worker.StateChanged) -> None:

@@ -860,6 +860,118 @@ class TestGetUsers:
             'active': True,
         }
 
+    async def test_get_users_batches_account_ids(self, app, mocker, git_repository):
+        app.configure(
+            git_repository,
+            caching=True,
+            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        )
+
+        def user_response(account_id: str) -> dict:
+            return {
+                'self': f'https://your-domain.atlassian.net/rest/api/2/user?accountId={account_id}',
+                'accountId': account_id,
+                'accountType': 'atlassian',
+                'emailAddress': f'{account_id}@example.com',
+                'active': True,
+            }
+
+        response_mock = mocker.patch(
+            'httpx.AsyncClient.request',
+            side_effect=[
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps(
+                        {
+                            'maxResults': 50,
+                            'startAt': 0,
+                            'total': 2,
+                            'values': [user_response('id1'), user_response('id2')],
+                        }
+                    ),
+                ),
+                Response(
+                    200,
+                    request=Request('GET', ''),
+                    content=json.dumps(
+                        {
+                            'maxResults': 50,
+                            'startAt': 0,
+                            'total': 2,
+                            'values': [user_response('id3'), user_response('id4')],
+                        }
+                    ),
+                ),
+            ],
+        )
+
+        assert app.jira.USER_BULK_BATCH_SIZE == 50
+        app.jira.USER_BULK_BATCH_SIZE = 2
+
+        users = []
+        async for user in app.jira.get_users(ResponsiveNetworkClient(Static()), ('id1', 'id2', 'id3', 'id4')):
+            users.append(user)
+
+        assert response_mock.call_args_list == [
+            mocker.call(
+                'GET',
+                'https://foobarbaz.atlassian.net/rest/api/2/user/bulk',
+                auth=('foo@bar.baz', 'bar'),
+                params={'maxResults': 100, 'accountId': ['id1', 'id2'], 'startAt': 0},
+            ),
+            mocker.call(
+                'GET',
+                'https://foobarbaz.atlassian.net/rest/api/2/user/bulk',
+                auth=('foo@bar.baz', 'bar'),
+                params={'maxResults': 100, 'accountId': ['id3', 'id4'], 'startAt': 0},
+            ),
+        ]
+
+        assert len(users) == 4
+        assert [user['accountId'] for user in users] == ['id1', 'id2', 'id3', 'id4']
+
+    async def test_get_users_skips_null_entries(self, app, mocker, git_repository):
+        app.configure(
+            git_repository,
+            caching=True,
+            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        )
+
+        response_mock = mocker.patch(
+            'httpx.AsyncClient.request',
+            return_value=Response(
+                200,
+                request=Request('GET', ''),
+                content=json.dumps(
+                    {
+                        'isLast': True,
+                        'maxResults': 100,
+                        'startAt': 0,
+                        'total': 2,
+                        'values': [
+                            None,
+                            {
+                                'self': 'https://your-domain.atlassian.net/rest/api/2/user?accountId=id1',
+                                'accountId': 'id1',
+                                'accountType': 'atlassian',
+                                'emailAddress': 'id1@example.com',
+                                'active': True,
+                            },
+                        ],
+                    }
+                ),
+            ),
+        )
+
+        users = []
+        async for user in app.jira.get_users(ResponsiveNetworkClient(Static()), ('id1',)):
+            users.append(user)
+
+        assert response_mock.call_count == 1
+        assert len(users) == 1
+        assert users[0]['accountId'] == 'id1'
+
     async def test_get_deactivated_users(self, app, mocker, git_repository):
         app.configure(
             git_repository,
