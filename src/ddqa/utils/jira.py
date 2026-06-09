@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
 class JiraClient:
     PAGINATION_RESULT_SIZE = 100
+    USER_BULK_BATCH_SIZE = 50
 
     # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-myself/#api-rest-api-2-myself-get
     SELF_INSPECTION_API = 'rest/api/2/myself'
@@ -156,29 +157,35 @@ class JiraClient:
                 break
 
     async def get_users(self, client: ResponsiveNetworkClient, account_ids: Iterable[str]) -> AsyncIterator[dict]:
-        offset = 0
+        account_id_list = list(account_ids)
 
-        while True:
-            params = {
-                'maxResults': self.PAGINATION_RESULT_SIZE,
-                'accountId': list(account_ids),
-                'startAt': offset,
-            }
-            data = await self.__api_get(client, f'{self.config.jira_server}{self.USER_BULK_API}', params=params)
+        for batch_start in range(0, len(account_id_list), self.USER_BULK_BATCH_SIZE):
+            batch = account_id_list[batch_start : batch_start + self.USER_BULK_BATCH_SIZE]
+            offset = 0
 
-            data = data.json()
-            for user in data['values']:
-                offset += 1
-                yield user
+            while True:
+                params = {
+                    'maxResults': self.PAGINATION_RESULT_SIZE,
+                    'accountId': batch,
+                    'startAt': offset,
+                }
+                data = await self.__api_get(client, f'{self.config.jira_server}{self.USER_BULK_API}', params=params)
 
-            if offset >= data['total']:
-                break
+                data = data.json()
+                values = data.get('values') or []
+                for user in values:
+                    offset += 1
+                    if user:
+                        yield user
+
+                if data.get('isLast', offset >= data.get('total', 0)) or not values:
+                    break
 
     async def get_deactivated_users(
         self, client: ResponsiveNetworkClient, account_ids: Iterable[str]
     ) -> AsyncIterator[dict]:
         async for user in self.get_users(client, account_ids):
-            if not user.get('active'):
+            if user and not user.get('active'):
                 yield user
 
     async def update_issue_status(self, client: ResponsiveNetworkClient, issue: JiraIssue, status: str) -> JiraIssue:
