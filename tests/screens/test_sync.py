@@ -5,7 +5,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
-from httpx import Request, Response
+from httpx import HTTPStatusError, Request, Response
 from textual.widgets import Button, Label, RichLog
 
 from ddqa.screens.sync import InteractiveSidebar, SyncScreen
@@ -34,9 +34,14 @@ async def test_response_error(app, git_repository, helpers, mocker):
     app.configure(
         git_repository,
         caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
     )
-    mocker.patch('httpx.AsyncClient.get', return_value=Response(500, request=Request('GET', '')))
+    error = HTTPStatusError('500 error', request=Request('GET', ''), response=Response(500, request=Request('GET', '')))
+    mocker.patch('ddqa.utils.datadog.DatadogDatastore.get_members', side_effect=error)
 
     async with app.run_test():
         sidebar = app.query_one(InteractiveSidebar)
@@ -46,30 +51,7 @@ async def test_response_error(app, git_repository, helpers, mocker):
 
         text_log = sidebar.query_one(RichLog)
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
-            Fetching global config from: {app.repo.global_config_source}
-            """)
-
-        button = sidebar.query_one(Button)
-        assert button.disabled
-
-
-async def test_parsing_error(app, git_repository, helpers, mocker):
-    app.configure(
-        git_repository,
-        caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
-    )
-    mocker.patch('httpx.AsyncClient.get', return_value=Response(200, request=Request('GET', ''), content='!'))
-
-    async with app.run_test():
-        sidebar = app.query_one(InteractiveSidebar)
-
-        status = sidebar.query_one(Label)
-        assert str(status.render()) == 'Unable to parse TOML source'
-
-        text_log = sidebar.query_one(RichLog)
-        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
-            Fetching global config from: {app.repo.global_config_source}
+            Fetching members from Datadog datastore: {app.repo.datastore_id}
             """)
 
         button = sidebar.query_one(Button)
@@ -88,19 +70,23 @@ async def test_no_members(application, auto_mode, request, git_repository, helpe
     app.configure(
         git_repository,
         caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
     )
-    mocker.patch('httpx.AsyncClient.get', return_value=Response(200, request=Request('GET', ''), content=''))
+    mocker.patch('ddqa.utils.datadog.DatadogDatastore.get_members', return_value={})
 
     async with app.run_test():
         sidebar = app.query_one(InteractiveSidebar)
 
         status = sidebar.query_one(Label)
-        assert str(status.render()) == 'No members found in TOML source'
+        assert str(status.render()) == 'No members found in datastore'
 
         text_log = sidebar.query_one(RichLog)
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
-            Fetching global config from: {app.repo.global_config_source}
+            Fetching members from Datadog datastore: {app.repo.datastore_id}
             """)
 
         button = sidebar.query_one(Button)
@@ -121,24 +107,16 @@ async def test_save_members(application, auto_mode, request, git_repository, hel
     app.configure(
         git_repository,
         caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
     )
-    mocker.patch(
-        'httpx.AsyncClient.get',
-        side_effect=[
-            Response(
-                200,
-                request=Request('GET', ''),
-                content=helpers.dedent("""
-                    jira_server = "https://foo.atlassian.net"
+    mocker.patch('ddqa.utils.datadog.DatadogDatastore.get_members', return_value={'g': 'j'})
+    mocker.patch('ddqa.cache.datadog.DatadogCache.get_datastore_modified_at', return_value='2024-01-01T00:00:00Z')
+    save_datastore = mocker.patch('ddqa.cache.datadog.DatadogCache.save_datastore')
 
-                    [members]
-                    g = "j"
-                    """),
-            ),
-            Response(500, request=Request('GET', '')),
-        ],
-    )
     repo_config = app.repo.model_dump()
     repo_config['teams'] = {
         'foo': {
@@ -156,24 +134,22 @@ async def test_save_members(application, auto_mode, request, git_repository, hel
     }
     app.save_repo_config(repo_config)
 
-    mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=[])
+    error = HTTPStatusError('500 error', request=Request('GET', ''), response=Response(500, request=Request('GET', '')))
+    mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=error)
 
     async with app.run_test():
         sidebar = app.query_one(InteractiveSidebar)
 
         text_log = sidebar.query_one(RichLog)
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
-            Fetching global config from: {app.repo.global_config_source}
+            Fetching members from Datadog datastore: {app.repo.datastore_id}
             Refreshing members for team: bar-team
             """)
 
         button = sidebar.query_one(Button)
         assert button.disabled
 
-        assert app.github.load_global_config(app.repo.global_config_source) == {
-            'jira_server': 'https://foo.atlassian.net',
-            'members': {'g': 'j'},
-        }
+        save_datastore.assert_not_called()
 
     assert_return_code(app, auto_mode)
 
@@ -190,25 +166,19 @@ async def test_save_teams(application, auto_mode, git_repository, helpers, mocke
     app.configure(
         git_repository,
         caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
     )
     mocker.patch(
-        'httpx.AsyncClient.get',
-        side_effect=[
-            Response(
-                200,
-                request=Request('GET', ''),
-                content=helpers.dedent("""
-                    jira_server = "https://foo.atlassian.net"
-
-                    [members]
-                    g = "j"
-                    foo1 = "jira-foo1"
-                    bar1 = "jira-bar1"
-                    """),
-            ),
-        ],
+        'ddqa.utils.datadog.DatadogDatastore.get_members',
+        return_value={'g': 'j', 'foo1': 'jira-foo1', 'bar1': 'jira-bar1'},
     )
+    mocker.patch('ddqa.cache.datadog.DatadogCache.get_datastore_modified_at', return_value='2024-01-01T00:00:00Z')
+    mocker.patch('ddqa.cache.datadog.DatadogCache.get_datastore_members', return_value={'placeholder': 'placeholder'})
+    save_datastore = mocker.patch('ddqa.cache.datadog.DatadogCache.save_datastore')
     mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1']))
     mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users', return_value=MagicMock(return_value=[]))
 
@@ -237,10 +207,10 @@ async def test_save_teams(application, auto_mode, git_repository, helpers, mocke
 
         text_log = sidebar.query_one(RichLog)
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
-            Fetching global config from: {app.repo.global_config_source}
+            Fetching members from Datadog datastore: {app.repo.datastore_id}
             Refreshing members for team: bar-team
             Refreshing members for team: foo-team
-            Validating the github-metadata configuration...
+            Validating the Jira members datastore...
             Validating 3 Jira users...
             Sync finished correctly
             """)
@@ -248,10 +218,11 @@ async def test_save_teams(application, auto_mode, git_repository, helpers, mocke
         button = sidebar.query_one(Button)
         assert not button.disabled
 
-        assert app.github.load_global_config(app.repo.global_config_source) == {
-            'jira_server': 'https://foo.atlassian.net',
-            'members': {'g': 'j', 'bar1': 'jira-bar1', 'foo1': 'jira-foo1'},
-        }
+        save_datastore.assert_called_once_with(
+            app.repo.datastore_id,
+            '2024-01-01T00:00:00Z',
+            {'g': 'j', 'foo1': 'jira-foo1', 'bar1': 'jira-bar1'},
+        )
 
         assert_return_code(app, auto_mode)
 
@@ -268,26 +239,19 @@ async def test_deactivated_jira_user(application, auto_mode, git_repository, hel
     app.configure(
         git_repository,
         caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
     )
     mocker.patch(
-        'httpx.AsyncClient.get',
-        side_effect=[
-            Response(
-                200,
-                request=Request('GET', ''),
-                content=helpers.dedent("""
-                    jira_server = "https://foo.atlassian.net"
-
-                    [members]
-                    g = "j"
-                    foo1 = "jira-foo1"
-                    bar1 = "jira-bar1"
-                    """),
-            ),
-        ],
+        'ddqa.utils.datadog.DatadogDatastore.get_members',
+        return_value={'g': 'j', 'foo1': 'jira-foo1', 'bar1': 'jira-bar1'},
     )
-
+    mocker.patch('ddqa.cache.datadog.DatadogCache.get_datastore_modified_at', return_value='2024-01-01T00:00:00Z')
+    mocker.patch('ddqa.cache.datadog.DatadogCache.get_datastore_members', return_value={'placeholder': 'placeholder'})
+    save_datastore = mocker.patch('ddqa.cache.datadog.DatadogCache.save_datastore')
     mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1']))
     mock = MagicMock()
     mock.__aiter__.return_value = [{'accountId': 'j'}]
@@ -314,10 +278,10 @@ async def test_deactivated_jira_user(application, auto_mode, git_repository, hel
         text_log = sidebar.query_one(RichLog)
 
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
-            Fetching global config from: {app.repo.global_config_source}
+            Fetching members from Datadog datastore: {app.repo.datastore_id}
             Refreshing members for team: bar-team
             Refreshing members for team: foo-team
-            Validating the github-metadata configuration...
+            Validating the Jira members datastore...
             Validating 3 Jira users...
             User g is deactivated on Jira
             Sync finished correctly
@@ -326,10 +290,11 @@ async def test_deactivated_jira_user(application, auto_mode, git_repository, hel
         button = sidebar.query_one(Button)
         assert not button.disabled
 
-        assert app.github.load_global_config(app.repo.global_config_source) == {
-            'jira_server': 'https://foo.atlassian.net',
-            'members': {'bar1': 'jira-bar1', 'foo1': 'jira-foo1'},
-        }
+        save_datastore.assert_called_once_with(
+            app.repo.datastore_id,
+            '2024-01-01T00:00:00Z',
+            {'foo1': 'jira-foo1', 'bar1': 'jira-bar1'},
+        )
 
     assert_return_code(app, auto_mode)
 
@@ -346,26 +311,20 @@ async def test_github_user_not_in_jira(application, auto_mode, git_repository, h
     app.configure(
         git_repository,
         caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
     )
 
     mocker.patch(
-        'httpx.AsyncClient.get',
-        side_effect=[
-            Response(
-                200,
-                request=Request('GET', ''),
-                content=helpers.dedent("""
-                    jira_server = "https://foo.atlassian.net"
-
-                    [members]
-                    g = "j"
-                    foo1 = "jira-foo1"
-                    """),
-            ),
-        ],
+        'ddqa.utils.datadog.DatadogDatastore.get_members',
+        return_value={'g': 'j', 'foo1': 'jira-foo1'},
     )
-
+    mocker.patch('ddqa.cache.datadog.DatadogCache.get_datastore_modified_at', return_value='2024-01-01T00:00:00Z')
+    mocker.patch('ddqa.cache.datadog.DatadogCache.get_datastore_members', return_value={'placeholder': 'placeholder'})
+    save_datastore = mocker.patch('ddqa.cache.datadog.DatadogCache.save_datastore')
     mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1']))
     mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users')
 
@@ -390,11 +349,11 @@ async def test_github_user_not_in_jira(application, auto_mode, git_repository, h
         sidebar = app.query_one(InteractiveSidebar)
         text_log = sidebar.query_one(RichLog)
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
-            Fetching global config from: {app.repo.global_config_source}
+            Fetching members from Datadog datastore: {app.repo.datastore_id}
             Refreshing members for team: bar-team
             Refreshing members for team: foo-team
-            GitHub user bar1 is not declared in the Jira config
-            Validating the github-metadata configuration...
+            GitHub user bar1 is not declared in the Jira members datastore
+            Validating the Jira members datastore...
             Validating 2 Jira users...
             Sync finished correctly
             """)
@@ -402,10 +361,11 @@ async def test_github_user_not_in_jira(application, auto_mode, git_repository, h
         button = sidebar.query_one(Button)
         assert not button.disabled
 
-        assert app.github.load_global_config(app.repo.global_config_source) == {
-            'jira_server': 'https://foo.atlassian.net',
-            'members': {'foo1': 'jira-foo1', 'g': 'j'},
-        }
+        save_datastore.assert_called_once_with(
+            app.repo.datastore_id,
+            '2024-01-01T00:00:00Z',
+            {'g': 'j', 'foo1': 'jira-foo1'},
+        )
 
         assert_return_code(app, auto_mode)
 
@@ -422,26 +382,18 @@ async def test_duplicate_jira_user(application, auto_mode, git_repository, helpe
     app.configure(
         git_repository,
         caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
     )
     mocker.patch(
-        'httpx.AsyncClient.get',
-        side_effect=[
-            Response(
-                200,
-                request=Request('GET', ''),
-                content=helpers.dedent("""
-                    jira_server = "https://foo.atlassian.net"
-
-                    [members]
-                    g = "j"
-                    foo1 = "jira-foo1"
-                    bar1 = "jira-foo1"
-                    baz1 = "jira-baz1"
-                    """),
-            ),
-        ],
+        'ddqa.utils.datadog.DatadogDatastore.get_members',
+        return_value={'g': 'j', 'foo1': 'jira-foo1', 'bar1': 'jira-foo1', 'baz1': 'jira-baz1'},
     )
+    mocker.patch('ddqa.cache.datadog.DatadogCache.get_datastore_modified_at', return_value='2024-01-01T00:00:00Z')
+    save_datastore = mocker.patch('ddqa.cache.datadog.DatadogCache.save_datastore')
 
     mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1']))
     mock = MagicMock()
@@ -469,20 +421,17 @@ async def test_duplicate_jira_user(application, auto_mode, git_repository, helpe
         text_log = sidebar.query_one(RichLog)
 
         assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
-            Fetching global config from: {app.repo.global_config_source}
+            Fetching members from Datadog datastore: {app.repo.datastore_id}
             Refreshing members for team: bar-team
             Refreshing members for team: foo-team
-            Validating the github-metadata configuration...
-            Jira user `jira-foo1` is declared multiple times in the Jira config with GitHub user `foo1`
-            Jira user `jira-foo1` is declared multiple times in the Jira config with GitHub user `bar1`
+            Validating the Jira members datastore...
+            Jira user `jira-foo1` is declared multiple times in the Jira members datastore with GitHub user `foo1`
+            Jira user `jira-foo1` is declared multiple times in the Jira members datastore with GitHub user `bar1`
             """)
 
         button = sidebar.query_one(Button)
         assert button.disabled
 
-        assert app.github.load_global_config(app.repo.global_config_source) == {
-            'jira_server': 'https://foo.atlassian.net',
-            'members': {'bar1': 'jira-foo1', 'foo1': 'jira-foo1', 'baz1': 'jira-baz1', 'g': 'j'},
-        }
+        save_datastore.assert_not_called()
 
     assert_return_code(app, auto_mode)

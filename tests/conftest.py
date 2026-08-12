@@ -118,7 +118,7 @@ def isolation() -> Generator[Path, None, None]:
         repo_config_file.write_text(
             tomli_w.dumps(
                 {
-                    'global_config_source': 'https://www.google.com',
+                    'datastore_id': 'test-datastore-id',
                     'qa_statuses': ['TODO', 'IN PROGRESS', 'DONE'],
                     'teams': {
                         'foo': {

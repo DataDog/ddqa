@@ -5,13 +5,13 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from pydantic import BaseModel, Field, HttpUrl, field_serializer, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from ddqa.models.config.team import TeamConfig
 
 
 class RepoConfig(BaseModel):
-    global_config_source: HttpUrl
+    datastore_id: str
     qa_statuses: Annotated[list[str], Field(min_length=2)]
     teams: dict[str, TeamConfig]
     ignored_labels: list[str] = []
@@ -27,10 +27,6 @@ class RepoConfig(BaseModel):
             raise ValueError(message)
 
         return v
-
-    @field_serializer('global_config_source')
-    def serialize_global_config_source(self, global_config_source: HttpUrl, _info):
-        return str(global_config_source) if global_config_source else None
 
 
 class ReposConfig(BaseModel):

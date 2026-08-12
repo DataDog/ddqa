@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from textual.screen import Screen
 
     from ddqa.models.config.repo import RepoConfig
+    from ddqa.utils.datadog import DatadogDatastore
     from ddqa.utils.git import GitRepository
     from ddqa.utils.github import GitHubRepository
     from ddqa.utils.jira import JiraClient
@@ -80,11 +81,17 @@ class Application(App):
         return GitHubRepository(self.git, self.config.auth.github, self.cache_dir)
 
     @cached_property
+    def datadog(self) -> DatadogDatastore:
+        from ddqa.utils.datadog import DatadogDatastore
+
+        return DatadogDatastore(self.config.auth.datadog, self.cache_dir)
+
+    @cached_property
     def jira(self) -> JiraClient:
         from ddqa.models.jira import JiraConfig
         from ddqa.utils.jira import JiraClient
 
-        jira_config = JiraConfig(**self.github.load_global_config(self.repo.global_config_source))
+        jira_config = JiraConfig(members=self.datadog.cache.get_datastore_members(self.repo.datastore_id))
         return JiraClient(jira_config, self.config.auth.jira, self.repo, self.cache_dir)
 
     @cached_property
@@ -149,7 +156,7 @@ class Application(App):
         self.__console.print(*args, **kwargs)
 
     def needs_syncing(self) -> bool:
-        return not self.github.load_global_config(self.repo.global_config_source) or not any(
+        return not self.datadog.cache.get_datastore_members(self.repo.datastore_id) or not any(
             self.github.cache.cache_dir_team_members.iterdir()
         )
 

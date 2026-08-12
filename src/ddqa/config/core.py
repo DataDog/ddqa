@@ -38,8 +38,6 @@ class Config:
 
     @cached_property
     def repos(self) -> dict[str, RepoConfig]:
-        from base64 import b64decode
-
         from ddqa.models.config.repo import ReposConfig
 
         if 'DDQA_REPO_CONFIG' in os.environ:
@@ -59,13 +57,6 @@ class Config:
             if repo_config_file.is_file():
                 for key, value in tomllib.loads(repo_config_file.read_text()).items():
                     repo_data.setdefault(key, value)
-
-            if (
-                'global_config_source' in repo_data
-                and isinstance(repo_data['global_config_source'], str)
-                and not repo_data['global_config_source'].startswith('http')
-            ):
-                repo_data['global_config_source'] = b64decode(repo_data['global_config_source']).decode()
 
             repos[repo_name] = repo_data
 

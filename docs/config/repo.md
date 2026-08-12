@@ -5,7 +5,7 @@
 A repository must be configured ([example](https://github.com/DataDog/integrations-core/blob/master/.ddqa/config.toml)) before use:
 
 ```toml
-global_config_source = "..."
+datastore_id = "..."
 qa_statuses = ["..."]
 
 [teams."..."]
@@ -19,18 +19,11 @@ The config file is located by default in your repository at `/.ddqa/config.toml`
 
 ## Core options
 
-### Global config source (*required*) ### {: #global-config-source }
+### Datastore ID (*required*) ### {: #datastore-id }
 
-Key: `global_config_source`
+Key: `datastore_id`
 
-This is a URL (optionally encoded in [Base64](https://en.wikipedia.org/wiki/Base64)) like `https://raw.githubusercontent.com/org/repo/master/jira.toml` that points to the raw contents of a TOML file on GitHub that contains potentially private metadata that the tool needs in order to operate. Currently, the only required information is the cloud URL and a mapping of GitHub usernames to Jira IDs:
-
-```toml
-jira_server = "https://<ORG>.atlassian.net"
-
-[members]
-github-user1 = "jira-id1"
-```
+This is the ID of the [Datadog Actions Datastore](https://docs.datadoghq.com/actions/datastores/) that contains the mapping of GitHub usernames to Jira account IDs that the tool needs in order to operate.
 
 ### QA statuses (*required*) ### {: #qa-statuses }
 

@@ -17,6 +17,13 @@ class JiraAuth(BaseSettings):
     model_config = SettingsConfigDict(env_prefix='DDQA_JIRA_')
 
 
+class DatadogAuth(BaseSettings):
+    api_key: str
+    app_key: str
+    model_config = SettingsConfigDict(env_prefix='DDQA_DATADOG_')
+
+
 class AuthConfig(BaseModel):
     github: GitHubAuth
     jira: JiraAuth
+    datadog: DatadogAuth

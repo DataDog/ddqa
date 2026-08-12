@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2023-present Datadog, Inc. <dev@datadoghq.com>
 #
 # SPDX-License-Identifier: MIT
-import tomllib
 from collections import Counter
 
 from textual.app import ComposeResult
@@ -53,33 +52,19 @@ class InteractiveSidebar(Widget):
         text_log = self.query_one(RichLog)
         button = self.query_one(Button)
 
+        datastore_id = self.app.repo.datastore_id
+
         async with ResponsiveNetworkClient(status) as client:
-            text_log.write(
-                f'Fetching global config from: '
-                f'[link={self.app.repo.global_config_source}]{self.app.repo.global_config_source}[/link]',
-                shrink=False,
-            )
+            text_log.write(f'Fetching members from Datadog datastore: {datastore_id}', shrink=False)
             try:
-                response = await client.get(
-                    str(self.app.repo.global_config_source),
-                    auth=(self.app.config.auth.github.user, self.app.config.auth.github.token),
-                )
-                response.raise_for_status()
+                members = await self.app.datadog.get_members(client, datastore_id, refresh=True)
             except Exception as e:
                 status.update(str(e))
                 return
 
-            try:
-                global_config = tomllib.loads(response.text)
-            except Exception:
-                status.update('Unable to parse TOML source')
+            if not members:
+                status.update('No members found in datastore')
                 return
-
-            if not global_config:
-                status.update('No members found in TOML source')
-                return
-
-            self.app.github.cache.save_global_config(self.app.repo.global_config_source, global_config)
 
             teams = sorted(team.github_team for team in self.app.repo.teams.values())
             for team in teams:
@@ -90,39 +75,34 @@ class InteractiveSidebar(Widget):
                 try:
                     github_members = await self.app.github.get_team_members(client, team, refresh=True)
                     for member in github_members:
-                        if member not in global_config['members']:
+                        if member not in members:
                             text_log.write(
                                 f'GitHub user [link=https://github.com/{member}]{member}[/link] is not '
-                                f'declared in the [link={self.app.repo.global_config_source}]Jira '
-                                f'config[/link]',
+                                'declared in the Jira members datastore',
                                 shrink=False,
                             )
                 except Exception as e:
                     status.update(str(e))
                     return
 
-            text_log.write('Validating the github-metadata configuration...', shrink=False)
+            text_log.write('Validating the Jira members datastore...', shrink=False)
 
-            members = global_config.get('members', {})
             members_values_counter = Counter(members.values())
 
             if duplicate_users := [key for key, value in members.items() if members_values_counter[value] > 1]:
                 for duplicate_user in duplicate_users:
                     text_log.write(
                         f'Jira user `{members[duplicate_user]}` is declared multiple times in the '
-                        f'[link={self.app.repo.global_config_source}]Jira config[/link] with GitHub '
-                        f'user `{duplicate_user}`',
+                        f'Jira members datastore with GitHub user `{duplicate_user}`',
                         shrink=False,
                     )
                 return
 
-            text_log.write(f'Validating {len(global_config.get("members", {}))} Jira users...', shrink=False)
+            text_log.write(f'Validating {len(members)} Jira users...', shrink=False)
             try:
-                members_rev = {v: k for k, v in global_config.get('members', {}).items()}
+                members_rev = {v: k for k, v in members.items()}
 
-                async for jira_user in self.app.jira.get_deactivated_users(
-                    client, global_config.get('members', {}).values()
-                ):
+                async for jira_user in self.app.jira.get_deactivated_users(client, members.values()):
                     account_id = jira_user.get('accountId')
                     if not account_id or not (github_user_id := members_rev.get(account_id)):
                         continue
@@ -132,9 +112,10 @@ class InteractiveSidebar(Widget):
                         f'[link={self.app.jira.config.jira_server}/jira/people/{account_id}]Jira[/link]',
                         shrink=False,
                     )
-                    del global_config['members'][github_user_id]
+                    del members[github_user_id]
 
-                self.app.github.cache.save_global_config(self.app.repo.global_config_source, global_config)
+                modified_at = self.app.datadog.cache.get_datastore_modified_at(datastore_id)
+                self.app.datadog.cache.save_datastore(datastore_id, modified_at, members)
             except Exception as e:
                 status.update(str(e))
                 return

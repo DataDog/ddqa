@@ -8,8 +8,6 @@ from collections.abc import AsyncIterator, Iterable
 from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
-from pydantic import HttpUrl
-
 from ddqa.cache.github import GitHubCache
 from ddqa.utils.fs import Path
 
@@ -65,9 +63,6 @@ class GitHubRepository:
     @cached_property
     def repo_name(self) -> str:
         return self.repo_id.partition('/')[2]
-
-    def load_global_config(self, source: HttpUrl) -> dict[str, Any]:
-        return self.cache.load_global_config(source)
 
     async def get_team_members(self, client: ResponsiveNetworkClient, team: str, *, refresh: bool = False) -> set[str]:
         members = self.cache.get_team_members(team)

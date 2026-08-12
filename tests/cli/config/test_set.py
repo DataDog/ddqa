@@ -20,6 +20,8 @@ def test(ddqa, helpers):
         user = "new-user"
 
         [jira]
+
+        [datadog]
         """,
         terminal=True,
     )

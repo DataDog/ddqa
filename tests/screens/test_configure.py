@@ -42,7 +42,11 @@ async def test_default_state(app, helpers):
             │     Field required
             ├── jira -> email
             │     Field required
-            └── jira -> token
+            ├── jira -> token
+            │     Field required
+            ├── datadog -> api_key
+            │     Field required
+            └── datadog -> app_key
                   Field required
             """)
 
@@ -54,6 +58,7 @@ class TestRepoNameInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -78,6 +83,7 @@ class TestRepoNameInput:
                 'repo': ['foo'],
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -102,6 +108,7 @@ class TestRepoNameInput:
                 'repo': 'foo',
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -126,6 +133,7 @@ class TestRepoNameInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -161,6 +169,7 @@ class TestRepoPathInput:
                 'repos': {'agent': {}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -186,6 +195,7 @@ class TestRepoPathInput:
                 'repos': {'agent': {'path': ['foo']}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -212,6 +222,7 @@ class TestRepoPathInput:
                 'repos': {'agent': {'path': path}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -238,6 +249,7 @@ class TestRepoPathInput:
                 'repos': {'agent': {}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -274,6 +286,7 @@ class TestGitHubUserInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -299,6 +312,7 @@ class TestGitHubUserInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': ['foo'], 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -324,6 +338,7 @@ class TestGitHubUserInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -359,6 +374,7 @@ class TestGitHubTokenInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -385,6 +401,7 @@ class TestGitHubTokenInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': ['bar']},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -411,6 +428,7 @@ class TestGitHubTokenInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -448,6 +466,7 @@ class TestJiraEmailInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -473,6 +492,7 @@ class TestJiraEmailInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': ['foo'], 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -498,6 +518,7 @@ class TestJiraEmailInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -533,6 +554,7 @@ class TestJiraTokenInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -559,6 +581,7 @@ class TestJiraTokenInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': ['bar']},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -585,6 +608,7 @@ class TestJiraTokenInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()

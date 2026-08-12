@@ -15,9 +15,7 @@ DDQA will always ensure valid config by loading the configuration screen if ther
 
 You'll need to create a [fine-grain access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#personal-access-tokens-classic) using `DataDog` resource owner.
 
-Restrict its access to the concerned repositories:
-- `DataDog/github-metadata`, to access user mapping.
-- the list of repositories you are creating cards for (e.g. `DataDog/datadog-agent`) 
+Restrict its access to the list of repositories you are creating cards for (e.g. `DataDog/datadog-agent`).
 
 <figure markdown>
   ![GitHub token repositories](../assets/images/github-token-repositories.png){ loading=lazy role="img" }
@@ -82,3 +80,17 @@ Read
 
 !!! tip
     You can configure your Jira credentials using the `DDQA_JIRA_EMAIL` and `DDQA_JIRA_TOKEN` environment variables.
+
+## Datadog auth
+
+The mapping of GitHub usernames to Jira account IDs is stored in a Datadog [Actions Datastore](https://docs.datadoghq.com/actions/datastores/) rather than in a GitHub repository, so you'll need a Datadog API key and application key with access to it.
+
+You can create these under [Organization Settings](https://app.datadoghq.com/organization-settings/api-keys) in Datadog.
+
+The following API is used:
+
+- `/api/v2/actions-datastores/{datastore_id}` ([GET](https://docs.datadoghq.com/api/latest/actions-datastores/))
+- `/api/v2/actions-datastores/{datastore_id}/items` ([GET](https://docs.datadoghq.com/api/latest/actions-datastores/))
+
+!!! tip
+    You can configure your Datadog credentials using the `DDQA_DATADOG_API_KEY` and `DDQA_DATADOG_APP_KEY` environment variables.
