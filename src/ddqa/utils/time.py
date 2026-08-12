@@ -45,4 +45,4 @@ def format_elapsed_time(seconds: float) -> str:
             units.append((unit, final))
             break
 
-    return ', '.join(f'{value} {unit}{"s" if value > 1 else ""}' for unit, value in units)
+    return ', '.join(f"{value} {unit}{'s' if value > 1 else ''}" for unit, value in units)

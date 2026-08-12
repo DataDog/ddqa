@@ -103,7 +103,7 @@ class Application(App):
             if isinstance(config.jira_statuses, dict):
                 if missing_statuses := set(self.repo.qa_statuses).difference(config.jira_statuses):
                     ordered_statuses = [status for status in self.repo.qa_statuses if status in missing_statuses]
-                    message = f'repos -> {team} -> jira_statuses\n  Missing statuses: {", ".join(ordered_statuses)}'
+                    message = f"repos -> {team} -> jira_statuses\n  Missing statuses: {', '.join(ordered_statuses)}"
                     raise ValueError(message)
 
                 statuses.update(config.jira_statuses)
@@ -169,7 +169,7 @@ class Application(App):
             repo_name = self.config.app.repo
         except ValidationError as e:
             for error in e.errors():
-                errors.append(f'{" -> ".join(map(str, error["loc"]))}\n  {error["msg"]}')
+                errors.append(f"{' -> '.join(map(str, error['loc']))}\n  {error['msg']}")
         else:
             if not repo_name:
                 errors.append('repo\n  Field required')
@@ -178,7 +178,7 @@ class Application(App):
                     repos = self.config.repos
                 except ValidationError as e:
                     for error in e.errors():
-                        errors.append(f'{" -> ".join(map(str, error["loc"]))}\n  {error["msg"]}')
+                        errors.append(f"{' -> '.join(map(str, error['loc']))}\n  {error['msg']}")
                 else:
                     if repo_name not in repos:
                         errors.append(f'repo\n  unknown repository: {repo_name}')
@@ -198,6 +198,6 @@ class Application(App):
             _ = self.config.auth
         except ValidationError as e:
             for error in e.errors():
-                errors.append(f'{" -> ".join(map(str, error["loc"]))}\n  {error["msg"]}')
+                errors.append(f"{' -> '.join(map(str, error['loc']))}\n  {error['msg']}")
 
         return errors

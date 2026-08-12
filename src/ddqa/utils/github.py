@@ -120,7 +120,7 @@ class GitHubRepository:
             return TestCandidate(**cached_candidate_data)
 
         candidate_data['title'] = pr_data['title']
-        candidate_data['url'] = f'https://github.com/{self.repo_id}/pull/{pr_data["number"]}'
+        candidate_data['url'] = f"https://github.com/{self.repo_id}/pull/{pr_data['number']}"
         candidate_data['user'] = pr_data['user']['login']
         candidate_data['user_url'] = pr_data['user']['html_url']
 

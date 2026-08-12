@@ -66,7 +66,11 @@ class TestStatus:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
             github_teams={'foo-team': ['github-foo1']},
         )
         repo_config = dict(app.repo.model_dump())
@@ -146,7 +150,11 @@ class TestStatus:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
             github_teams={'foo-team': ['github-foo1']},
         )
         repo_config = dict(app.repo.model_dump())
@@ -222,7 +230,11 @@ class TestStatus:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
             github_teams={'foo-team': ['github-foo1']},
         )
         repo_config = dict(app.repo.model_dump())

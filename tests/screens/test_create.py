@@ -118,7 +118,11 @@ class TestDefaultState:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
             github_teams={'foo-team': ['github-foo1']},
         )
 
@@ -155,7 +159,11 @@ class TestDefaultState:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
             github_teams={'foo-team': ['github-foo1']},
         )
         app.git.capture('tag', 'previous_ref')
@@ -189,7 +197,11 @@ async def test_population(app, git_repository, helpers, mock_pull_requests):
     app.configure(
         git_repository,
         caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
         github_teams={'foo-team': ['github-foo1']},
     )
 
@@ -247,7 +259,11 @@ async def test_rendering(app, git_repository, helpers, mock_pull_requests, login
     app.configure(
         git_repository,
         caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
         github_teams={'foo-team': ['github-foo1']},
     )
 
@@ -334,7 +350,11 @@ class TestAssignment:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
             github_teams={'foo-team': ['github-foo1'], 'bar-team': ['github-bar1']},
         )
         repo_config = dict(app.repo.model_dump())
@@ -415,7 +435,11 @@ class TestAssignment:
         auto_mode_app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
             github_teams={'foo-team': ['github-foo1'], 'bar-team': ['github-bar1']},
         )
         repo_config = dict(auto_mode_app.repo.model_dump())
@@ -500,7 +524,11 @@ class TestAssignment:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
             github_teams={'foo-team': ['github-foo1']},
         )
         repo_config = dict(app.repo.model_dump())
@@ -569,7 +597,11 @@ class TestAssignment:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
             github_teams={'foo-team': ['github-foo1'], 'bar-team': ['username1']},
         )
         repo_config = dict(app.repo.model_dump())
@@ -623,7 +655,11 @@ class TestAssignment:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
             github_teams={'foo-team': ['github-foo1'], 'bar-team': ['github-bar1']},
         )
         repo_config = dict(app.repo.model_dump())
@@ -677,7 +713,11 @@ class TestAssignment:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
             github_teams={'foo-team': ['github-foo1'], 'bar-team': ['github-bar1']},
         )
         repo_config = dict(app.repo.model_dump())
@@ -799,7 +839,11 @@ class TestAssignment:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
             github_teams={'foo-team': ['github-foo1'], 'bar-team': ['github-bar1']},
         )
         repo_config = dict(app.repo.model_dump())
@@ -881,7 +925,11 @@ class TestCreation:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
             github_teams={
                 'foo-team': ['github-foo1', 'github-foo2', 'github-foo3', 'github-foo4', 'github-foo5', 'github-foo6'],
                 'bar-team': ['github-bar1', 'github-bar2', 'github-bar3', 'github-bar4', 'github-bar5', 'github-bar6'],

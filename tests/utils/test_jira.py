@@ -32,7 +32,11 @@ class TestGetCurrentUserID:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
         cached_user_id_file = app.cache_dir / 'jira' / 'user_ids.json'
         assert not cached_user_id_file.is_file()
@@ -64,7 +68,11 @@ class TestGetCurrentUserID:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
         cached_user_id_file = app.cache_dir / 'jira' / 'user_ids.json'
         assert not cached_user_id_file.is_file()
@@ -107,7 +115,11 @@ async def test_create_issues(app, git_repository, helpers, mocker):
     app.configure(
         git_repository,
         caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
     )
     repo_config = dict(app.repo.model_dump())
     repo_config['teams'] = {
@@ -247,7 +259,11 @@ async def test_search_issues(app, git_repository, mocker):
     app.configure(
         git_repository,
         caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
     )
     repo_config = dict(app.repo.model_dump())
     repo_config['teams'] = {
@@ -603,7 +619,11 @@ async def test_rate_limit_handling(app, git_repository, mocker):
     app.configure(
         git_repository,
         caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
     )
     repo_config = dict(app.repo.model_dump())
     repo_config['teams'] = {
@@ -756,7 +776,11 @@ class TestGetUsers:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         response_mock = mocker.patch(
@@ -861,7 +885,11 @@ class TestGetUsers:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         def user_response(account_id: str) -> dict:
@@ -932,7 +960,11 @@ class TestGetUsers:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         response_mock = mocker.patch(
@@ -973,7 +1005,11 @@ class TestGetUsers:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}, 'datadog': {'api_key': 'baz', 'app_key': 'baz'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         response_mock = mocker.patch(
