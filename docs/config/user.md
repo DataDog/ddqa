@@ -83,14 +83,28 @@ Read
 
 ## Datadog auth
 
-The mapping of GitHub usernames to Jira account IDs is stored in a Datadog [Actions Datastore](https://docs.datadoghq.com/actions/datastores/) rather than in a GitHub repository, so you'll need a Datadog API key and application key with access to it.
-
-You can create these under [Organization Settings](https://app.datadoghq.com/organization-settings/api-keys) in Datadog.
+The mapping of GitHub usernames to Jira account IDs is stored in a Datadog [Actions Datastore](https://docs.datadoghq.com/actions/datastores/) rather than in a GitHub repository, so `ddqa` needs a Datadog API key and application key with access to it.
 
 The following API is used:
 
 - `/api/v2/actions-datastores/{datastore_id}` ([GET](https://docs.datadoghq.com/api/latest/actions-datastores/))
 - `/api/v2/actions-datastores/{datastore_id}/items` ([GET](https://docs.datadoghq.com/api/latest/actions-datastores/))
 
-!!! tip
-    You can configure your Datadog credentials using the `DDQA_DATADOG_API_KEY` and `DDQA_DATADOG_APP_KEY` environment variables.
+### Recommended: ephemeral credentials via `dd-auth`
+
+The `[datadog]` config table is **not required**. The recommended way to authenticate is to mint short-lived credentials with [`dd-auth`](https://github.com/DataDog/dd-auth) and run `ddqa` as its subcommand, so no Datadog secret is ever written to disk. Since `dd-auth` exports `DD_API_KEY`/`DD_APP_KEY` by default, rename them to the variables `ddqa` reads:
+
+```shell
+dd-auth --actions-api --api-key-env DDQA_DATADOG_API_KEY --app-key-env DDQA_DATADOG_APP_KEY -- ddqa sync
+```
+
+### Alternative: persistent credentials
+
+If you'd rather not run `dd-auth` every time, you can create a long-lived API key and application key under [Organization Settings](https://app.datadoghq.com/organization-settings/api-keys) and store them either as environment variables:
+
+```shell
+export DDQA_DATADOG_API_KEY="..."
+export DDQA_DATADOG_APP_KEY="..."
+```
+
+or persistently in your personal config file's `[datadog]` table (via the configuration screen, or `ddqa config set datadog.api_key ...`).

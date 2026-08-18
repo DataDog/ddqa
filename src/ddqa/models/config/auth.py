@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2023-present Datadog, Inc. <dev@datadoghq.com>
 #
 # SPDX-License-Identifier: MIT
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -26,4 +26,6 @@ class DatadogAuth(BaseSettings):
 class AuthConfig(BaseModel):
     github: GitHubAuth
     jira: JiraAuth
-    datadog: DatadogAuth
+    # No `[datadog]` config table is required: credentials are commonly supplied as
+    # ephemeral env vars (e.g. via `dd-auth`) rather than stored persistently.
+    datadog: DatadogAuth = Field(default_factory=DatadogAuth)
