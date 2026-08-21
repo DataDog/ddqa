@@ -10,6 +10,12 @@ from typing import Any
 from ddqa.utils.fs import Path
 
 
+# Reserved `github_user` key under which the Jira server URL is stored in the datastore,
+# alongside the regular github-username-to-jira-account-id entries. Datastore item keys must
+# start with a letter or digit, so a leading underscore alone isn't a valid sentinel.
+JIRA_SERVER_KEY = 'ddqa__jira_server__'
+
+
 class DatadogCache:
     def __init__(self, cache_dir: Path) -> None:
         self.__cache_dir = cache_dir
@@ -36,7 +42,12 @@ class DatadogCache:
     def get_datastore_members(self, datastore_id: str) -> dict[str, str]:
         return self.__load().get(datastore_id, {}).get('members', {})
 
-    def save_datastore(self, datastore_id: str, modified_at: str, members: dict[str, str]) -> None:
+    def get_datastore_jira_server(self, datastore_id: str) -> str | None:
+        return self.__load().get(datastore_id, {}).get('jira_server')
+
+    def save_datastore(
+        self, datastore_id: str, modified_at: str, members: dict[str, str], jira_server: str | None = None
+    ) -> None:
         data = self.__load()
-        data[datastore_id] = {'modified_at': modified_at, 'members': members}
+        data[datastore_id] = {'modified_at': modified_at, 'members': members, 'jira_server': jira_server}
         self.datastores_file.write_atomic(json.dumps(data), 'w', encoding='utf-8')

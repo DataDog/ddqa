@@ -91,7 +91,14 @@ class Application(App):
         from ddqa.models.jira import JiraConfig
         from ddqa.utils.jira import JiraClient
 
-        jira_config = JiraConfig(members=self.datadog.cache.get_datastore_members(self.repo.datastore_id))
+        if self.repo.global_config_source:
+            jira_config = JiraConfig(**self.github.load_global_config(self.repo.global_config_source))
+        else:
+            jira_config = JiraConfig(
+                members=self.datadog.cache.get_datastore_members(self.repo.datastore_id),
+                jira_server=self.datadog.cache.get_datastore_jira_server(self.repo.datastore_id),
+            )
+
         return JiraClient(jira_config, self.config.auth.jira, self.repo, self.cache_dir)
 
     @cached_property
@@ -156,9 +163,12 @@ class Application(App):
         self.__console.print(*args, **kwargs)
 
     def needs_syncing(self) -> bool:
-        return not self.datadog.cache.get_datastore_members(self.repo.datastore_id) or not any(
-            self.github.cache.cache_dir_team_members.iterdir()
-        )
+        if self.repo.global_config_source:
+            has_members = bool(self.github.load_global_config(self.repo.global_config_source))
+        else:
+            has_members = bool(self.datadog.cache.get_datastore_members(self.repo.datastore_id))
+
+        return not has_members or not any(self.github.cache.cache_dir_team_members.iterdir())
 
     def config_errors(self) -> list[str]:
         from pydantic import ValidationError
@@ -194,10 +204,26 @@ class Application(App):
                         except Exception as e:
                             errors.append(str(e))
 
+        needs_datadog_auth = True
         try:
-            _ = self.config.auth
-        except ValidationError as e:
-            for error in e.errors():
-                errors.append(f"{' -> '.join(map(str, error['loc']))}\n  {error['msg']}")
+            needs_datadog_auth = bool(self.repo.datastore_id)
+        except Exception:
+            pass
+
+        from ddqa.models.config.auth import DatadogAuth, GitHubAuth, JiraAuth
+
+        for prefix, model in (('github', GitHubAuth), ('jira', JiraAuth)):
+            try:
+                model(**self.config.data.get(prefix, {}))
+            except ValidationError as e:
+                for error in e.errors():
+                    errors.append(f"{prefix} -> {' -> '.join(map(str, error['loc']))}\n  {error['msg']}")
+
+        if needs_datadog_auth:
+            try:
+                DatadogAuth(**self.config.data.get('datadog', {}))
+            except ValidationError as e:
+                for error in e.errors():
+                    errors.append(f"datadog -> {' -> '.join(map(str, error['loc']))}\n  {error['msg']}")
 
         return errors

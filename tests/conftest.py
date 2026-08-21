@@ -54,6 +54,7 @@ class TestApplication(Application):
                 (self.github.cache.cache_dir_team_members / f'{team}.txt').write_text('\n'.join(members))
 
     def save_repo_config(self, repo_config: dict[str, Any]) -> None:
+        repo_config = {k: v for k, v in repo_config.items() if v is not None}
         Path(self.repo.path, '.ddqa', 'config.toml').write_text(tomli_w.dumps(repo_config))
         self.config_file.load()
         del self.repo

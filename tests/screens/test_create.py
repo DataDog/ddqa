@@ -44,6 +44,10 @@ def mock_remote_url():
                 'github-bar6': 'jira-bar6',
             },
         ),
+        mock.patch(
+            'ddqa.cache.datadog.DatadogCache.get_datastore_jira_server',
+            return_value='https://example.atlassian.net',
+        ),
     ):
         yield
 
@@ -1093,7 +1097,7 @@ class TestCreation:
             assert response_mock.call_args_list == [
                 mocker.call(
                     'POST',
-                    'https://datadoghq.atlassian.net/rest/api/2/issue',
+                    'https://example.atlassian.net/rest/api/2/issue',
                     auth=('foo@bar.baz', 'bar'),
                     json={
                         'fields': {
@@ -1115,7 +1119,7 @@ class TestCreation:
                 ),
                 mocker.call(
                     'POST',
-                    'https://datadoghq.atlassian.net/rest/api/2/issue',
+                    'https://example.atlassian.net/rest/api/2/issue',
                     auth=('foo@bar.baz', 'bar'),
                     json={
                         'fields': {
@@ -1135,7 +1139,7 @@ class TestCreation:
                 # PR #1 author (github-bar1) is in bar-team, so only Bar Baz is assigned
                 mocker.call(
                     'POST',
-                    'https://datadoghq.atlassian.net/rest/api/2/issue',
+                    'https://example.atlassian.net/rest/api/2/issue',
                     auth=('foo@bar.baz', 'bar'),
                     json={
                         'fields': {

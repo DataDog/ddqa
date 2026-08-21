@@ -27,5 +27,10 @@ class AuthConfig(BaseModel):
     github: GitHubAuth
     jira: JiraAuth
     # No `[datadog]` config table is required: credentials are commonly supplied as
-    # ephemeral env vars (e.g. via `dd-auth`) rather than stored persistently.
-    datadog: DatadogAuth = Field(default_factory=DatadogAuth)
+    # ephemeral env vars (e.g. via `dd-auth`) rather than stored persistently. Only
+    # constructed lazily since it's only needed by repos configured with `datastore_id`.
+    datadog_data: dict = Field(default_factory=dict, alias='datadog')
+
+    @property
+    def datadog(self) -> DatadogAuth:
+        return DatadogAuth(**self.datadog_data)

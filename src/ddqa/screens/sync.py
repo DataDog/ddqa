@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2023-present Datadog, Inc. <dev@datadoghq.com>
 #
 # SPDX-License-Identifier: MIT
+import tomllib
 from collections import Counter
 
 from textual.app import ComposeResult
@@ -52,19 +53,52 @@ class InteractiveSidebar(Widget):
         text_log = self.query_one(RichLog)
         button = self.query_one(Button)
 
-        datastore_id = self.app.repo.datastore_id
+        global_config_source = self.app.repo.global_config_source
 
         async with ResponsiveNetworkClient(status) as client:
-            text_log.write(f'Fetching members from Datadog datastore: {datastore_id}', shrink=False)
-            try:
-                members = await self.app.datadog.get_members(client, datastore_id, refresh=True)
-            except Exception as e:
-                status.update(str(e))
-                return
+            if global_config_source:
+                text_log.write(
+                    f'Fetching global config from: [link={global_config_source}]{global_config_source}[/link]',
+                    shrink=False,
+                )
+                try:
+                    response = await client.get(
+                        str(global_config_source),
+                        auth=(self.app.config.auth.github.user, self.app.config.auth.github.token),
+                    )
+                    response.raise_for_status()
+                except Exception as e:
+                    status.update(str(e))
+                    return
 
-            if not members:
-                status.update('No members found in datastore')
-                return
+                try:
+                    global_config = tomllib.loads(response.text)
+                except Exception:
+                    status.update('Unable to parse TOML source')
+                    return
+
+                if not global_config:
+                    status.update('No members found in TOML source')
+                    return
+
+                self.app.github.cache.save_global_config(global_config_source, global_config)
+                members = global_config.get('members', {})
+            else:
+                datastore_id = self.app.repo.datastore_id
+                text_log.write(f'Fetching members from Datadog datastore: {datastore_id}', shrink=False)
+                try:
+                    members = await self.app.datadog.get_members(client, datastore_id, refresh=True)
+                except Exception as e:
+                    status.update(str(e))
+                    return
+
+                if not members:
+                    status.update('No members found in datastore')
+                    return
+
+            source_link = (
+                f'[link={global_config_source}]Jira config[/link]' if global_config_source else 'Jira members datastore'
+            )
 
             teams = sorted(team.github_team for team in self.app.repo.teams.values())
             for team in teams:
@@ -78,14 +112,14 @@ class InteractiveSidebar(Widget):
                         if member not in members:
                             text_log.write(
                                 f'GitHub user [link=https://github.com/{member}]{member}[/link] is not '
-                                'declared in the Jira members datastore',
+                                f'declared in the {source_link}',
                                 shrink=False,
                             )
                 except Exception as e:
                     status.update(str(e))
                     return
 
-            text_log.write('Validating the Jira members datastore...', shrink=False)
+            text_log.write(f'Validating the {source_link}...', shrink=False)
 
             members_values_counter = Counter(members.values())
 
@@ -93,7 +127,7 @@ class InteractiveSidebar(Widget):
                 for duplicate_user in duplicate_users:
                     text_log.write(
                         f'Jira user `{members[duplicate_user]}` is declared multiple times in the '
-                        f'Jira members datastore with GitHub user `{duplicate_user}`',
+                        f'{source_link} with GitHub user `{duplicate_user}`',
                         shrink=False,
                     )
                 return
@@ -114,8 +148,14 @@ class InteractiveSidebar(Widget):
                     )
                     del members[github_user_id]
 
-                modified_at = self.app.datadog.cache.get_datastore_modified_at(datastore_id)
-                self.app.datadog.cache.save_datastore(datastore_id, modified_at, members)
+                if global_config_source:
+                    global_config['members'] = members
+                    self.app.github.cache.save_global_config(global_config_source, global_config)
+                else:
+                    datastore_id = self.app.repo.datastore_id
+                    modified_at = self.app.datadog.cache.get_datastore_modified_at(datastore_id)
+                    jira_server = self.app.datadog.cache.get_datastore_jira_server(datastore_id)
+                    self.app.datadog.cache.save_datastore(datastore_id, modified_at, members, jira_server)
             except Exception as e:
                 status.update(str(e))
                 return

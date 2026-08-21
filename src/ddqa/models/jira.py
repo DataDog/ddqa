@@ -8,9 +8,6 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, HttpUrl, field_validator
 
-# Not user-configurable: every ddqa user operates against Datadog's own Jira instance.
-JIRA_SERVER = 'https://datadoghq.atlassian.net'
-
 
 class Status(BaseModel):
     id: str  # noqa: A003
@@ -43,7 +40,7 @@ class JiraIssue(BaseModel):
 
 
 class JiraConfig(BaseModel, extra='allow'):
-    jira_server: HttpUrl = HttpUrl(JIRA_SERVER)
+    jira_server: HttpUrl
     members: dict[str, str]
     __reversed_members: dict[str, str] | None = None
 

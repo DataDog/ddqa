@@ -5,7 +5,9 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
+import tomli_w
 from httpx import HTTPStatusError, Request, Response
+from pydantic import HttpUrl
 from textual.widgets import Button, Label, RichLog
 
 from ddqa.screens.sync import InteractiveSidebar, SyncScreen
@@ -178,6 +180,9 @@ async def test_save_teams(application, auto_mode, git_repository, helpers, mocke
     )
     mocker.patch('ddqa.cache.datadog.DatadogCache.get_datastore_modified_at', return_value='2024-01-01T00:00:00Z')
     mocker.patch('ddqa.cache.datadog.DatadogCache.get_datastore_members', return_value={'placeholder': 'placeholder'})
+    mocker.patch(
+        'ddqa.cache.datadog.DatadogCache.get_datastore_jira_server', return_value='https://example.atlassian.net'
+    )
     save_datastore = mocker.patch('ddqa.cache.datadog.DatadogCache.save_datastore')
     mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1']))
     mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users', return_value=MagicMock(return_value=[]))
@@ -222,6 +227,7 @@ async def test_save_teams(application, auto_mode, git_repository, helpers, mocke
             app.repo.datastore_id,
             '2024-01-01T00:00:00Z',
             {'g': 'j', 'foo1': 'jira-foo1', 'bar1': 'jira-bar1'},
+            'https://example.atlassian.net',
         )
 
         assert_return_code(app, auto_mode)
@@ -251,6 +257,9 @@ async def test_deactivated_jira_user(application, auto_mode, git_repository, hel
     )
     mocker.patch('ddqa.cache.datadog.DatadogCache.get_datastore_modified_at', return_value='2024-01-01T00:00:00Z')
     mocker.patch('ddqa.cache.datadog.DatadogCache.get_datastore_members', return_value={'placeholder': 'placeholder'})
+    mocker.patch(
+        'ddqa.cache.datadog.DatadogCache.get_datastore_jira_server', return_value='https://example.atlassian.net'
+    )
     save_datastore = mocker.patch('ddqa.cache.datadog.DatadogCache.save_datastore')
     mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1']))
     mock = MagicMock()
@@ -294,6 +303,7 @@ async def test_deactivated_jira_user(application, auto_mode, git_repository, hel
             app.repo.datastore_id,
             '2024-01-01T00:00:00Z',
             {'foo1': 'jira-foo1', 'bar1': 'jira-bar1'},
+            'https://example.atlassian.net',
         )
 
     assert_return_code(app, auto_mode)
@@ -324,6 +334,9 @@ async def test_github_user_not_in_jira(application, auto_mode, git_repository, h
     )
     mocker.patch('ddqa.cache.datadog.DatadogCache.get_datastore_modified_at', return_value='2024-01-01T00:00:00Z')
     mocker.patch('ddqa.cache.datadog.DatadogCache.get_datastore_members', return_value={'placeholder': 'placeholder'})
+    mocker.patch(
+        'ddqa.cache.datadog.DatadogCache.get_datastore_jira_server', return_value='https://example.atlassian.net'
+    )
     save_datastore = mocker.patch('ddqa.cache.datadog.DatadogCache.save_datastore')
     mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1']))
     mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users')
@@ -365,6 +378,7 @@ async def test_github_user_not_in_jira(application, auto_mode, git_repository, h
             app.repo.datastore_id,
             '2024-01-01T00:00:00Z',
             {'g': 'j', 'foo1': 'jira-foo1'},
+            'https://example.atlassian.net',
         )
 
         assert_return_code(app, auto_mode)
@@ -435,3 +449,76 @@ async def test_duplicate_jira_user(application, auto_mode, git_repository, helpe
         save_datastore.assert_not_called()
 
     assert_return_code(app, auto_mode)
+
+
+@pytest.mark.parametrize(
+    'application,auto_mode',
+    [
+        pytest.param('app', False, id='manual'),
+        pytest.param('auto_mode_app', True, id='auto'),
+    ],
+)
+async def test_global_config_source(application, auto_mode, git_repository, helpers, mocker, request):
+    app = request.getfixturevalue(application)
+    app.configure(
+        git_repository,
+        caching=True,
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+        },
+    )
+
+    source = 'https://example.com/config.toml'
+    global_config = {'members': {'foo1': 'jira-foo1', 'bar1': 'jira-bar1'}}
+    response = Response(200, request=Request('GET', source), text=tomli_w.dumps(global_config))
+    mocker.patch('ddqa.utils.network.ResponsiveNetworkClient.get', return_value=response)
+    mocker.patch('ddqa.utils.github.GitHubRepository.get_team_members', side_effect=(['foo1'], ['bar1']))
+    mocker.patch('ddqa.utils.jira.JiraClient.get_deactivated_users', return_value=MagicMock(return_value=[]))
+    mocker.patch(
+        'ddqa.cache.github.GitHubCache.load_global_config',
+        return_value={'jira_server': 'https://example.atlassian.net', 'members': {'placeholder': 'placeholder'}},
+    )
+    save_global_config = mocker.patch('ddqa.cache.github.GitHubCache.save_global_config')
+
+    repo_config = dict(app.repo.model_dump())
+    del repo_config['datastore_id']
+    repo_config['global_config_source'] = source
+    repo_config['teams'] = {
+        'foo': {
+            'jira_project': 'FOO',
+            'jira_issue_type': 'Foo-Task',
+            'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
+            'github_team': 'foo-team',
+        },
+        'bar': {
+            'jira_project': 'BAR',
+            'jira_issue_type': 'Bar-Task',
+            'jira_statuses': {'TODO': 'Backlog', 'IN PROGRESS': 'Sprint', 'DONE': 'Done'},
+            'github_team': 'bar-team',
+        },
+    }
+    app.save_repo_config(repo_config)
+
+    async with app.run_test():
+        sidebar = app.query_one(InteractiveSidebar)
+
+        status = sidebar.query_one(Label)
+        assert not str(status.render())
+
+        text_log = sidebar.query_one(RichLog)
+        assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent(f"""
+            Fetching global config from: {source}
+            Refreshing members for team: bar-team
+            Refreshing members for team: foo-team
+            Validating the Jira config...
+            Validating 2 Jira users...
+            Sync finished correctly
+            """)
+
+        button = sidebar.query_one(Button)
+        assert not button.disabled
+
+        save_global_config.assert_called_with(HttpUrl(source), global_config)
+
+        assert_return_code(app, auto_mode)

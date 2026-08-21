@@ -19,11 +19,36 @@ The config file is located by default in your repository at `/.ddqa/config.toml`
 
 ## Core options
 
-### Datastore ID (*required*) ### {: #datastore-id }
+### Member source (*required*, choose one) ### {: #member-source }
+
+The GitHub-username-to-Jira-account-ID mapping that the tool needs in order to operate must come from exactly one of the following two sources. Configuring both, or neither, is an error.
+
+#### Datastore ID ### {: #datastore-id }
 
 Key: `datastore_id`
 
-This is the ID of the [Datadog Actions Datastore](https://docs.datadoghq.com/actions/datastores/) that contains the mapping of GitHub usernames to Jira account IDs that the tool needs in order to operate.
+This is the ID of the [Datadog Actions Datastore](https://docs.datadoghq.com/actions/datastores/) that contains the mapping of GitHub usernames to Jira account IDs.
+
+The Jira server URL is not configured in `ddqa` itself; it must be stored in the same datastore, as an item whose `github_user` field is the reserved value `ddqa__jira_server__` and whose `jira_user` field is the Jira server URL, for example `https://<ORG>.atlassian.net`.
+
+#### Global config source ### {: #global-config-source }
+
+Key: `global_config_source`
+
+This is the URL to a raw TOML file, hosted in a GitHub repository, that contains the mapping of GitHub usernames to Jira account IDs, for example:
+
+```toml
+global_config_source = "https://raw.githubusercontent.com/<ORG>/<REPO>/main/config.toml"
+```
+
+The referenced TOML file must define a `jira_server` key and a `members` table mapping GitHub usernames to Jira account IDs:
+
+```toml
+jira_server = "https://<ORG>.atlassian.net"
+
+[members]
+some-github-user = "<JIRA_ACCOUNT_ID>"
+```
 
 ### QA statuses (*required*) ### {: #qa-statuses }
 

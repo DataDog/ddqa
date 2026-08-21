@@ -83,7 +83,9 @@ Read
 
 ## Datadog auth
 
-The mapping of GitHub usernames to Jira account IDs is stored in a Datadog [Actions Datastore](https://docs.datadoghq.com/actions/datastores/) rather than in a GitHub repository, so `ddqa` needs a Datadog API key and application key with access to it.
+Only needed when your repository is configured with [`datastore_id`](repo.md#datastore-id). If it instead uses [`global_config_source`](repo.md#global-config-source), the GitHub-username-to-Jira-account-ID mapping is read from a GitHub-hosted TOML file and no Datadog credentials are required.
+
+When `datastore_id` is used, the mapping is stored in a Datadog [Actions Datastore](https://docs.datadoghq.com/actions/datastores/) rather than in a GitHub repository, so `ddqa` needs a Datadog API key and application key with access to it.
 
 The following API is used:
 

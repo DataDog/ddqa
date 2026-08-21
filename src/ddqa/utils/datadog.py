@@ -6,7 +6,7 @@ from __future__ import annotations
 from functools import cached_property
 from typing import TYPE_CHECKING
 
-from ddqa.cache.datadog import DatadogCache
+from ddqa.cache.datadog import JIRA_SERVER_KEY, DatadogCache
 
 if TYPE_CHECKING:
     from ddqa.models.config.auth import DatadogAuth
@@ -48,12 +48,15 @@ class DatadogDatastore:
         if not refresh and cached_modified_at == modified_at:
             return self.cache.get_datastore_members(datastore_id)
 
-        members = await self.__fetch_all_members(client, datastore_id)
-        self.cache.save_datastore(datastore_id, modified_at, members)
+        members, jira_server = await self.__fetch_all_members(client, datastore_id)
+        self.cache.save_datastore(datastore_id, modified_at, members, jira_server)
         return members
 
-    async def __fetch_all_members(self, client: ResponsiveNetworkClient, datastore_id: str) -> dict[str, str]:
+    async def __fetch_all_members(
+        self, client: ResponsiveNetworkClient, datastore_id: str
+    ) -> tuple[dict[str, str], str | None]:
         members: dict[str, str] = {}
+        jira_server: str | None = None
         offset = 0
 
         while True:
@@ -66,14 +69,18 @@ class DatadogDatastore:
 
             for item in payload['data']:
                 value = item['attributes']['value']
-                members[str(value['github_user'])] = str(value['jira_user'])
+                github_user = str(value['github_user'])
+                if github_user == JIRA_SERVER_KEY:
+                    jira_server = str(value['jira_user'])
+                else:
+                    members[github_user] = str(value['jira_user'])
 
             if not payload['meta']['page']['hasMore']:
                 break
 
             offset += self.PAGE_SIZE
 
-        return members
+        return members, jira_server
 
     async def __api_get(self, client: ResponsiveNetworkClient, *args, **kwargs):
         retry_wait = 2

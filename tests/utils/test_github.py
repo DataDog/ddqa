@@ -40,6 +40,24 @@ def test_repo_id(app, git_repository, url, repo_id):
         assert app.github.repo_id == repo_id
 
 
+def test_load_global_config(app, git_repository):
+    app.configure(
+        git_repository,
+        caching=True,
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
+    )
+
+    source = 'https://example.com/config.toml'
+    assert app.github.load_global_config(source) == {}
+
+    app.github.cache.save_global_config(source, {'members': {'g1': 'j1'}})
+    assert app.github.load_global_config(source) == {'members': {'g1': 'j1'}}
+
+
 class TestCandidates:
     async def test_pr(self, app, git_repository, mocker):
         app.configure(

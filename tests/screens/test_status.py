@@ -40,6 +40,10 @@ def mock_remote_call():
                 'github-bar6': 'jira-bar6',
             },
         ),
+        mock.patch(
+            'ddqa.cache.datadog.DatadogCache.get_datastore_jira_server',
+            return_value='https://example.atlassian.net',
+        ),
     ):
         yield
 
