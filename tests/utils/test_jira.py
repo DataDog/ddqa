@@ -20,11 +20,12 @@ def mock_calls():
     with (
         mock.patch('ddqa.utils.git.GitRepository.get_remote_url', return_value='https://github.com/org/repo.git'),
         mock.patch(
-            'ddqa.utils.github.GitHubRepository.load_global_config',
-            return_value={
-                'jira_server': 'https://foobarbaz.atlassian.net',
-                'members': {'github-foo': 'jira-foo', 'github-bar': 'jira-bar'},
-            },
+            'ddqa.cache.datadog.DatadogCache.get_datastore_members',
+            return_value={'github-foo': 'jira-foo', 'github-bar': 'jira-bar'},
+        ),
+        mock.patch(
+            'ddqa.cache.datadog.DatadogCache.get_datastore_jira_server',
+            return_value='https://example.atlassian.net',
         ),
     ):
         yield
@@ -35,7 +36,11 @@ class TestGetCurrentUserID:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
         cached_user_id_file = app.cache_dir / 'jira' / 'user_ids.json'
         assert not cached_user_id_file.is_file()
@@ -55,7 +60,7 @@ class TestGetCurrentUserID:
 
         current_user_id = await app.jira.get_current_user_id(ResponsiveNetworkClient(Static()))
         assert response_mock.call_args_list == [
-            mocker.call('GET', 'https://foobarbaz.atlassian.net/rest/api/2/myself', auth=('foo@bar.baz', 'bar')),
+            mocker.call('GET', 'https://example.atlassian.net/rest/api/2/myself', auth=('foo@bar.baz', 'bar')),
         ]
 
         assert current_user_id == 'qwerty1234567890'
@@ -67,7 +72,11 @@ class TestGetCurrentUserID:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
         cached_user_id_file = app.cache_dir / 'jira' / 'user_ids.json'
         assert not cached_user_id_file.is_file()
@@ -90,7 +99,7 @@ class TestGetCurrentUserID:
 
         current_user_id = await app.jira.get_current_user_id(ResponsiveNetworkClient(Static()))
         assert response_mock.call_args_list == [
-            mocker.call('GET', 'https://foobarbaz.atlassian.net/rest/api/2/myself', auth=('foo@bar.baz', 'bar')),
+            mocker.call('GET', 'https://example.atlassian.net/rest/api/2/myself', auth=('foo@bar.baz', 'bar')),
         ]
 
         assert current_user_id == 'qwerty1234567890'
@@ -100,7 +109,7 @@ class TestGetCurrentUserID:
 
         current_user_id = await app.jira.get_current_user_id(ResponsiveNetworkClient(Static()))
         assert response_mock.call_args_list == [
-            mocker.call('GET', 'https://foobarbaz.atlassian.net/rest/api/2/myself', auth=('foo@bar.baz', 'bar')),
+            mocker.call('GET', 'https://example.atlassian.net/rest/api/2/myself', auth=('foo@bar.baz', 'bar')),
         ]
 
         assert current_user_id == 'qwerty1234567890'
@@ -110,7 +119,11 @@ async def test_create_issues(app, git_repository, helpers, mocker):
     app.configure(
         git_repository,
         caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
     )
     repo_config = dict(app.repo.model_dump())
     repo_config['teams'] = {
@@ -176,7 +189,7 @@ async def test_create_issues(app, git_repository, helpers, mocker):
     assert response_mock.call_args_list == [
         mocker.call(
             'POST',
-            'https://foobarbaz.atlassian.net/rest/api/2/issue',
+            'https://example.atlassian.net/rest/api/2/issue',
             auth=('foo@bar.baz', 'bar'),
             json={
                 'fields': {
@@ -208,7 +221,7 @@ async def test_create_issues(app, git_repository, helpers, mocker):
         ),
         mocker.call(
             'POST',
-            'https://foobarbaz.atlassian.net/rest/api/2/issue',
+            'https://example.atlassian.net/rest/api/2/issue',
             auth=('foo@bar.baz', 'bar'),
             json={
                 'fields': {
@@ -241,8 +254,8 @@ async def test_create_issues(app, git_repository, helpers, mocker):
     ]
 
     assert created_issues == {
-        'foo': 'https://foobarbaz.atlassian.net/browse/FOO-1',
-        'bar': 'https://foobarbaz.atlassian.net/browse/BAR-1',
+        'foo': 'https://example.atlassian.net/browse/FOO-1',
+        'bar': 'https://example.atlassian.net/browse/BAR-1',
     }
 
 
@@ -250,7 +263,11 @@ async def test_search_issues(app, git_repository, mocker):
     app.configure(
         git_repository,
         caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
     )
     repo_config = dict(app.repo.model_dump())
     repo_config['teams'] = {
@@ -445,7 +462,7 @@ async def test_search_issues(app, git_repository, mocker):
     assert response_mock.call_args_list == [
         mocker.call(
             'POST',
-            'https://foobarbaz.atlassian.net/rest/api/2/search',
+            'https://example.atlassian.net/rest/api/2/search',
             auth=('foo@bar.baz', 'bar'),
             json={
                 'jql': 'project in ("FOO", "BAR") and labels in ("qa-1.2.3", "label-9000")',
@@ -465,14 +482,14 @@ async def test_search_issues(app, git_repository, mocker):
             },
         ),
         mocker.call(
-            'GET', 'https://foobarbaz.atlassian.net/rest/api/2/issue/FOO-1/transitions', auth=('foo@bar.baz', 'bar')
+            'GET', 'https://example.atlassian.net/rest/api/2/issue/FOO-1/transitions', auth=('foo@bar.baz', 'bar')
         ),
         mocker.call(
-            'GET', 'https://foobarbaz.atlassian.net/rest/api/2/issue/BAR-1/transitions', auth=('foo@bar.baz', 'bar')
+            'GET', 'https://example.atlassian.net/rest/api/2/issue/BAR-1/transitions', auth=('foo@bar.baz', 'bar')
         ),
         mocker.call(
             'POST',
-            'https://foobarbaz.atlassian.net/rest/api/2/search',
+            'https://example.atlassian.net/rest/api/2/search',
             auth=('foo@bar.baz', 'bar'),
             json={
                 'jql': 'project in ("FOO", "BAR") and labels in ("qa-1.2.3", "label-9000")',
@@ -493,7 +510,7 @@ async def test_search_issues(app, git_repository, mocker):
         ),
         mocker.call(
             'POST',
-            'https://foobarbaz.atlassian.net/rest/api/2/search',
+            'https://example.atlassian.net/rest/api/2/search',
             auth=('foo@bar.baz', 'bar'),
             json={
                 'jql': 'project in ("FOO", "BAR") and labels in ("qa-1.2.3", "label-9000")',
@@ -606,7 +623,11 @@ async def test_rate_limit_handling(app, git_repository, mocker):
     app.configure(
         git_repository,
         caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
     )
     repo_config = dict(app.repo.model_dump())
     repo_config['teams'] = {
@@ -688,7 +709,7 @@ async def test_rate_limit_handling(app, git_repository, mocker):
     assert response_mock.call_args_list == [
         mocker.call(
             'POST',
-            'https://foobarbaz.atlassian.net/rest/api/2/issue',
+            'https://example.atlassian.net/rest/api/2/issue',
             auth=('foo@bar.baz', 'bar'),
             json={
                 'fields': {
@@ -703,7 +724,7 @@ async def test_rate_limit_handling(app, git_repository, mocker):
         ),
         mocker.call(
             'POST',
-            'https://foobarbaz.atlassian.net/rest/api/2/issue',
+            'https://example.atlassian.net/rest/api/2/issue',
             auth=('foo@bar.baz', 'bar'),
             json={
                 'fields': {
@@ -718,7 +739,7 @@ async def test_rate_limit_handling(app, git_repository, mocker):
         ),
         mocker.call(
             'POST',
-            'https://foobarbaz.atlassian.net/rest/api/2/issue',
+            'https://example.atlassian.net/rest/api/2/issue',
             auth=('foo@bar.baz', 'bar'),
             json={
                 'fields': {
@@ -733,7 +754,7 @@ async def test_rate_limit_handling(app, git_repository, mocker):
         ),
         mocker.call(
             'POST',
-            'https://foobarbaz.atlassian.net/rest/api/2/issue',
+            'https://example.atlassian.net/rest/api/2/issue',
             auth=('foo@bar.baz', 'bar'),
             json={
                 'fields': {
@@ -749,8 +770,8 @@ async def test_rate_limit_handling(app, git_repository, mocker):
     ]
 
     assert created_issues == {
-        'foo': 'https://foobarbaz.atlassian.net/browse/FOO-1',
-        'bar': 'https://foobarbaz.atlassian.net/browse/BAR-1',
+        'foo': 'https://example.atlassian.net/browse/FOO-1',
+        'bar': 'https://example.atlassian.net/browse/BAR-1',
     }
 
 
@@ -759,7 +780,11 @@ class TestGetUsers:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         response_mock = mocker.patch(
@@ -825,13 +850,13 @@ class TestGetUsers:
         assert response_mock.call_args_list == [
             mocker.call(
                 'GET',
-                'https://foobarbaz.atlassian.net/rest/api/2/user/bulk',
+                'https://example.atlassian.net/rest/api/2/user/bulk',
                 auth=('foo@bar.baz', 'bar'),
                 params={'maxResults': 2, 'accountId': ['id1', 'id2', 'id3'], 'startAt': 0},
             ),
             mocker.call(
                 'GET',
-                'https://foobarbaz.atlassian.net/rest/api/2/user/bulk',
+                'https://example.atlassian.net/rest/api/2/user/bulk',
                 auth=('foo@bar.baz', 'bar'),
                 params={'maxResults': 2, 'accountId': ['id1', 'id2', 'id3'], 'startAt': 2},
             ),
@@ -864,7 +889,11 @@ class TestGetUsers:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         def user_response(account_id: str) -> dict:
@@ -916,13 +945,13 @@ class TestGetUsers:
         assert response_mock.call_args_list == [
             mocker.call(
                 'GET',
-                'https://foobarbaz.atlassian.net/rest/api/2/user/bulk',
+                'https://example.atlassian.net/rest/api/2/user/bulk',
                 auth=('foo@bar.baz', 'bar'),
                 params={'maxResults': 100, 'accountId': ['id1', 'id2'], 'startAt': 0},
             ),
             mocker.call(
                 'GET',
-                'https://foobarbaz.atlassian.net/rest/api/2/user/bulk',
+                'https://example.atlassian.net/rest/api/2/user/bulk',
                 auth=('foo@bar.baz', 'bar'),
                 params={'maxResults': 100, 'accountId': ['id3', 'id4'], 'startAt': 0},
             ),
@@ -935,7 +964,11 @@ class TestGetUsers:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         response_mock = mocker.patch(
@@ -976,7 +1009,11 @@ class TestGetUsers:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         response_mock = mocker.patch(
@@ -1042,13 +1079,13 @@ class TestGetUsers:
         assert response_mock.call_args_list == [
             mocker.call(
                 'GET',
-                'https://foobarbaz.atlassian.net/rest/api/2/user/bulk',
+                'https://example.atlassian.net/rest/api/2/user/bulk',
                 auth=('foo@bar.baz', 'bar'),
                 params={'maxResults': 2, 'accountId': ['id1', 'id2', 'id3'], 'startAt': 0},
             ),
             mocker.call(
                 'GET',
-                'https://foobarbaz.atlassian.net/rest/api/2/user/bulk',
+                'https://example.atlassian.net/rest/api/2/user/bulk',
                 auth=('foo@bar.baz', 'bar'),
                 params={'maxResults': 2, 'accountId': ['id1', 'id2', 'id3'], 'startAt': 2},
             ),

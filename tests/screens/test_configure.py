@@ -4,6 +4,8 @@
 from textual.widgets import Button, Input, RichLog
 
 from ddqa.screens.configure import (
+    DatadogApiKeyInput,
+    DatadogAppKeyInput,
     GitHubTokenInput,
     GitHubUserInput,
     JiraEmailInput,
@@ -23,6 +25,8 @@ async def test_default_state(app, helpers):
             GitHubTokenInput,
             JiraEmailInput,
             JiraTokenInput,
+            DatadogApiKeyInput,
+            DatadogAppKeyInput,
         )
 
         for input_instance, expected_type in zip(inputs, expected_inputs, strict=True):
@@ -42,7 +46,11 @@ async def test_default_state(app, helpers):
             │     Field required
             ├── jira -> email
             │     Field required
-            └── jira -> token
+            ├── jira -> token
+            │     Field required
+            ├── datadog -> api_key
+            │     Field required
+            └── datadog -> app_key
                   Field required
             """)
 
@@ -54,6 +62,7 @@ class TestRepoNameInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -78,6 +87,7 @@ class TestRepoNameInput:
                 'repo': ['foo'],
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -102,6 +112,7 @@ class TestRepoNameInput:
                 'repo': 'foo',
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -126,6 +137,7 @@ class TestRepoNameInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -161,6 +173,7 @@ class TestRepoPathInput:
                 'repos': {'agent': {}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -186,6 +199,7 @@ class TestRepoPathInput:
                 'repos': {'agent': {'path': ['foo']}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -212,6 +226,7 @@ class TestRepoPathInput:
                 'repos': {'agent': {'path': path}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -238,6 +253,7 @@ class TestRepoPathInput:
                 'repos': {'agent': {}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -274,6 +290,7 @@ class TestGitHubUserInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -299,6 +316,7 @@ class TestGitHubUserInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': ['foo'], 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -324,6 +342,7 @@ class TestGitHubUserInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'token': 'bar'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -359,6 +378,7 @@ class TestGitHubTokenInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -385,6 +405,7 @@ class TestGitHubTokenInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': ['bar']},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -411,6 +432,7 @@ class TestGitHubTokenInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo'},
                 'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -448,6 +470,7 @@ class TestJiraEmailInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -473,6 +496,7 @@ class TestJiraEmailInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': ['foo'], 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -498,6 +522,7 @@ class TestJiraEmailInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -533,6 +558,7 @@ class TestJiraTokenInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -559,6 +585,7 @@ class TestJiraTokenInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo', 'token': ['bar']},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -585,6 +612,7 @@ class TestJiraTokenInput:
                 'repos': {'agent': {'path': str(isolation)}},
                 'github': {'user': 'foo', 'token': 'bar'},
                 'jira': {'email': 'foo'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
             }
         )
         config_file.save()
@@ -610,5 +638,189 @@ class TestJiraTokenInput:
             assert app.config.data['jira'] == {'email': 'foo', 'token': 'bar'}
             assert input_box.password is True
             assert input_box.value == 'bar'
+            assert save_button.disabled is False
+            assert not text_log.lines
+
+
+class TestDatadogApiKeyInput:
+    async def test_default_state(self, app, isolation, config_file, helpers):
+        config_file.model.data.update(
+            {
+                'repo': 'agent',
+                'repos': {'agent': {'path': str(isolation)}},
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'app_key': 'baz'},
+            }
+        )
+        config_file.save()
+
+        async with app.run_test():
+            input_box = app.query_one(DatadogApiKeyInput)
+            save_button = app.query_one(Button)
+            text_log = app.query_one(RichLog)
+
+            assert app.config.data['datadog'] == {'app_key': 'baz'}
+            assert input_box.password is True
+            assert not input_box.value
+            assert save_button.disabled is True
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
+                Configuration errors
+                └── datadog -> api_key
+                      Field required
+                """)
+
+    async def test_wrong_type(self, app, isolation, config_file, helpers):
+        config_file.model.data.update(
+            {
+                'repo': 'agent',
+                'repos': {'agent': {'path': str(isolation)}},
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': ['baz'], 'app_key': 'baz'},
+            }
+        )
+        config_file.save()
+
+        async with app.run_test():
+            input_box = app.query_one(DatadogApiKeyInput)
+            save_button = app.query_one(Button)
+            text_log = app.query_one(RichLog)
+
+            assert app.config.data['datadog'] == {'api_key': ['baz'], 'app_key': 'baz'}
+            assert input_box.password is True
+            assert not input_box.value
+            assert save_button.disabled is True
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
+                Configuration errors
+                └── datadog -> api_key
+                      Input should be a valid string
+                """)
+
+    async def test_save(self, app, isolation, config_file, helpers):
+        config_file.model.data.update(
+            {
+                'repo': 'agent',
+                'repos': {'agent': {'path': str(isolation)}},
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'app_key': 'baz'},
+            }
+        )
+        config_file.save()
+
+        async with app.run_test() as pilot:
+            input_box = app.query_one(DatadogApiKeyInput)
+            save_button = app.query_one(Button)
+            text_log = app.query_one(RichLog)
+
+            assert app.config.data['datadog'] == {'app_key': 'baz'}
+            assert input_box.password is True
+            assert not input_box.value
+            assert save_button.disabled is True
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
+                Configuration errors
+                └── datadog -> api_key
+                      Field required
+                """)
+
+            app.set_focus(input_box)
+            await pilot.press(*'baz')
+
+            assert app.config.data['datadog'] == {'api_key': 'baz', 'app_key': 'baz'}
+            assert input_box.password is True
+            assert input_box.value == 'baz'
+            assert save_button.disabled is False
+            assert not text_log.lines
+
+
+class TestDatadogAppKeyInput:
+    async def test_default_state(self, app, isolation, config_file, helpers):
+        config_file.model.data.update(
+            {
+                'repo': 'agent',
+                'repos': {'agent': {'path': str(isolation)}},
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz'},
+            }
+        )
+        config_file.save()
+
+        async with app.run_test():
+            input_box = app.query_one(DatadogAppKeyInput)
+            save_button = app.query_one(Button)
+            text_log = app.query_one(RichLog)
+
+            assert app.config.data['datadog'] == {'api_key': 'baz'}
+            assert input_box.password is True
+            assert not input_box.value
+            assert save_button.disabled is True
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
+                Configuration errors
+                └── datadog -> app_key
+                      Field required
+                """)
+
+    async def test_wrong_type(self, app, isolation, config_file, helpers):
+        config_file.model.data.update(
+            {
+                'repo': 'agent',
+                'repos': {'agent': {'path': str(isolation)}},
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': ['baz']},
+            }
+        )
+        config_file.save()
+
+        async with app.run_test():
+            input_box = app.query_one(DatadogAppKeyInput)
+            save_button = app.query_one(Button)
+            text_log = app.query_one(RichLog)
+
+            assert app.config.data['datadog'] == {'api_key': 'baz', 'app_key': ['baz']}
+            assert input_box.password is True
+            assert not input_box.value
+            assert save_button.disabled is True
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
+                Configuration errors
+                └── datadog -> app_key
+                      Input should be a valid string
+                """)
+
+    async def test_save(self, app, isolation, config_file, helpers):
+        config_file.model.data.update(
+            {
+                'repo': 'agent',
+                'repos': {'agent': {'path': str(isolation)}},
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo', 'token': 'bar'},
+                'datadog': {'api_key': 'baz'},
+            }
+        )
+        config_file.save()
+
+        async with app.run_test() as pilot:
+            input_box = app.query_one(DatadogAppKeyInput)
+            save_button = app.query_one(Button)
+            text_log = app.query_one(RichLog)
+
+            assert app.config.data['datadog'] == {'api_key': 'baz'}
+            assert input_box.password is True
+            assert not input_box.value
+            assert save_button.disabled is True
+            assert '\n'.join(line.text for line in text_log.lines) == helpers.dedent("""
+                Configuration errors
+                └── datadog -> app_key
+                      Field required
+                """)
+
+            app.set_focus(input_box)
+            await pilot.press(*'baz')
+
+            assert app.config.data['datadog'] == {'api_key': 'baz', 'app_key': 'baz'}
+            assert input_box.password is True
+            assert input_box.value == 'baz'
             assert save_button.disabled is False
             assert not text_log.lines

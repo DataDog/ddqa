@@ -15,9 +15,7 @@ DDQA will always ensure valid config by loading the configuration screen if ther
 
 You'll need to create a [fine-grain access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#personal-access-tokens-classic) using `DataDog` resource owner.
 
-Restrict its access to the concerned repositories:
-- `DataDog/github-metadata`, to access user mapping.
-- the list of repositories you are creating cards for (e.g. `DataDog/datadog-agent`) 
+Restrict its access to the list of repositories you are creating cards for (e.g. `DataDog/datadog-agent`).
 
 <figure markdown>
   ![GitHub token repositories](../assets/images/github-token-repositories.png){ loading=lazy role="img" }
@@ -82,3 +80,33 @@ Read
 
 !!! tip
     You can configure your Jira credentials using the `DDQA_JIRA_EMAIL` and `DDQA_JIRA_TOKEN` environment variables.
+
+## Datadog auth
+
+Only needed when your repository is configured with [`datastore_id`](repo.md#datastore-id). If it instead uses [`global_config_source`](repo.md#global-config-source), the GitHub-username-to-Jira-account-ID mapping is read from a GitHub-hosted TOML file and no Datadog credentials are required.
+
+When `datastore_id` is used, the mapping is stored in a Datadog [Actions Datastore](https://docs.datadoghq.com/actions/datastores/) rather than in a GitHub repository, so `ddqa` needs a Datadog API key and application key with access to it.
+
+The following API is used:
+
+- `/api/v2/actions-datastores/{datastore_id}` ([GET](https://docs.datadoghq.com/api/latest/actions-datastores/))
+- `/api/v2/actions-datastores/{datastore_id}/items` ([GET](https://docs.datadoghq.com/api/latest/actions-datastores/))
+
+### Recommended: ephemeral credentials via `dd-auth`
+
+The `[datadog]` config table is **not required**. The recommended way to authenticate is to mint short-lived credentials with [`dd-auth`](https://github.com/DataDog/dd-auth) and run `ddqa` as its subcommand, so no Datadog secret is ever written to disk. Since `dd-auth` exports `DD_API_KEY`/`DD_APP_KEY` by default, rename them to the variables `ddqa` reads:
+
+```shell
+dd-auth --actions-api --api-key-env DDQA_DATADOG_API_KEY --app-key-env DDQA_DATADOG_APP_KEY -- ddqa sync
+```
+
+### Alternative: persistent credentials
+
+If you'd rather not run `dd-auth` every time, you can create a long-lived API key and application key under [Organization Settings](https://app.datadoghq.com/organization-settings/api-keys) and store them either as environment variables:
+
+```shell
+export DDQA_DATADOG_API_KEY="..."
+export DDQA_DATADOG_APP_KEY="..."
+```
+
+or persistently in your personal config file's `[datadog]` table (via the configuration screen, or `ddqa config set datadog.api_key ...`).

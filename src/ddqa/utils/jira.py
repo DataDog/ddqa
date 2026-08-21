@@ -102,7 +102,7 @@ class JiraClient:
             response = await self.__api_post(
                 client, f'{self.config.jira_server}{self.ISSUE_API}', json={'fields': fields}
             )
-            created_issues[team] = f'{self.construct_issue_url(response.json()["key"])}'
+            created_issues[team] = f"{self.construct_issue_url(response.json()['key'])}"
 
         return created_issues
 
@@ -272,7 +272,7 @@ class JiraClient:
         if candidate.user:
             metadata_lines.append(f'Author: [{candidate.user}|https://github.com/{candidate.user}]')
         if candidate.labels:
-            metadata_lines.append(f'Labels: {", ".join(f"{{{{{label.name}}}}}" for label in candidate.labels)}')
+            metadata_lines.append(f"Labels: {', '.join(f'{{{{{label.name}}}}}' for label in candidate.labels)}")
 
         metadata_section = '\n'.join(metadata_lines)
 
@@ -285,7 +285,7 @@ class JiraClient:
         # Convert code blocks
         body = re.sub(
             r'```(\w*)$(.+?)```',
-            lambda match: f'{{code:{match.group(1) or "plaintext"}}}{match.group(2)}{{code}}',
+            lambda match: f"{{code:{match.group(1) or 'plaintext'}}}{match.group(2)}{{code}}",
             body,
             flags=re.MULTILINE | re.DOTALL,
         )
@@ -295,4 +295,4 @@ class JiraClient:
     @staticmethod
     def __format_jql_list(items: Iterable[str]) -> str:
         normalized_items = [f'"{item}"' for item in items]
-        return f'({", ".join(normalized_items)})'
+        return f"({', '.join(normalized_items)})"

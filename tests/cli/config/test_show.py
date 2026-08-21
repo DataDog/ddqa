@@ -3,7 +3,13 @@
 # SPDX-License-Identifier: MIT
 def test_default_scrubbed(ddqa, config_file, helpers):
     config_file.model.data.update(config_file.model.app.model_dump())
-    config_file.model.data.update({'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo', 'token': 'bar'}})
+    config_file.model.data.update(
+        {
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        }
+    )
     config_file.save()
 
     result = ddqa('config', 'show')
@@ -22,6 +28,10 @@ def test_default_scrubbed(ddqa, config_file, helpers):
         [jira]
         email = "foo"
         token = "*****"
+
+        [datadog]
+        api_key = "*****"
+        app_key = "*****"
         """,
         terminal=True,
     )
@@ -29,7 +39,13 @@ def test_default_scrubbed(ddqa, config_file, helpers):
 
 def test_reveal(ddqa, config_file, helpers):
     config_file.model.data.update(config_file.model.app.model_dump())
-    config_file.model.data.update({'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo', 'token': 'bar'}})
+    config_file.model.data.update(
+        {
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        }
+    )
     config_file.save()
 
     result = ddqa('config', 'show', '-a')
@@ -48,6 +64,10 @@ def test_reveal(ddqa, config_file, helpers):
         [jira]
         email = "foo"
         token = "bar"
+
+        [datadog]
+        api_key = "baz"
+        app_key = "baz"
         """,
         terminal=True,
     )

@@ -48,6 +48,7 @@ class ConfigFile:
         # Add these so the configuration error messages are more granular about missing keys
         default['github'] = {}
         default['jira'] = {}
+        default['datadog'] = {}
 
         content = tomli_w.dumps(default)
         self.save(content)
