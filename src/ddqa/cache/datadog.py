@@ -9,7 +9,6 @@ from typing import Any
 
 from ddqa.utils.fs import Path
 
-
 # Reserved `github_user` key under which the Jira server URL is stored in the datastore,
 # alongside the regular github-username-to-jira-account-id entries. Datastore item keys must
 # start with a letter or digit, so a leading underscore alone isn't a valid sentinel.

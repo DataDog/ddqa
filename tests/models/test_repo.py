@@ -30,7 +30,7 @@ class TestRepoConfig:
             teams=TEAMS,
         )
 
-        assert config.datastore_id == ''
+        assert not config.datastore_id
         assert str(config.global_config_source) == 'https://example.com/config.toml'
 
     def test_neither_source_configured(self):
