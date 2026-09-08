@@ -227,7 +227,7 @@ class CandidateListing(DataTable):
                     result.add_row(
                         team,
                         f'[link=https://github.com/{github_user}]{github_user}[/link]' if github_user else '',
-                        f'[link={issue_url}]{issue_url.rpartition("/")[2]}[/link]',
+                        f"[link={issue_url}]{issue_url.rpartition('/')[2]}[/link]",
                     )
 
                 await self.app.query_one(CandidateRendering).add_assignment_result(

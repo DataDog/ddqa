@@ -145,12 +145,48 @@ class JiraTokenInput(ValidatedInput):
             self.app.config.data.get('jira', {}).pop('token', None)
 
 
+class DatadogApiKeyInput(ValidatedInput):
+    def __init__(self, *args, **kwargs):
+        kwargs['password'] = True
+        super().__init__(*args, **kwargs)
+
+    def on_mount(self) -> None:
+        self.value = DefaultValue(self.app.config.data.get('datadog', {}).get('api_key', ''))
+
+    def validate_user_input(self, value: object):
+        with suppress(AttributeError):
+            del self.app.config.auth
+
+        if value:
+            self.app.config.data.setdefault('datadog', {})['api_key'] = value
+        else:
+            self.app.config.data.get('datadog', {}).pop('api_key', None)
+
+
+class DatadogAppKeyInput(ValidatedInput):
+    def __init__(self, *args, **kwargs):
+        kwargs['password'] = True
+        super().__init__(*args, **kwargs)
+
+    def on_mount(self) -> None:
+        self.value = DefaultValue(self.app.config.data.get('datadog', {}).get('app_key', ''))
+
+    def validate_user_input(self, value: object):
+        with suppress(AttributeError):
+            del self.app.config.auth
+
+        if value:
+            self.app.config.data.setdefault('datadog', {})['app_key'] = value
+        else:
+            self.app.config.data.get('datadog', {}).pop('app_key', None)
+
+
 class ConfigurationInput(Widget):
     DEFAULT_CSS = """
     ConfigurationInput {
         layout: grid;
         grid-size: 1 3;
-        grid-rows: 6fr 4fr 1fr;
+        grid-rows: 8fr 4fr 1fr;
     }
 
     #input-box {
@@ -179,6 +215,8 @@ class ConfigurationInput(Widget):
             LabeledInput(Label('GitHub token:'), GitHubTokenInput()),
             LabeledInput(Label('Jira email:'), JiraEmailInput()),
             LabeledInput(Label('Jira token:'), JiraTokenInput()),
+            LabeledInput(Label('Datadog API key:'), DatadogApiKeyInput()),
+            LabeledInput(Label('Datadog app key:'), DatadogAppKeyInput()),
             id='input-box',
         )
         yield RichLog()

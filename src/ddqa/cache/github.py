@@ -100,7 +100,7 @@ class GitHubCache:
         directory.ensure_dir_exists()
 
         if candidate_data['id'].isdigit():
-            (self.cache_dir_pull_requests / f'{candidate_data["id"]}.json').write_text(
+            (self.cache_dir_pull_requests / f"{candidate_data['id']}.json").write_text(
                 json.dumps(candidate_data, cls=SetEncoder)
             )
             (directory / candidate_data['id']).touch()

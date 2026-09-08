@@ -29,11 +29,33 @@ def test_repo_id(app, git_repository, url, repo_id):
     app.configure(
         git_repository,
         caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
     )
 
     with mock.patch('ddqa.utils.git.GitRepository.get_remote_url', return_value=url):
         assert app.github.repo_id == repo_id
+
+
+def test_load_global_config(app, git_repository):
+    app.configure(
+        git_repository,
+        caching=True,
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
+    )
+
+    source = 'https://example.com/config.toml'
+    assert app.github.load_global_config(source) == {}
+
+    app.github.cache.save_global_config(source, {'members': {'g1': 'j1'}})
+    assert app.github.load_global_config(source) == {'members': {'g1': 'j1'}}
 
 
 class TestCandidates:
@@ -41,7 +63,11 @@ class TestCandidates:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         response_mock = mocker.patch(
@@ -124,7 +150,11 @@ class TestCandidates:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         response_mock = mocker.patch(
@@ -219,7 +249,11 @@ class TestCandidates:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         response_mock = mocker.patch(
@@ -295,7 +329,11 @@ class TestCandidates:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         response_mock = mocker.patch(
@@ -362,7 +400,11 @@ class TestCandidates:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         response_mock = mocker.patch(
@@ -429,7 +471,11 @@ class TestCandidates:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         mocker.patch(
@@ -475,7 +521,11 @@ class TestCandidates:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         response_mock = mocker.patch(
@@ -517,7 +567,11 @@ class TestCandidates:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         response_mock = mocker.patch(
@@ -569,7 +623,11 @@ class TestCandidates:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
         repo_cache_dir = app.cache_dir / 'github' / 'org' / 'repo'
         assert not repo_cache_dir.is_dir()
@@ -813,7 +871,11 @@ class TestTeamMembers:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         response_mock = mocker.patch(
@@ -843,7 +905,11 @@ class TestTeamMembers:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
         team_members_cache_dir = app.cache_dir / 'github' / 'org' / 'repo' / 'team_members'
         assert not team_members_cache_dir.is_dir()
@@ -890,7 +956,11 @@ class TestTeamMembers:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
         team_members_cache_dir = app.cache_dir / 'github' / 'org' / 'repo' / 'team_members'
         assert not team_members_cache_dir.is_dir()
@@ -951,7 +1021,11 @@ async def test_rate_limit_handling(app, git_repository, mocker):
     app.configure(
         git_repository,
         caching=True,
-        data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+        data={
+            'github': {'user': 'foo', 'token': 'bar'},
+            'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+        },
     )
 
     start = time.time()
@@ -1058,7 +1132,11 @@ class TestAuthorTeam:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         mocker.patch(
@@ -1082,7 +1160,11 @@ class TestAuthorTeam:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         mocker.patch(
@@ -1108,7 +1190,11 @@ class TestAuthorTeam:
         app.configure(
             git_repository,
             caching=True,
-            data={'github': {'user': 'foo', 'token': 'bar'}, 'jira': {'email': 'foo@bar.baz', 'token': 'bar'}},
+            data={
+                'github': {'user': 'foo', 'token': 'bar'},
+                'jira': {'email': 'foo@bar.baz', 'token': 'bar'},
+                'datadog': {'api_key': 'baz', 'app_key': 'baz'},
+            },
         )
 
         mocker.patch(

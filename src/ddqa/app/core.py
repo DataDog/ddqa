@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import os
+from contextlib import suppress
 from functools import cached_property
 from typing import TYPE_CHECKING
 
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
     from textual.screen import Screen
 
     from ddqa.models.config.repo import RepoConfig
+    from ddqa.utils.datadog import DatadogDatastore
     from ddqa.utils.git import GitRepository
     from ddqa.utils.github import GitHubRepository
     from ddqa.utils.jira import JiraClient
@@ -80,11 +82,25 @@ class Application(App):
         return GitHubRepository(self.git, self.config.auth.github, self.cache_dir)
 
     @cached_property
+    def datadog(self) -> DatadogDatastore:
+        from ddqa.utils.datadog import DatadogDatastore
+
+        return DatadogDatastore(self.config.auth.datadog, self.cache_dir)
+
+    @cached_property
     def jira(self) -> JiraClient:
         from ddqa.models.jira import JiraConfig
         from ddqa.utils.jira import JiraClient
 
-        jira_config = JiraConfig(**self.github.load_global_config(self.repo.global_config_source))
+        if self.repo.global_config_source:
+            jira_config = JiraConfig(**self.github.load_global_config(self.repo.global_config_source))
+        else:
+            jira_server = self.datadog.cache.get_datastore_jira_server(self.repo.datastore_id)
+            jira_config = JiraConfig(
+                members=self.datadog.cache.get_datastore_members(self.repo.datastore_id),
+                jira_server=jira_server,  # type: ignore[arg-type]
+            )
+
         return JiraClient(jira_config, self.config.auth.jira, self.repo, self.cache_dir)
 
     @cached_property
@@ -96,7 +112,7 @@ class Application(App):
             if isinstance(config.jira_statuses, dict):
                 if missing_statuses := set(self.repo.qa_statuses).difference(config.jira_statuses):
                     ordered_statuses = [status for status in self.repo.qa_statuses if status in missing_statuses]
-                    message = f'repos -> {team} -> jira_statuses\n  Missing statuses: {", ".join(ordered_statuses)}'
+                    message = f"repos -> {team} -> jira_statuses\n  Missing statuses: {', '.join(ordered_statuses)}"
                     raise ValueError(message)
 
                 statuses.update(config.jira_statuses)
@@ -149,9 +165,12 @@ class Application(App):
         self.__console.print(*args, **kwargs)
 
     def needs_syncing(self) -> bool:
-        return not self.github.load_global_config(self.repo.global_config_source) or not any(
-            self.github.cache.cache_dir_team_members.iterdir()
-        )
+        if self.repo.global_config_source:
+            has_members = bool(self.github.load_global_config(self.repo.global_config_source))
+        else:
+            has_members = bool(self.datadog.cache.get_datastore_members(self.repo.datastore_id))
+
+        return not has_members or not any(self.github.cache.cache_dir_team_members.iterdir())
 
     def config_errors(self) -> list[str]:
         from pydantic import ValidationError
@@ -162,7 +181,7 @@ class Application(App):
             repo_name = self.config.app.repo
         except ValidationError as e:
             for error in e.errors():
-                errors.append(f'{" -> ".join(map(str, error["loc"]))}\n  {error["msg"]}')
+                errors.append(f"{' -> '.join(map(str, error['loc']))}\n  {error['msg']}")
         else:
             if not repo_name:
                 errors.append('repo\n  Field required')
@@ -171,7 +190,7 @@ class Application(App):
                     repos = self.config.repos
                 except ValidationError as e:
                     for error in e.errors():
-                        errors.append(f'{" -> ".join(map(str, error["loc"]))}\n  {error["msg"]}')
+                        errors.append(f"{' -> '.join(map(str, error['loc']))}\n  {error['msg']}")
                 else:
                     if repo_name not in repos:
                         errors.append(f'repo\n  unknown repository: {repo_name}')
@@ -187,10 +206,24 @@ class Application(App):
                         except Exception as e:
                             errors.append(str(e))
 
-        try:
-            _ = self.config.auth
-        except ValidationError as e:
-            for error in e.errors():
-                errors.append(f'{" -> ".join(map(str, error["loc"]))}\n  {error["msg"]}')
+        needs_datadog_auth = True
+        with suppress(Exception):
+            needs_datadog_auth = bool(self.repo.datastore_id)
+
+        from ddqa.models.config.auth import DatadogAuth, GitHubAuth, JiraAuth
+
+        for prefix, model in (('github', GitHubAuth), ('jira', JiraAuth)):
+            try:
+                model(**self.config.data.get(prefix, {}))
+            except ValidationError as e:
+                for error in e.errors():
+                    errors.append(f"{prefix} -> {' -> '.join(map(str, error['loc']))}\n  {error['msg']}")
+
+        if needs_datadog_auth:
+            try:
+                DatadogAuth(**self.config.data.get('datadog', {}))
+            except ValidationError as e:
+                for error in e.errors():
+                    errors.append(f"datadog -> {' -> '.join(map(str, error['loc']))}\n  {error['msg']}")
 
         return errors

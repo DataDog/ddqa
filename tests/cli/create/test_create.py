@@ -51,6 +51,7 @@ def test_needs_syncing(ddqa, isolation, config_file, mocker):
             'repos': {'test': {'path': str(isolation)}},
             'github': {'user': 'foo', 'token': 'bar'},
             'jira': {'email': 'foo', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
         }
     )
     config_file.save()
@@ -81,6 +82,7 @@ def test_valid_setup(ddqa, isolation, config_file, mocker):
             'repos': {'test': {'path': str(isolation)}},
             'github': {'user': 'foo', 'token': 'bar'},
             'jira': {'email': 'foo', 'token': 'bar'},
+            'datadog': {'api_key': 'baz', 'app_key': 'baz'},
         }
     )
     config_file.save()
