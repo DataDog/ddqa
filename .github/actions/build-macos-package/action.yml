@@ -18,11 +18,11 @@ inputs:
     description: Whether to sign and notarize the binaries
     default: true
     required: false
-  apple-certificate:
-    description: Apple Developer ID Application Certificate
+  apple-p12:
+    description: Apple Developer ID Application Certificate + Private Key (base64-encoded P12)
     required: false
-  apple-private-key:
-    description: Apple Developer ID Application Private Key
+  apple-p12-password:
+    description: Password for the Apple Developer ID Application P12
     required: false
   apple-api-key:
     description: Apple App Store Connect API Key
@@ -67,27 +67,30 @@ runs:
           tar -xzf "$f" -C bin
         done
 
+    # Only the P12 file (which is already encrypted at rest by its password) is
+    # written to disk. The P12 password is kept in the environment for the
+    # signing/notarization steps and is never written to a file.
     - name: Write credentials
       if: inputs.should-sign == 'true'
       shell: bash
       env:
-        APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE: ${{ inputs.apple-certificate }}
-        APPLE_DEVELOPER_ID_APPLICATION_PRIVATE_KEY: ${{ inputs.apple-private-key }}
+        APPLE_DEVELOPER_ID_APPLICATION_P12: ${{ inputs.apple-p12 }}
         APPLE_APP_STORE_CONNECT_API_DATA: ${{ inputs.apple-api-key }}
       run: |-
-        echo "$APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE" > /tmp/certificate.pem
-        echo "$APPLE_DEVELOPER_ID_APPLICATION_PRIVATE_KEY" > /tmp/private-key.pem
+        echo "$APPLE_DEVELOPER_ID_APPLICATION_P12" | base64 -d > /tmp/certificate.p12
         echo "$APPLE_APP_STORE_CONNECT_API_DATA" > /tmp/app-store-connect.json
 
     # https://developer.apple.com/documentation/security/hardened_runtime
     - name: Sign binaries
       if: inputs.should-sign == 'true'
       shell: bash
+      env:
+        SIGNING_P12_PASSWORD: ${{ inputs.apple-p12-password }}
       run: |-
         for f in bin/*; do
           rcodesign sign -vv \
-          --pem-source /tmp/certificate.pem \
-          --pem-source /tmp/private-key.pem \
+          --p12-file /tmp/certificate.p12 \
+          --p12-password "$SIGNING_P12_PASSWORD" \
           --code-signature-flags runtime \
           "$f"
         done
@@ -158,10 +161,12 @@ runs:
     - name: Sign app bundle
       if: inputs.should-sign == 'true'
       shell: bash
+      env:
+        SIGNING_P12_PASSWORD: ${{ inputs.apple-p12-password }}
       run: >-
         rcodesign sign -vv
-        --pem-source /tmp/certificate.pem
-        --pem-source /tmp/private-key.pem
+        --p12-file /tmp/certificate.p12
+        --p12-password "$SIGNING_P12_PASSWORD"
         "staged/${{ steps.stage.outputs.app-bundle }}"
         "signed/${{ steps.stage.outputs.app-bundle }}"
 
@@ -189,10 +194,12 @@ runs:
     - name: Sign DMG
       if: inputs.should-sign == 'true'
       shell: bash
+      env:
+        SIGNING_P12_PASSWORD: ${{ inputs.apple-p12-password }}
       run: >-
         rcodesign sign -vv
-        --pem-source /tmp/certificate.pem
-        --pem-source /tmp/private-key.pem
+        --p12-file /tmp/certificate.p12
+        --p12-password "$SIGNING_P12_PASSWORD"
         "${{ steps.stage.outputs.dmg-file }}"
         "${{ steps.stage.outputs.dmg-file }}"
 
